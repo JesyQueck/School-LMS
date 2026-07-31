@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AcademicStructureController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
@@ -57,5 +58,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/results', [ResultsController::class, 'index'])->name('results');
         Route::post('/results', [ResultsController::class, 'store'])->name('results.store');
         Route::post('/results/{result}/lock', [ResultsController::class, 'lock'])->name('results.lock');
+
+        Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards');
+        Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
+        Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
     });
 });

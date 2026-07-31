@@ -17,5 +17,6 @@
     <p><a href="{{ route('admin.students') }}">Manage students</a></p>
     <p><a href="{{ route('admin.finance') }}">Manage finance</a></p>
     <p><a href="{{ route('admin.results') }}">Manage results</a></p>
+    <p><a href="{{ route('admin.report-cards') }}">Manage report cards</a></p>
 </body>
 </html>
