@@ -17,6 +17,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Now that the teachers table exists, add the deferred foreign key
+        // on classes.form_teacher_id that was left unlinked in the previous
+        // migration to respect foreign-key creation order.
+        Schema::table('classes', function (Blueprint $table) {
+            $table->foreign('form_teacher_id')->references('id')->on('teachers')->nullOnDelete();
+        });
+
         Schema::create('teacher_class_subjects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('teacher_id')->constrained()->cascadeOnDelete();
@@ -65,6 +72,12 @@ return new class extends Migration
         Schema::dropIfExists('parents');
         Schema::dropIfExists('students');
         Schema::dropIfExists('teacher_class_subjects');
+
+        // Drop the deferred foreign key before dropping the teachers table.
+        Schema::table('classes', function (Blueprint $table) {
+            $table->dropForeign(['form_teacher_id']);
+        });
+
         Schema::dropIfExists('teachers');
     }
 };

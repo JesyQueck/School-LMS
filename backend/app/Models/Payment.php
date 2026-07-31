@@ -23,9 +23,4 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class, 'recorded_by');
     }
-
-    public function student(): BelongsTo
-    {
-        return $this->belongsTo(Student::class, 'student_id');
-    }
 }

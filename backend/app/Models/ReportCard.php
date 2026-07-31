@@ -24,4 +24,9 @@ class ReportCard extends Model
     {
         return $this->belongsTo(Term::class);
     }
+
+    public function publishedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'published_by');
+    }
 }

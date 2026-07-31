@@ -30,7 +30,9 @@ return new class extends Migration
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->foreignId('form_teacher_id')->nullable()->constrained('teachers')->nullOnDelete();
+            // form_teacher_id FK is added in a later migration, after the
+            // teachers table exists, to respect foreign-key dependencies.
+            $table->unsignedBigInteger('form_teacher_id')->nullable();
             $table->timestamps();
         });
 

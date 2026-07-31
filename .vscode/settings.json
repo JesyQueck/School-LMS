@@ -3,6 +3,10 @@
         "/^php artisan test --filter=AdminManagementTest$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd c:\\\\Users\\\\USER\\\\Desktop\\\\School-LMS\\\\backend; php artisan test --filter=TeacherPortalTest$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
