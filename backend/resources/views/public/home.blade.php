@@ -1,12 +1,10 @@
 <x-layouts.guest>
-    <div class="pt-4 sm:pt-6">
-        <x-public.hero
-            title="Welcome to Greenfield Academy"
-            subtitle="Empowering students to achieve excellence through a nurturing environment, dedicated faculty, and a world-class curriculum."
-            :primaryCta="['href' => '/admissions', 'label' => 'Apply Now']"
-            :secondaryCta="['href' => '/about', 'label' => 'Learn More']"
-        />
-    </div>
+    <x-public.hero
+        title="Welcome to Greenfield Academy"
+        subtitle="Empowering students to achieve excellence through a nurturing environment, dedicated faculty, and a world-class curriculum."
+        :primaryCta="['href' => '/admissions', 'label' => 'Apply Now']"
+        :secondaryCta="['href' => '/about', 'label' => 'Learn More']"
+    />
 
     <section class="bg-white dark:bg-dark-surface border-b border-neutral-200 dark:border-dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -148,26 +146,24 @@
                 align="center"
             />
 
-            <div class="max-w-4xl mx-auto">
-                <div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border shadow-sm overflow-hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-3">
-                        <div class="md:col-span-1 bg-gradient-to-br from-primary-100 to-accent-100 dark:from-primary-900/30 dark:to-accent-900/30 flex items-center justify-center p-8">
-                            <div class="h-24 w-24 rounded-full bg-white dark:bg-dark-surface flex items-center justify-center text-2xl font-bold text-primary-700 dark:text-primary-300 shadow-sm">
-                                PC
-                            </div>
+            <div class="max-w-4xl mx-auto bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border shadow-sm overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3">
+                    <div class="md:col-span-1 bg-gradient-to-br from-primary-100 to-accent-100 dark:from-primary-900/30 dark:to-accent-900/30 flex items-center justify-center p-8">
+                        <div class="h-24 w-24 rounded-full bg-white dark:bg-dark-surface flex items-center justify-center text-2xl font-bold text-primary-700 dark:text-primary-300 shadow-sm">
+                            PC
                         </div>
-                        <div class="md:col-span-2 p-6 lg:p-8">
-                            <svg class="h-8 w-8 text-primary-300 dark:text-primary-700 mb-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4.995v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4.995v10h-9.983z"/></svg>
-                            <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">
-                                At Greenfield Academy, we are committed to providing an environment where every student can thrive. Our dedicated team of educators works tirelessly to ensure that each child receives the attention and support they need to reach their full potential.
-                            </p>
-                            <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-6">
-                                We invite you to join our community and experience the Greenfield difference firsthand.
-                            </p>
-                            <div>
-                                <p class="font-semibold text-neutral-900 dark:text-white">Principal Catherine</p>
-                                <p class="text-sm text-neutral-500 dark:text-neutral-400">Principal, Greenfield Academy</p>
-                            </div>
+                    </div>
+                    <div class="md:col-span-2 p-6 lg:p-8">
+                        <svg class="h-8 w-8 text-primary-300 dark:text-primary-700 mb-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4.995v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h4.995v10h-9.983z"/></svg>
+                        <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4">
+                            At Greenfield Academy, we are committed to providing an environment where every student can thrive. Our dedicated team of educators works tirelessly to ensure that each child receives the attention and support they need to reach their full potential.
+                        </p>
+                        <p class="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-6">
+                            We invite you to join our community and experience the Greenfield difference firsthand.
+                        </p>
+                        <div>
+                            <p class="font-semibold text-neutral-900 dark:text-white">Principal Catherine</p>
+                            <p class="text-sm text-neutral-500 dark:text-neutral-400">Principal, Greenfield Academy</p>
                         </div>
                     </div>
                 </div>

@@ -6,7 +6,7 @@
     'image' => null,
 ])
 
-<section class="relative bg-white dark:bg-dark-surface overflow-hidden pt-6 sm:pt-8">
+<section class="relative bg-white dark:bg-dark-surface overflow-hidden">
     <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-primary-900/10 dark:via-dark-surface dark:to-accent-900/10"></div>
 
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
