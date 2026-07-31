@@ -15,6 +15,12 @@ use App\Http\Controllers\Parent\ChildController;
 use App\Http\Controllers\Parent\DashboardController as ParentDashboardController;
 use App\Http\Controllers\Parent\FeesController as ParentFeesController;
 use App\Http\Controllers\Parent\ResultsController as ParentResultsController;
+use App\Http\Controllers\Student\AnnouncementsController as StudentAnnouncementsController;
+use App\Http\Controllers\Student\AttendanceController as StudentAttendanceController;
+use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Student\FeesController as StudentFeesController;
+use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
+use App\Http\Controllers\Student\ResultsController as StudentResultsController;
 use App\Http\Controllers\TeacherPortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +53,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/children/{student}/attendance', [ParentAttendanceController::class, 'index'])->name('children.attendance');
         Route::get('/children/{student}/fees', [ParentFeesController::class, 'index'])->name('children.fees');
         Route::get('/announcements', [ParentAnnouncementsController::class, 'index'])->name('announcements');
+    });
+
+    Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {
+        Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/results', [StudentResultsController::class, 'index'])->name('results');
+        Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance');
+        Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');
+        Route::get('/report-cards', [StudentReportCardController::class, 'index'])->name('report-cards');
+        Route::get('/announcements', [StudentAnnouncementsController::class, 'index'])->name('announcements');
     });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {

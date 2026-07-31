@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Http\Controllers\Student;
+
+use App\Http\Controllers\Controller;
+use App\Models\Student;
+use Illuminate\Http\Request;
+
+class AttendanceController extends Controller
+{
+    public function index(Request $request)
+    {
+        $student = $request->user()->student;
+
+        $attendance = $student->attendance()
+            ->with(['term', 'class'])
+            ->latest('date')
+            ->get();
+
+        return view('student.attendance', compact('student', 'attendance'));
+    }
+}
