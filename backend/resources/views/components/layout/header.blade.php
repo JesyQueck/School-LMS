@@ -1,7 +1,7 @@
-<header class="h-16 bg-white dark:bg-dark-surface border-b border-neutral-200 dark:border-dark-border flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-150 flex-shrink-0">
+<header class="h-16 bg-white dark:bg-dark-surface border-b border-neutral-200 dark:border-dark-border flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-colors duration-150 shrink-0">
     <div class="flex items-center gap-4">
-        <button 
-            @click="$store.sidebar.toggle()" 
+        <button
+            @click="$store.sidebar.toggle()"
             class="lg:hidden p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 focus-visible-ring"
             aria-label="Open menu"
             aria-expanded="false"
@@ -12,14 +12,13 @@
             </svg>
         </button>
         <div>
-            {!! $breadcrumbs ?? '' !!}
-            <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">{!! $title !!}</h1>
+            <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">{{ $title }}</h1>
         </div>
     </div>
     <div class="flex items-center gap-2 sm:gap-3">
         {{ $actions ?? '' }}
-        <button 
-            @click="$store.theme.toggle()" 
+        <button
+            @click="$store.theme.toggle()"
             class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400 focus-visible-ring"
             aria-label="Toggle theme"
         >
