@@ -42,4 +42,34 @@ class PublicController extends Controller
 
         return view('public.announcements', compact('announcements'));
     }
+
+    public function academics()
+    {
+        return view('public.academics');
+    }
+
+    public function gallery()
+    {
+        return view('public.gallery');
+    }
+
+    public function news()
+    {
+        return view('public.news');
+    }
+
+    public function faq()
+    {
+        return view('public.faq');
+    }
+
+    public function privacy()
+    {
+        return view('public.privacy');
+    }
+
+    public function terms()
+    {
+        return view('public.terms');
+    }
 }

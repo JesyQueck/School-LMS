@@ -30,6 +30,12 @@ Route::get('/about', [PublicController::class, 'about'])->name('about');
 Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 Route::get('/admissions', [PublicController::class, 'admissions'])->name('admissions');
 Route::get('/announcements', [PublicController::class, 'announcements'])->name('public.announcements');
+Route::get('/academics', [PublicController::class, 'academics'])->name('public.academics');
+Route::get('/gallery', [PublicController::class, 'gallery'])->name('public.gallery');
+Route::get('/news', [PublicController::class, 'news'])->name('public.news');
+Route::get('/faq', [PublicController::class, 'faq'])->name('public.faq');
+Route::get('/privacy', [PublicController::class, 'privacy'])->name('public.privacy');
+Route::get('/terms', [PublicController::class, 'terms'])->name('public.terms');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

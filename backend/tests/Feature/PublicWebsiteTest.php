@@ -15,14 +15,14 @@ class PublicWebsiteTest extends TestCase
     {
         $response = $this->get('/');
         $response->assertOk();
-        $response->assertSee('Welcome to Our School');
+        $response->assertSee('Welcome to Greenfield Academy');
     }
 
     public function test_about_page_is_accessible(): void
     {
         $response = $this->get('/about');
         $response->assertOk();
-        $response->assertSee('About Our School');
+        $response->assertSee('About Greenfield Academy');
     }
 
     public function test_contact_page_is_accessible(): void
