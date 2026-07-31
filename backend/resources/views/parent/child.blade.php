@@ -6,7 +6,7 @@
     <title>Child Overview</title>
 </head>
 <body>
-    <h1>{{ $student->user->name ?? $student->admission_no }}</h1>
+    <h1>{{ $student->full_name }}</h1>
     <p>Admission No: {{ $student->admission_no }}</p>
     <p>Class: {{ $student->class->name ?? 'N/A' }}</p>
 

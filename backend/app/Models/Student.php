@@ -16,6 +16,11 @@ class Student extends Model
         'date_of_birth' => 'date',
     ];
 
+    public function getFullNameAttribute(): string
+    {
+        return trim(($this->first_name ?? '').' '.($this->last_name ?? '')) ?: ($this->user->name ?? $this->admission_no);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

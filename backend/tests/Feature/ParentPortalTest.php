@@ -33,6 +33,8 @@ class ParentPortalTest extends TestCase
             'user_id' => User::factory()->create()->id,
             'class_id' => $class->id,
             'admission_no' => 'ADM501',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
         ]);
 
         $parent->students()->attach($student->id);
@@ -41,6 +43,7 @@ class ParentPortalTest extends TestCase
 
         $response = $this->get('/parent/dashboard');
         $response->assertOk();
+        $response->assertSee('John Doe');
         $response->assertSee('ADM501');
     }
 

@@ -13,7 +13,7 @@ class DashboardController extends Controller
         $parent = $request->user()->parentProfile;
 
         $children = $parent
-            ? $parent->students()->with(['class', 'user'])->get()
+            ? $parent->students()->with('class')->get()
             : collect();
 
         $announcements = Announcement::forRole('parent')

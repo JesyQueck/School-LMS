@@ -6,7 +6,7 @@
     <title>Results</title>
 </head>
 <body>
-    <h1>Results for {{ $student->user->name ?? $student->admission_no }}</h1>
+    <h1>Results for {{ $student->full_name }}</h1>
     <p>Admission No: {{ $student->admission_no }}</p>
 
     @forelse($results as $result)

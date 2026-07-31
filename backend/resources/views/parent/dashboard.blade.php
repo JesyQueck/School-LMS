@@ -11,7 +11,7 @@
     @forelse($children as $child)
         <p>
             <a href="{{ route('parent.children.show', $child) }}">
-                {{ $child->user->name ?? $child->admission_no }} ({{ $child->admission_no }})
+                {{ $child->full_name }} ({{ $child->admission_no }})
             </a>
         </p>
     @empty

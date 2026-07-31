@@ -12,7 +12,7 @@ class ChildController extends Controller
     {
         $this->authorize('view', $student);
 
-        $student->load(['class', 'user', 'reportCards' => function ($query) {
+        $student->load(['class', 'reportCards' => function ($query) {
             $query->where('is_published', true)->with('term');
         }]);
 

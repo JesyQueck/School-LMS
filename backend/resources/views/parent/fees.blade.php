@@ -6,7 +6,7 @@
     <title>Fees</title>
 </head>
 <body>
-    <h1>Fees for {{ $student->user->name ?? $student->admission_no }}</h1>
+    <h1>Fees for {{ $student->full_name }}</h1>
     <p>Admission No: {{ $student->admission_no }}</p>
 
     @forelse($fees as $fee)
