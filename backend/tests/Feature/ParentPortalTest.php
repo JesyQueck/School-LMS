@@ -263,7 +263,7 @@ class ParentPortalTest extends TestCase
 
         $response = $this->get('/parent/children/' . $student->id . '/attendance');
         $response->assertOk();
-        $response->assertSee('present');
+        $response->assertSee('Present');
     }
 
     public function test_parent_can_view_child_fees(): void
@@ -312,6 +312,6 @@ class ParentPortalTest extends TestCase
         $response = $this->get('/parent/children/' . $student->id . '/fees');
         $response->assertOk();
         $response->assertSee('Tuition');
-        $response->assertSee('50000');
+        $response->assertSee('50,000.00');
     }
 }

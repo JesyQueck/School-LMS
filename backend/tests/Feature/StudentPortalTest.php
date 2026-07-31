@@ -158,7 +158,7 @@ class StudentPortalTest extends TestCase
 
         $response = $this->get('/student/attendance');
         $response->assertOk();
-        $response->assertSee('present');
+        $response->assertSee('Present');
     }
 
     public function test_student_can_view_fees(): void
@@ -199,7 +199,7 @@ class StudentPortalTest extends TestCase
         $response = $this->get('/student/fees');
         $response->assertOk();
         $response->assertSee('Tuition');
-        $response->assertSee('50000');
+        $response->assertSee('50,000.00');
     }
 
     public function test_student_sees_student_and_all_announcements_only(): void
