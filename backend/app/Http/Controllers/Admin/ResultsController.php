@@ -9,10 +9,12 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Term;
 use App\Services\ResultService;
+use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 
 class ResultsController extends Controller
 {
+    use AuditsActions;
     public function __construct(
         protected ResultService $resultService,
     ) {}
@@ -41,12 +43,17 @@ class ResultsController extends Controller
 
         $this->resultService->createResult($data, $request->user());
 
+        $result = Result::query()->latest('id')->first();
+        $this->audit($request, 'result.created', Result::class, $result?->id, null, $data);
+
         return redirect()->route('admin.results')->with('status', 'Result submitted.');
     }
 
-    public function lock(Result $result)
+    public function lock(Request $request, Result $result)
     {
         $this->resultService->lockResult($result);
+
+        $this->audit($request, 'result.locked', Result::class, $result->id, ['is_locked' => false], ['is_locked' => true]);
 
         return redirect()->route('admin.results')->with('status', 'Result locked.');
     }

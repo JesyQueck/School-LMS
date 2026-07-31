@@ -10,10 +10,12 @@ use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Term;
 use App\Services\FeeService;
+use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 
 class FinanceController extends Controller
 {
+    use AuditsActions;
     public function __construct(
         protected FeeService $feeService,
     ) {}
@@ -41,6 +43,8 @@ class FinanceController extends Controller
 
         FeeType::create($data);
 
+        $this->audit($request, 'fee_type.created', FeeType::class, FeeType::query()->latest('id')->value('id'), null, $data);
+
         return redirect()->route('admin.finance')->with('status', 'Fee type created.');
     }
 
@@ -55,6 +59,8 @@ class FinanceController extends Controller
 
         $studentFee = StudentFee::create($data);
         $studentFee->update(['status' => $this->feeService->recomputeStatus($studentFee)]);
+
+        $this->audit($request, 'student_fee.created', StudentFee::class, $studentFee->id, null, $studentFee->toArray());
 
         return redirect()->route('admin.finance')->with('status', 'Student fee created.');
     }
@@ -72,6 +78,9 @@ class FinanceController extends Controller
         $studentFee = StudentFee::findOrFail($data['student_fee_id']);
 
         $this->feeService->recordPayment($studentFee, $data, $request->user());
+
+        $payment = Payment::query()->latest('id')->first();
+        $this->audit($request, 'payment.created', Payment::class, $payment?->id, null, $data);
 
         return redirect()->route('admin.finance')->with('status', 'Payment recorded.');
     }

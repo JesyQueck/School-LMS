@@ -1,0 +1,198 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\AcademicSession;
+use App\Models\ClassSubject;
+use App\Models\ReportCard;
+use App\Models\Result;
+use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\Subject;
+use App\Models\Term;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class AuditLogTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_admin_can_create_class_and_audit_log_is_recorded(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($adminUser);
+
+        $response = $this->post('/admin/classes', [
+            'name' => 'JSS 2',
+        ]);
+
+        $response->assertRedirect('/admin/classes');
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $adminUser->id,
+            'action' => 'class.created',
+            'target_model' => \App\Models\SchoolClass::class,
+        ]);
+    }
+
+    public function test_admin_can_create_student_and_audit_log_is_recorded(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $studentUser = User::factory()->create();
+
+        $this->actingAs($adminUser);
+
+        $response = $this->post('/admin/students', [
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_number' => 'ADM701',
+        ]);
+
+        $response->assertRedirect('/admin/students');
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $adminUser->id,
+            'action' => 'student.created',
+            'target_model' => Student::class,
+        ]);
+    }
+
+    public function test_admin_can_create_result_and_audit_log_is_recorded(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $subject = Subject::create(['name' => 'English']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM702',
+        ]);
+
+        $this->actingAs($adminUser);
+
+        $response = $this->post('/admin/results', [
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 30,
+            'exam_score' => 50,
+            'remark' => 'Good',
+        ]);
+
+        $response->assertRedirect('/admin/results');
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $adminUser->id,
+            'action' => 'result.created',
+            'target_model' => Result::class,
+        ]);
+    }
+
+    public function test_admin_can_lock_result_and_audit_log_is_recorded(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $subject = Subject::create(['name' => 'English']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM703',
+        ]);
+        $result = Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 30,
+            'exam_score' => 50,
+            'total' => 80,
+            'grade' => 'A1',
+            'is_locked' => false,
+        ]);
+
+        $this->actingAs($adminUser);
+
+        $response = $this->post("/admin/results/{$result->id}/lock");
+
+        $response->assertRedirect('/admin/results');
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $adminUser->id,
+            'action' => 'result.locked',
+            'target_model' => Result::class,
+            'target_id' => $result->id,
+        ]);
+    }
+
+    public function test_admin_can_publish_report_card_and_audit_log_is_recorded(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => SchoolClass::create(['name' => 'JSS 1'])->id,
+            'admission_no' => 'ADM704',
+        ]);
+        $reportCard = ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'is_published' => false,
+        ]);
+
+        $this->actingAs($adminUser);
+
+        $response = $this->post("/admin/report-cards/{$reportCard->id}/publish");
+
+        $response->assertRedirect('/admin/report-cards');
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $adminUser->id,
+            'action' => 'report_card.published',
+            'target_model' => ReportCard::class,
+            'target_id' => $reportCard->id,
+        ]);
+    }
+}

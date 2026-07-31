@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class SchoolAdminController extends Controller
 {
+    use AuditsActions;
     public function index()
     {
         return view('admin.index', [
@@ -54,6 +56,8 @@ class SchoolAdminController extends Controller
 
         SchoolClass::create($data);
 
+        $this->audit($request, 'class.created', SchoolClass::class, SchoolClass::query()->latest('id')->value('id'), null, $data);
+
         return redirect()->route('admin.classes')->with('status', 'Class created.');
     }
 
@@ -72,6 +76,8 @@ class SchoolAdminController extends Controller
         }
 
         Teacher::create($data);
+
+        $this->audit($request, 'teacher.created', Teacher::class, Teacher::query()->latest('id')->value('id'), null, $data);
 
         return redirect()->route('admin.teachers')->with('status', 'Teacher created.');
     }
@@ -105,6 +111,8 @@ class SchoolAdminController extends Controller
         }
 
         Student::create($data);
+
+        $this->audit($request, 'student.created', Student::class, Student::query()->latest('id')->value('id'), null, $data);
 
         return redirect()->route('admin.students')->with('status', 'Student created.');
     }

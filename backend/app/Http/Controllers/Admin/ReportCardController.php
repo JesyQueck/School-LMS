@@ -7,10 +7,12 @@ use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Term;
 use App\Services\ReportCardService;
+use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 
 class ReportCardController extends Controller
 {
+    use AuditsActions;
     public function __construct(
         protected ReportCardService $reportCardService,
     ) {}
@@ -38,12 +40,17 @@ class ReportCardController extends Controller
 
         $this->reportCardService->generateReportCard($data);
 
+        $reportCard = ReportCard::query()->latest('id')->first();
+        $this->audit($request, 'report_card.created', ReportCard::class, $reportCard?->id, null, $data);
+
         return redirect()->route('admin.report-cards')->with('status', 'Report card created.');
     }
 
     public function publish(ReportCard $reportCard, Request $request)
     {
         $this->reportCardService->publish($reportCard, $request->user());
+
+        $this->audit($request, 'report_card.published', ReportCard::class, $reportCard->id, ['is_published' => false], ['is_published' => true]);
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card published.');
     }
