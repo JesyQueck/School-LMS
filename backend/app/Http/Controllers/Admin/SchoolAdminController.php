@@ -31,6 +31,7 @@ class SchoolAdminController extends Controller
     {
         return view('admin.classes.index', [
             'classes' => SchoolClass::with('formTeacher')->get(),
+            'teachers' => Teacher::with('user')->get(),
         ]);
     }
 
@@ -45,6 +46,7 @@ class SchoolAdminController extends Controller
     {
         return view('admin.students.index', [
             'students' => Student::with(['user', 'class'])->get(),
+            'classes' => SchoolClass::all(),
         ]);
     }
 
