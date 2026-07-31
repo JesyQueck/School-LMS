@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AcademicStructureController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
@@ -52,5 +53,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/finance/fee-types', [FinanceController::class, 'createFeeType'])->name('finance.fee-types.store');
         Route::post('/finance/student-fees', [FinanceController::class, 'createStudentFee'])->name('finance.student-fees.store');
         Route::post('/finance/payments', [FinanceController::class, 'createPayment'])->name('finance.payments.store');
+
+        Route::get('/results', [ResultsController::class, 'index'])->name('results');
+        Route::post('/results', [ResultsController::class, 'store'])->name('results.store');
+        Route::post('/results/{result}/lock', [ResultsController::class, 'lock'])->name('results.lock');
     });
 });
