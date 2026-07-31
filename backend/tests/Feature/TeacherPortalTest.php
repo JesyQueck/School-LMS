@@ -1,0 +1,83 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\AcademicSession;
+use App\Models\ClassSubject;
+use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\Subject;
+use App\Models\Teacher;
+use App\Models\TeacherClassSubject;
+use App\Models\Term;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class TeacherPortalTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_teacher_can_view_assigned_classes_and_submit_attendance(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-1001',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $subject = Subject::create(['name' => 'English']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+            'is_compulsory' => true,
+        ]);
+
+        TeacherClassSubject::create([
+            'teacher_id' => $teacher->id,
+            'class_subject_id' => $classSubject->id,
+            'is_active' => true,
+        ]);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM401',
+        ]);
+
+        $this->actingAs($teacherUser);
+
+        $response = $this->get('/teacher/dashboard');
+        $response->assertOk();
+        $response->assertSee('JSS 1');
+
+        $attendanceResponse = $this->post('/teacher/attendance', [
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+            'date' => '2026-09-15',
+            'status' => 'present',
+        ]);
+
+        $attendanceResponse->assertRedirect('/teacher/dashboard');
+        $this->assertDatabaseHas('attendance', ['student_id' => $student->id, 'status' => 'present']);
+    }
+}

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TeacherPortalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,7 +29,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'admin'])->middleware('role:admin');
-    Route::get('/teacher/dashboard', [DashboardController::class, 'teacher'])->middleware('role:teacher');
+    Route::get('/teacher/dashboard', [TeacherPortalController::class, 'dashboard'])->middleware('role:teacher')->name('teacher.dashboard');
+    Route::post('/teacher/attendance', [TeacherPortalController::class, 'storeAttendance'])->middleware('role:teacher')->name('teacher.attendance.store');
     Route::get('/parent/dashboard', [DashboardController::class, 'parent'])->middleware('role:parent');
     Route::get('/student/dashboard', [DashboardController::class, 'student'])->middleware('role:student');
 
