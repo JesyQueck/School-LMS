@@ -10,12 +10,14 @@
     ];
 @endphp
 
-<div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-6 shadow-sm text-center">
+<div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-5 shadow-sm flex items-center gap-4">
     @if($icon)
-        <div class="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center mx-auto mb-4">
+        <div class="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center flex-shrink-0">
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
         </div>
     @endif
-    <p class="text-3xl font-bold text-neutral-900 dark:text-white mb-1">{{ $value }}</p>
-    <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $label }}</p>
+    <div>
+        <p class="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white mb-0.5">{{ $value }}</p>
+        <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $label }}</p>
+    </div>
 </div>

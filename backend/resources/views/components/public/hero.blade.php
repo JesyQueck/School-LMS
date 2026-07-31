@@ -6,12 +6,11 @@
     'image' => null,
 ])
 
-<section class="relative bg-white dark:bg-dark-surface overflow-hidden">
+<section class="relative bg-white dark:bg-dark-surface overflow-hidden pt-6 sm:pt-8">
     <div class="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-primary-900/10 dark:via-dark-surface dark:to-accent-900/10"></div>
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--color-primary-100)_0,_transparent_50%)] dark:bg-[radial-gradient(circle_at_top_right,_var(--color-primary-900)_0,_transparent_50%)] opacity-60"></div>
 
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div class="max-w-2xl">
                 <div class="inline-flex items-center gap-2 rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 mb-6">
                     <span class="h-2 w-2 rounded-full bg-primary-600 dark:bg-primary-400 animate-pulse"></span>
