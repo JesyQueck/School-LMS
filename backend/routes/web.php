@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AcademicStructureController;
+use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
@@ -46,5 +47,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/assignments', [TeacherAssignmentController::class, 'index'])->name('assignments');
         Route::post('/assignments', [TeacherAssignmentController::class, 'store'])->name('assignments.store');
+
+        Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
+        Route::post('/finance/fee-types', [FinanceController::class, 'createFeeType'])->name('finance.fee-types.store');
+        Route::post('/finance/student-fees', [FinanceController::class, 'createStudentFee'])->name('finance.student-fees.store');
+        Route::post('/finance/payments', [FinanceController::class, 'createPayment'])->name('finance.payments.store');
     });
 });
