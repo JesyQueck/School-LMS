@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\Term;
 use App\Services\ReportCardService;
 use App\Traits\AuditsActions;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class ReportCardController extends Controller
@@ -53,5 +54,14 @@ class ReportCardController extends Controller
         $this->audit($request, 'report_card.published', ReportCard::class, $reportCard->id, ['is_published' => false], ['is_published' => true]);
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card published.');
+    }
+
+    public function download(ReportCard $reportCard)
+    {
+        $reportCard->load(['student.results.classSubject.subject', 'student.user', 'student.class', 'term']);
+
+        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard'));
+
+        return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }
 }

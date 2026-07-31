@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance');
         Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');
         Route::get('/report-cards', [StudentReportCardController::class, 'index'])->name('report-cards');
+        Route::get('/report-cards/{reportCard}/download', [StudentReportCardController::class, 'download'])->name('report-cards.download');
         Route::get('/announcements', [StudentAnnouncementsController::class, 'index'])->name('announcements');
     });
 
@@ -97,5 +98,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards');
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
         Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
+        Route::get('/report-cards/{reportCard}/download', [ReportCardController::class, 'download'])->name('report-cards.download');
     });
 });
