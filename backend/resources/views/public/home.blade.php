@@ -17,7 +17,7 @@
         </div>
     </section>
 
-    <section class="py-16 lg:py-20">
+    <section class="py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Welcome to Greenfield Academy"
@@ -36,7 +36,7 @@
         </div>
     </section>
 
-    <section class="bg-white dark:bg-dark-surface py-16 lg:py-20">
+    <section class="bg-white dark:bg-dark-surface py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Why Choose Greenfield Academy"
@@ -77,7 +77,7 @@
         </div>
     </section>
 
-    <section class="py-16 lg:py-20">
+    <section class="py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Academic Programs"
@@ -138,7 +138,7 @@
         </div>
     </section>
 
-    <section class="bg-white dark:bg-dark-surface py-16 lg:py-20">
+    <section class="bg-white dark:bg-dark-surface py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="A Message from Our Principal"
@@ -171,7 +171,7 @@
         </div>
     </section>
 
-    <section class="py-16 lg:py-20">
+    <section class="py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Latest News"
@@ -205,7 +205,7 @@
         </div>
     </section>
 
-    <section class="bg-white dark:bg-dark-surface py-16 lg:py-20">
+    <section class="bg-white dark:bg-dark-surface py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Upcoming Events"
@@ -242,7 +242,7 @@
         </div>
     </section>
 
-    <section class="py-16 lg:py-20">
+    <section class="py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Student Life"
@@ -263,7 +263,7 @@
         </div>
     </section>
 
-    <section class="bg-white dark:bg-dark-surface py-16 lg:py-20">
+    <section class="bg-white dark:bg-dark-surface py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="What Parents Say"
@@ -294,7 +294,7 @@
         </div>
     </section>
 
-    <section class="py-16 lg:py-20">
+    <section class="py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Our Facilities"
@@ -323,7 +323,7 @@
         </div>
     </section>
 
-    <section class="py-16 lg:py-20">
+    <section class="py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-public.section-header
                 title="Get in Touch"

@@ -17,13 +17,13 @@
     ];
 
     $navPages = $pages ?: [
-        ['href' => '/', 'label' => 'Home', 'icon' => 'home'],
-        ['href' => '/about', 'label' => 'About', 'icon' => 'info'],
-        ['href' => '/admissions', 'label' => 'Admissions', 'icon' => 'clipboard-list'],
-        ['href' => '/academics', 'label' => 'Academics', 'icon' => 'book-open'],
-        ['href' => '/gallery', 'label' => 'Gallery', 'icon' => 'image'],
-        ['href' => '/news', 'label' => 'News', 'icon' => 'newspaper'],
-        ['href' => '/contact', 'label' => 'Contact', 'icon' => 'mail'],
+        ['href' => '/', 'label' => 'Home'],
+        ['href' => '/about', 'label' => 'About'],
+        ['href' => '/admissions', 'label' => 'Admissions'],
+        ['href' => '/academics', 'label' => 'Academics'],
+        ['href' => '/gallery', 'label' => 'Gallery'],
+        ['href' => '/news', 'label' => 'News'],
+        ['href' => '/contact', 'label' => 'Contact'],
     ];
 @endphp
 
@@ -39,8 +39,7 @@
                 <div class="hidden lg:flex items-center gap-1">
                     @foreach($navPages as $page)
                         <a href="{{ $page['href'] }}"
-                           class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors {{ request()->is(ltrim(parse_url($page['href'], PHP_URL_PATH), '/')) && $page['href'] !== '/' ? 'text-primary-600 dark:text-primary-400' : '' }}">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$page['icon']] ?? '' }}"/></svg>
+                           class="px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors {{ request()->is(ltrim(parse_url($page['href'], PHP_URL_PATH), '/')) && $page['href'] !== '/' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : '' }}">
                             {{ $page['label'] }}
                         </a>
                     @endforeach
@@ -64,25 +63,21 @@
     <div x-show="mobileOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" x-cloak class="lg:hidden border-t border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface">
         <div class="px-4 py-3 space-y-1">
             @foreach($navPages as $page)
-                <a href="{{ $page['href'] }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors {{ request()->is(ltrim(parse_url($page['href'], PHP_URL_PATH), '/')) && $page['href'] !== '/' ? 'text-primary-600 dark:text-primary-400' : '' }}">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$page['icon']] ?? '' }}"/></svg>
+                <a href="{{ $page['href'] }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors {{ request()->is(ltrim(parse_url($page['href'], PHP_URL_PATH), '/')) && $page['href'] !== '/' ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : '' }}">
                     {{ $page['label'] }}
                 </a>
             @endforeach
             <div class="border-t border-neutral-200 dark:border-dark-border pt-2 mt-2 space-y-1">
-                <a href="/student/dashboard" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths['user'] }}"/></svg>
+                <a href="/student/dashboard" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                     Student Portal
                 </a>
-                <a href="/parent/dashboard" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths['users'] }}"/></svg>
+                <a href="/parent/dashboard" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                     Parent Portal
                 </a>
-                <a href="/teacher/dashboard" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths['graduation-cap'] }}"/></svg>
+                <a href="/teacher/dashboard" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                     Teacher Portal
                 </a>
-                <a href="/login" class="flex items-center justify-center font-medium rounded-lg transition-colors duration-150 bg-primary-600 hover:bg-primary-700 text-white text-sm px-4 py-2 shadow-sm mt-2">
+                <a href="/login" class="flex items-center justify-center font-medium rounded-lg transition-colors duration-150 bg-primary-600 hover:bg-primary-700 text-white text-sm px-4 py-2.5 shadow-sm mt-2">
                     Login
                 </a>
             </div>
