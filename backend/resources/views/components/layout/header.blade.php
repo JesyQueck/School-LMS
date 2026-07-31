@@ -12,8 +12,8 @@
             </svg>
         </button>
         <div>
-            {{ $breadcrumbs ?? '' }}
-            <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">{{ $title }}</h1>
+            {!! $breadcrumbs ?? '' !!}
+            <h1 class="text-lg font-semibold text-neutral-900 dark:text-white">{!! $title !!}</h1>
         </div>
     </div>
     <div class="flex items-center gap-2 sm:gap-3">

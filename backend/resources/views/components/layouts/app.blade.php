@@ -66,8 +66,8 @@
 
         <!-- Main content wrapper -->
         <div class="flex flex-1 flex-col overflow-hidden">
-            <x-layout.header title="{{ $title ?? 'Dashboard' }}">
-                {{ $breadcrumbs ?? '' }}
+            <x-layout.header title="{!! $title ?? 'Dashboard' !!}">
+                {!! $breadcrumbs ?? '' !!}
             </x-layout.header>
 
             <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
