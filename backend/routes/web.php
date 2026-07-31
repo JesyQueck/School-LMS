@@ -20,13 +20,16 @@ use App\Http\Controllers\Student\AttendanceController as StudentAttendanceContro
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\FeesController as StudentFeesController;
 use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
+use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Student\ResultsController as StudentResultsController;
 use App\Http\Controllers\TeacherPortalController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [PublicController::class, 'home'])->name('home');
+Route::get('/about', [PublicController::class, 'about'])->name('about');
+Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
+Route::get('/admissions', [PublicController::class, 'admissions'])->name('admissions');
+Route::get('/announcements', [PublicController::class, 'announcements'])->name('public.announcements');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
