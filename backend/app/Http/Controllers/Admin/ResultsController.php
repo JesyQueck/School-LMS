@@ -8,6 +8,7 @@ use App\Models\Result;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Term;
+use App\Services\CsvExportService;
 use App\Services\ResultService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
@@ -15,8 +16,10 @@ use Illuminate\Http\Request;
 class ResultsController extends Controller
 {
     use AuditsActions;
+
     public function __construct(
         protected ResultService $resultService,
+        protected CsvExportService $csvExportService,
     ) {}
 
     public function index()
@@ -56,5 +59,10 @@ class ResultsController extends Controller
         $this->audit($request, 'result.locked', Result::class, $result->id, ['is_locked' => false], ['is_locked' => true]);
 
         return redirect()->route('admin.results')->with('status', 'Result locked.');
+    }
+
+    public function exportResults(Request $request)
+    {
+        return $this->csvExportService->exportResults($request);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Services\CsvExportService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,6 +14,10 @@ use Illuminate\Support\Str;
 class SchoolAdminController extends Controller
 {
     use AuditsActions;
+
+    public function __construct(
+        protected CsvExportService $csvExportService,
+    ) {}
     public function index()
     {
         return view('admin.index', [
@@ -115,5 +120,10 @@ class SchoolAdminController extends Controller
         $this->audit($request, 'student.created', Student::class, Student::query()->latest('id')->value('id'), null, $data);
 
         return redirect()->route('admin.students')->with('status', 'Student created.');
+    }
+
+    public function exportStudents(Request $request)
+    {
+        return $this->csvExportService->exportStudents($request);
     }
 }

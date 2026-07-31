@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/teachers', [SchoolAdminController::class, 'teachers'])->name('teachers');
         Route::post('/teachers', [SchoolAdminController::class, 'createTeacher'])->name('teachers.store');
         Route::get('/students', [SchoolAdminController::class, 'students'])->name('students');
+        Route::get('/students/export', [SchoolAdminController::class, 'exportStudents'])->name('students.export');
         Route::post('/students', [SchoolAdminController::class, 'createStudent'])->name('students.store');
 
         Route::get('/academic', [AcademicStructureController::class, 'index'])->name('academic');
@@ -92,6 +93,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/finance/payments', [FinanceController::class, 'createPayment'])->name('finance.payments.store');
 
         Route::get('/results', [ResultsController::class, 'index'])->name('results');
+        Route::get('/results/export', [ResultsController::class, 'exportResults'])->name('results.export');
         Route::post('/results', [ResultsController::class, 'store'])->name('results.store');
         Route::post('/results/{result}/lock', [ResultsController::class, 'lock'])->name('results.lock');
 
