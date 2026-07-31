@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+
+class SchoolClass extends Model
+{
+    protected $table = 'classes';
+
+    protected $guarded = [];
+
+    public function formTeacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'form_teacher_id');
+    }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class, 'class_id');
+    }
+
+    public function classSubjects(): HasMany
+    {
+        return $this->hasMany(ClassSubject::class, 'class_id');
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class, 'class_id');
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^php artisan test --filter=AdminManagementTest$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
