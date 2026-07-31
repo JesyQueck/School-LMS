@@ -24,18 +24,8 @@
             :class="$store.sidebar.open ? 'translate-x-0' : '-translate-x-full'"
             class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 lg:translate-x-0 lg:static lg:block flex flex-col"
             aria-label="Sidebar"
+            x-cloak
         >
-            <div class="lg:hidden flex justify-end p-2">
-                <button 
-                    @click="$store.sidebar.close()"
-                    class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
-                    aria-label="Close menu"
-                >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
             <x-layout.sidebar :title="config('app.name', 'School LMS')">
                 @if(auth()->check())
                     @php $role = auth()->user()->role; @endphp

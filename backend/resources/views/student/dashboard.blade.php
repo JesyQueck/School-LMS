@@ -1,25 +1,11 @@
 <x-layouts.app title="Student Dashboard">
-    @php
-        $breadcrumbs = [
-            ['label' => 'Student', 'href' => '/student/dashboard', 'active' => true],
-        ];
-    @endphp
-
-    <x-slot:title>
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-                <x-ui.breadcrumbs>
-                    @foreach($breadcrumbs as $crumb)
-                        <x-ui.breadcrumb-item :href="$crumb['href'] ?? null" :active="$crumb['active'] ?? false">
-                            {{ $crumb['label'] }}
-                        </x-ui.breadcrumb-item>
-                    @endforeach
-                </x-ui.breadcrumbs>
-                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Student Dashboard</h1>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Welcome, {{ $student->full_name ?? 'Student' }}. Here's your academic overview.</p>
-            </div>
-        </div>
-    </x-slot:title>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/student/dashboard" active>Student</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Student Dashboard</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Welcome, {{ $student->full_name ?? 'Student' }}. Here's your academic overview.</p>
+    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="Attendance" value="98%" :trend="['direction' => 'up', 'value' => 'This term']" icon="calendar-check" />

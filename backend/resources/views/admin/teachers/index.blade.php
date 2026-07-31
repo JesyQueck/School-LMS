@@ -1,26 +1,12 @@
 <x-layouts.app title="Teachers">
-    @php
-        $breadcrumbs = [
-            ['label' => 'Admin', 'href' => '/admin/dashboard'],
-            ['label' => 'Teachers', 'active' => true],
-        ];
-    @endphp
-
-    <x-slot:title>
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-                <x-ui.breadcrumbs>
-                    @foreach($breadcrumbs as $crumb)
-                        <x-ui.breadcrumb-item :href="$crumb['href'] ?? null" :active="$crumb['active'] ?? false">
-                            {{ $crumb['label'] }}
-                        </x-ui.breadcrumb-item>
-                    @endforeach
-                </x-ui.breadcrumbs>
-                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Teachers</h1>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage teaching staff and their assignments.</p>
-            </div>
-        </div>
-    </x-slot:title>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Teachers</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Teachers</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage teaching staff and their assignments.</p>
+    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-4">

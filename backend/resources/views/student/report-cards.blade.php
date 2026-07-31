@@ -1,26 +1,12 @@
 <x-layouts.app title="My Report Cards">
-    @php
-        $breadcrumbs = [
-            ['label' => 'Student', 'href' => '/student/dashboard'],
-            ['label' => 'Report Cards', 'active' => true],
-        ];
-    @endphp
-
-    <x-slot:title>
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-                <x-ui.breadcrumbs>
-                    @foreach($breadcrumbs as $crumb)
-                        <x-ui.breadcrumb-item :href="$crumb['href'] ?? null" :active="$crumb['active'] ?? false">
-                            {{ $crumb['label'] }}
-                        </x-ui.breadcrumb-item>
-                    @endforeach
-                </x-ui.breadcrumbs>
-                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">My Report Cards</h1>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">View and download your academic performance records.</p>
-            </div>
-        </div>
-    </x-slot:title>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/student/dashboard">Student</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Report Cards</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">My Report Cards</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">View and download your academic performance records.</p>
+    </div>
 
     <div class="grid grid-cols-1 gap-6">
         @forelse($reportCards as $reportCard)

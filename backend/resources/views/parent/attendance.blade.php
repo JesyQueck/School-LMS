@@ -1,27 +1,13 @@
 <x-layouts.app title="Attendance">
-    @php
-        $breadcrumbs = [
-            ['label' => 'Parent', 'href' => '/parent/dashboard'],
-            ['label' => $student->full_name ?? 'Child', 'href' => route('parent.children.show', $student)],
-            ['label' => 'Attendance', 'active' => true],
-        ];
-    @endphp
-
-    <x-slot:title>
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-                <x-ui.breadcrumbs>
-                    @foreach($breadcrumbs as $crumb)
-                        <x-ui.breadcrumb-item :href="$crumb['href'] ?? null" :active="$crumb['active'] ?? false">
-                            {{ $crumb['label'] }}
-                        </x-ui.breadcrumb-item>
-                    @endforeach
-                </x-ui.breadcrumbs>
-                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Attendance</h1>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->full_name ?? 'Student' }} &middot; {{ $student->class->name ?? 'N/A' }}</p>
-            </div>
-        </div>
-    </x-slot:title>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/parent/dashboard">Parent</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('parent.children.show', $student) }}">{{ $student->full_name ?? 'Child' }}</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Attendance</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Attendance</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->full_name ?? 'Student' }} &middot; {{ $student->class->name ?? 'N/A' }}</p>
+    </div>
 
     <div class="grid grid-cols-1 gap-6">
         <x-ui.card>

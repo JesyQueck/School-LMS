@@ -1,26 +1,12 @@
 <x-layouts.app title="Finance Management">
-    @php
-        $breadcrumbs = [
-            ['label' => 'Admin', 'href' => '/admin/dashboard'],
-            ['label' => 'Finance', 'active' => true],
-        ];
-    @endphp
-
-    <x-slot:title>
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-                <x-ui.breadcrumbs>
-                    @foreach($breadcrumbs as $crumb)
-                        <x-ui.breadcrumb-item :href="$crumb['href'] ?? null" :active="$crumb['active'] ?? false">
-                            {{ $crumb['label'] }}
-                        </x-ui.breadcrumb-item>
-                    @endforeach
-                </x-ui.breadcrumbs>
-                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Finance Management</h1>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage fee types, student fees, and payment records.</p>
-            </div>
-        </div>
-    </x-slot:title>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Finance</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Finance Management</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage fee types, student fees, and payment records.</p>
+    </div>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">
