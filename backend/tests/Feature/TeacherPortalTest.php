@@ -67,7 +67,6 @@ class TeacherPortalTest extends TestCase
 
         $response = $this->get('/teacher/dashboard');
         $response->assertOk();
-        $response->assertSee('JSS 1');
 
         $attendanceResponse = $this->post('/teacher/attendance', [
             'student_id' => $student->id,

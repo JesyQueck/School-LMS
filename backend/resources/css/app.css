@@ -19,7 +19,7 @@
     --color-primary-800: #1e40af;
     --color-primary-900: #1e3a8a;
 
-    /* Secondary */
+    /* Neutral (formerly secondary) */
     --color-secondary-50: #f8fafc;
     --color-secondary-100: #f1f5f9;
     --color-secondary-200: #e2e8f0;
@@ -65,4 +65,38 @@
     --color-dark-surface: #1e293b;
     --color-dark-border: #334155;
     --color-dark-text: #f1f5f9;
+}
+
+/* Smooth theme transition */
+* {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Screen reader only utility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus visible utility */
+.focus-visible-ring:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
 }

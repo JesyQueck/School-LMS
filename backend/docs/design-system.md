@@ -1,7 +1,10 @@
-# School LMS — Design System
+# School LMS — Design System v1.1
 
-Version: 1.0.0
+Version: 1.1.0
 Status: Approved for implementation
+Last Updated: 2026-07-31
+
+---
 
 ## 1. Design Principles
 
@@ -15,103 +18,101 @@ Status: Approved for implementation
 
 ## 2. Color System
 
-### 2.1 Primary Brand Colors
+### 2.1 Design Tokens
+
+All colors are defined as CSS custom properties in `app.css` via `@theme`.
+
+### 2.2 Primary Brand Colors
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-primary-50` | `#eff6ff` | Light backgrounds, hover states |
-| `--color-primary-100` | `#dbeafe` | Subtle backgrounds |
-| `--color-primary-200` | `#bfdbfe` | Borders, dividers |
-| `--color-primary-300` | `#93c5fd` | Disabled states |
-| `--color-primary-400` | `#60a5fa` | Hover accents |
-| `--color-primary-500` | `#3b82f6` | **Primary brand color** — main buttons, links, active states |
-| `--color-primary-600` | `#2563eb` | Hover states, pressed buttons |
-| `--color-primary-700` | `#1d4ed8` | Active navigation, focus rings |
-| `--color-primary-800` | `#1e40af` | Dark mode primary |
-| `--color-primary-900` | `#1e3a8a` | Dark mode hover |
+| `primary-50` | `#eff6ff` | Light backgrounds, hover states |
+| `primary-100` | `#dbeafe` | Subtle backgrounds |
+| `primary-200` | `#bfdbfe` | Borders, dividers |
+| `primary-300` | `#93c5fd` | Disabled states |
+| `primary-400` | `#60a5fa` | Hover accents |
+| `primary-500` | `#3b82f6` | **Primary brand color** — main buttons, links, active states |
+| `primary-600` | `#2563eb` | Hover states, pressed buttons |
+| `primary-700` | `#1d4ed8` | Active navigation, focus rings |
+| `primary-800` | `#1e40af` | Dark mode primary |
+| `primary-900` | `#1e3a8a` | Dark mode hover |
 
-### 2.2 Secondary Colors
+### 2.3 Neutral Palette
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--color-secondary-50` | `#f8fafc` | Light backgrounds |
-| `--color-secondary-100` | `#f1f5f9` | Card backgrounds, table stripes |
-| `--color-secondary-200` | `#e2e8f0` | Borders, dividers |
-| `--color-secondary-300` | `#cbd5e1` | Disabled text |
-| `--color-secondary-400` | `#94a3b8` | Placeholder text |
-| `--color-secondary-500` | `#64748b` | **Secondary text** — labels, captions |
-| `--color-secondary-600` | `#475569` | Body text in light mode |
-| `--color-secondary-700` | `#334155` | Headings in light mode |
-| `--color-secondary-800` | `#1e293b` | Dark mode body text |
-| `--color-secondary-900` | `#0f172a` | Dark mode headings |
-
-### 2.3 Accent Colors
+**Renamed from `secondary` to `neutral` for consistency with industry standards.**
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-accent-50` | `#fdf4ff` | Light backgrounds |
-| `--color-accent-100` | `#fae8ff` | Subtle highlights |
-| `--color-accent-200` | `#f5d0fe` | Borders |
-| `--color-accent-300` | `#f0abfc` | Soft accents |
-| `--color-accent-400` | `#e879f9` | Hover accents |
-| `--color-accent-500` | `#d946ef` | **Accent color** — CTAs, highlights, badges |
-| `--color-accent-600` | `#c026d3` | Hover states |
-| `--color-accent-700` | `#a21caf` | Active states |
-| `--color-accent-800` | `#86198f` | Dark mode accent |
-| `--color-accent-900` | `#701a75` | Dark mode hover |
+| `neutral-50` | `#f9fafb` | Page background |
+| `neutral-100` | `#f3f4f6` | Card backgrounds, table stripes |
+| `neutral-200` | `#e5e7eb` | Borders, dividers |
+| `neutral-300` | `#d1d5db` | Disabled borders |
+| `neutral-400` | `#9ca3af` | Disabled text, placeholder |
+| `neutral-500` | `#6b7280` | Secondary text, labels |
+| `neutral-600` | `#4b5563` | Body text in light mode |
+| `neutral-700` | `#374151` | Headings in light mode |
+| `neutral-800` | `#1f293b` | Dark mode body text |
+| `neutral-900` | `#111827` | Dark mode headings |
 
-### 2.4 Semantic Colors
-
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--color-success-50` | `#f0fdf4` | Success backgrounds |
-| `--color-success-500` | `#22c55e` | Success icons, text |
-| `--color-success-600` | `#16a34a` | Success buttons |
+### 2.4 Accent Colors
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-warning-50` | `#fffbeb` | Warning backgrounds |
-| `--color-warning-500` | `#f59e0b` | Warning icons, text |
-| `--color-warning-600` | `#d97706` | Warning buttons |
+| `accent-50` | `#fdf4ff` | Light backgrounds |
+| `accent-100` | `#fae8ff` | Subtle highlights |
+| `accent-200` | `#f5d0fe` | Borders |
+| `accent-300` | `#f0abfc` | Soft accents |
+| `accent-400` | `#e879f9` | Hover accents |
+| `accent-500` | `#d946ef` | **Accent color** — CTAs, highlights, badges |
+| `accent-600` | `#c026d3` | Hover states |
+| `accent-700` | `#a21caf` | Active states |
+| `accent-800` | `#86198f` | Dark mode accent |
+| `accent-900` | `#701a75` | Dark mode hover |
+
+### 2.5 Semantic Colors
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-danger-50` | `#fef2f2` | Error backgrounds |
-| `--color-danger-500` | `#ef4444` | Error icons, text |
-| `--color-danger-600` | `#dc2626` | Error buttons, destructive actions |
+| `success-50` | `#f0fdf4` | Success backgrounds |
+| `success-500` | `#22c55e` | Success icons, text |
+| `success-600` | `#16a34a` | Success buttons |
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-info-50` | `#eff6ff` | Info backgrounds |
-| `--color-info-500` | `#3b82f6` | Info icons, text |
-| `--color-info-600` | `#2563eb` | Info buttons |
-
-### 2.5 Neutral Palette (Light Mode)
+| `warning-50` | `#fffbeb` | Warning backgrounds |
+| `warning-500` | `#f59e0b` | Warning icons, text |
+| `warning-600` | `#d97706` | Warning buttons |
 
 | Token | Hex | Usage |
 |-------|-----|-------|
-| `--color-white` | `#ffffff` | Card backgrounds, page bg |
-| `--color-neutral-50` | `#f9fafb` | Page background |
-| `--color-neutral-100` | `#f3f4f6` | Card backgrounds, table stripes |
-| `--color-neutral-200` | `#e5e7eb` | Borders, dividers |
-| `--color-neutral-300` | `#d1d5db` | Disabled borders |
-| `--color-neutral-400` | `#9ca3af` | Disabled text |
-| `--color-neutral-500` | `#6b7280` | Secondary text |
-| `--color-neutral-600` | `#4b5563` | Body text |
-| `--color-neutral-700` | `#374151` | Headings |
-| `--color-neutral-800` | `#1f2937` | Dark headings |
-| `--color-neutral-900` | `#111827` | Darkest text |
+| `danger-50` | `#fef2f2` | Error backgrounds |
+| `danger-500` | `#ef4444` | Error icons, text |
+| `danger-600` | `#dc2626` | Error buttons, destructive actions |
 
-### 2.6 Dark Mode Overrides
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `info-50` | `#eff6ff` | Info backgrounds |
+| `info-500` | `#3b82f6` | Info icons, text |
+| `info-600` | `#2563eb` | Info buttons |
 
-Dark mode swaps neutral scale and darkens brand colors:
+### 2.6 Dark Mode Surfaces
 
-| Token | Hex |
-|-------|-----|
-| `--color-dark-bg` | `#0f172a` |
-| `--color-dark-surface` | `#1e293b` |
-| `--color-dark-border` | `#334155` |
-| `--color-dark-text` | `#f1f5f9` |
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `dark-bg` | `#0f172a` | Page background |
+| `dark-surface` | `#1e293b` | Card, sidebar, header backgrounds |
+| `dark-border` | `#334155` | Borders |
+| `dark-text` | `#f1f5f9` | Body text |
+
+### 2.7 Elevation System
+
+| Token | Classes | Usage |
+|-------|---------|-------|
+| `elevation-0` | `shadow-none` | Flat elements |
+| `elevation-1` | `shadow-sm` | Cards, dropdowns |
+| `elevation-2` | `shadow-md` | Hover states, modals |
+| `elevation-3` | `shadow-lg` | Floating panels |
+| `elevation-4` | `shadow-xl` | Modals, toasts |
 
 ---
 
@@ -124,7 +125,7 @@ Dark mode swaps neutral scale and darkens brand colors:
 
 ### 3.2 Type Scale
 
-| Class | Size | Line Height | Usage |
+| Token | Size | Line Height | Usage |
 |-------|------|-------------|-------|
 | `text-xs` | 0.75rem | 1rem | Captions, timestamps, helper text |
 | `text-sm` | 0.875rem | 1.25rem | Labels, secondary text, table cells |
@@ -150,16 +151,62 @@ Dark mode swaps neutral scale and darkens brand colors:
 - Line height for body: `leading-relaxed` or `leading-normal`
 - Color contrast ratio minimum: **4.5:1** for normal text, **3:1** for large text
 - Never use color alone to convey meaning — always pair with icon or text
+- Support `prefers-reduced-motion` — disable animations for users who prefer reduced motion
 
 ---
 
-## 4. Icons
+## 4. Spacing System
+
+### 4.1 Scale
+
+Use a consistent 4px base grid:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `space-1` | 4px | Tight spacing within components |
+| `space-2` | 8px | Component padding, gaps |
+| `space-3` | 12px | Medium spacing |
+| `space-4` | 16px | Default gap, padding |
+| `space-5` | 20px | Medium-large spacing |
+| `space-6` | 24px | Card padding, section gaps |
+| `space-8` | 32px | Page padding, large gaps |
+| `space-10` | 40px | Extra large gaps |
+| `space-12` | 48px | Section separators |
+| `space-16` | 64px | Page-level spacing |
+
+### 4.2 Usage Rules
+
+- **Component padding:** `space-4` or `space-6`
+- **Component gaps:** `space-3` or `space-4`
+- **Section gaps:** `space-6` or `space-8`
+- **Page padding:** `space-4 sm:space-6 lg:space-8`
+- **Inline elements:** `space-2` or `space-3`
+
+---
+
+## 5. Border Radius Scale
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `radius-sm` | `0.25rem` (4px) | Small elements, tags |
+| `radius-md` | `0.375rem` (6px) | Buttons, inputs |
+| `radius-lg` | `0.5rem` (8px) | Cards |
+| `radius-xl` | `0.75rem` (12px) | Large cards, modals |
+| `radius-2xl` | `1rem` (16px) | Hero elements |
+| `radius-full` | `9999px` | Pills, avatars, checkboxes |
+
+**Default radius:** `radius-lg` for cards, `radius-md` for buttons and inputs.
+
+---
+
+## 6. Icons
 
 **Library:** Lucide Icons
 **Style:** 24px, 2px stroke, outlined
-**Usage:** Inline SVGs via `x-data` or Alpine components, or `<i>` tags with data attributes.
+**Size variants:** 16px, 20px, 24px, 32px
+**Usage:** Inline SVGs via shared icon component
 
-Common icons:
+**Common icons:**
 - Dashboard: `layout-dashboard`
 - Students: `users`
 - Teachers: `graduation-cap`
@@ -183,65 +230,98 @@ Common icons:
 - Bell: `bell`
 - Moon: `moon`
 - Sun: `sun`
+- Check: `check`
+- X: `x`
+- Alert circle: `alert-circle`
+- Info: `info`
+- Warning: `alert-triangle`
+- Calendar: `calendar`
+- Clock: `clock`
+- Mail: `mail`
+- Phone: `phone`
+- Map pin: `map-pin`
+- File: `file`
+- Download: `download`
+- Upload: `upload`
+- Share: `share`
+- Copy: `copy`
+- Refresh: `refresh-cw`
+- More vertical: `more-vertical`
+- Menu: `menu`
+- Arrow left: `arrow-left`
+- Arrow right: `arrow-right`
+- Chevron left: `chevron-left`
+- Chevron right: `chevron-right`
 
 ---
 
-## 5. Layout
+## 7. Layout
 
-### 5.1 Breakpoints
+### 7.1 Breakpoints
 
-| Breakpoint | Min Width | Usage |
-|------------|-----------|-------|
-| `sm` | 640px | Phablets, small tablets |
-| `md` | 768px | Tablets |
-| `lg` | 1024px | Laptops, small desktops |
-| `xl` | 1280px | Desktops |
-| `2xl` | 1536px | Large desktops, projectors |
+| Breakpoint | Min Width | Max Width | Usage |
+|------------|-----------|-----------|-------|
+| `mobile` | 0 | 639px | Phones |
+| `sm` | 640px | 767px | Phablets |
+| `md` | 768px | 1023px | Tablets |
+| `lg` | 1024px | 1279px | Laptops |
+| `xl` | 1280px | 1535px | Desktops |
+| `2xl` | 1536px | — | Large desktops |
 
-### 5.2 Grid System
+### 7.2 Container
+
+| Class | Usage |
+|-------|-------|
+| `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8` | Default container |
+| `max-w-full` | Full-width sections |
+| `max-w-3xl mx-auto` | Narrow content (forms, articles) |
+| `max-w-5xl mx-auto` | Medium content |
+
+### 7.3 Grid System
 
 - Use Tailwind's 12-column grid: `grid grid-cols-12`
 - Gutters: `gap-6` (24px) for cards, `gap-4` (16px) for dense tables/forms
-- Container max-width: `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`
+- Stat card grid: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`
+- Content + sidebar: `grid grid-cols-1 lg:grid-cols-12 gap-6` with sidebar `lg:col-span-3`
 
-### 5.3 Sidebar
+### 7.4 Sidebar
 
-- Width: `w-64` (256px) on desktop, collapsible on mobile
-- Position: Fixed left, below header on mobile
-- Background: White in light mode, `#1e293b` in dark mode
+- Width: `w-64` (256px) on desktop
+- On mobile: Off-canvas drawer with overlay, width `w-72`, slides from left
+- Background: White in light mode, `dark-surface` in dark mode
 - Border right: `border-r border-neutral-200 dark:border-dark-border`
 - Active item: `bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400`
 - Hover: `hover:bg-neutral-100 dark:hover:bg-neutral-800`
 - Transition: `transition-colors duration-150`
+- Header: Logo + app name, height `h-16`
+- Footer: User info + logout
+- Scrollable: `overflow-y-auto` for nav items
 
-**Component:** `<x-layout.sidebar-item href="..." icon="..." label="..." active="..." />`
+**Mobile behavior:**
+- Hidden by default on mobile
+- Toggle via hamburger button in header
+- Backdrop overlay when open
+- Close on overlay click or Escape key
+- Body scroll lock when open
 
-| Prop | Type | Description |
-|------|------|-------------|
-| href | string | Link URL |
-| icon | string | Lucide icon name |
-| label | string | Menu item text |
-| active | bool | Whether item is active |
-
-Icons supported: `layout-dashboard`, `school`, `graduation-cap`, `users`, `clipboard-list`, `wallet`, `file-text`, `book-open`, `calendar`, and more.
-
-### 5.4 Navbar / Header
+### 7.5 Header / Topbar
 
 - Height: `h-16` (64px)
-- Background: White in light mode, `#1e293b` in dark mode
+- Background: White in light mode, `dark-surface` in dark mode
 - Border bottom: `border-b border-neutral-200 dark:border-dark-border`
 - Left: Breadcrumbs or page title
 - Right: Search, notifications, user dropdown, theme toggle
 - Sticky: `sticky top-0 z-40`
+- Mobile: Hamburger menu, condensed title
 
-### 5.5 Footer
+### 7.6 Footer
 
 - Height: Auto, min `h-12`
 - Background: `bg-neutral-50 dark:bg-dark-surface`
 - Border top: `border-t border-neutral-200 dark:border-dark-border`
 - Content: Copyright, help link, version
 
-### 5.6 Page Container
+### 7.7 Page Container
 
 - Padding: `p-4 sm:p-6 lg:p-8`
 - Max width: `max-w-7xl`
@@ -250,9 +330,9 @@ Icons supported: `layout-dashboard`, `school`, `graduation-cap`, `users`, `clipb
 
 ---
 
-## 6. Component Specifications
+## 8. Component Specifications
 
-### 6.1 Buttons
+### 8.1 Buttons
 
 | Variant | Classes | Usage |
 |---------|---------|-------|
@@ -261,7 +341,7 @@ Icons supported: `layout-dashboard`, `school`, `graduation-cap`, `users`, `clipb
 | Accent | `bg-accent-600 hover:bg-accent-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors` | Highlights, premium features |
 | Danger | `bg-danger-600 hover:bg-danger-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors` | Destructive actions |
 | Ghost | `text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 font-medium px-4 py-2 rounded-lg transition-colors` | Tertiary actions |
-| Link | `text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium underline-offset-4 hover:underline` | Inline links |
+| Link | `text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium underline underline-offset-4 hover:underline` | Inline links |
 
 **Sizes:**
 - `sm`: `px-3 py-1.5 text-sm`
@@ -272,10 +352,9 @@ Icons supported: `layout-dashboard`, `school`, `graduation-cap`, `users`, `clipb
 - Minimum touch target: `44x44px`
 - Focus ring: `focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg`
 - Disabled: `disabled:opacity-50 disabled:cursor-not-allowed`
+- Loading: Add spinner inside button, hide text with `invisible`, show spinner centered
 
----
-
-### 6.2 Inputs
+### 8.2 Inputs
 
 | Element | Classes |
 |---------|---------|
@@ -291,26 +370,20 @@ Icons supported: `layout-dashboard`, `school`, `graduation-cap`, `users`, `clipb
 - Error messages linked via `aria-describedby`
 - Required fields: `required` attribute + `*` in label
 
----
-
-### 6.3 Textareas
+### 8.3 Textareas
 
 Same as inputs, with:
 - `resize-vertical` or `resize-none`
 - Min height: `min-h-[120px]`
 
----
-
-### 6.4 Selects
+### 8.4 Selects
 
 Same base as inputs, with:
 - `appearance-none` + custom chevron icon
 - Chevron positioned absolute right: `right-3 top-1/2 -translate-y-1/2 pointer-events-none`
 - Padding right: `pr-10`
 
----
-
-### 6.5 Checkboxes
+### 8.5 Checkboxes
 
 | Element | Classes |
 |---------|---------|
@@ -318,17 +391,13 @@ Same base as inputs, with:
 | Label | `ml-2 text-sm text-neutral-700 dark:text-neutral-300` |
 | Checkbox card | `border-2 rounded-lg p-4 cursor-pointer transition-colors` |
 
----
-
-### 6.6 Radio Buttons
+### 8.6 Radio Buttons
 
 Same as checkboxes, with:
 - `rounded-full` instead of `rounded`
 - Group wrapper: `flex items-center gap-3`
 
----
-
-### 6.7 Tables
+### 8.7 Tables
 
 | Element | Classes |
 |---------|---------|
@@ -336,10 +405,14 @@ Same as checkboxes, with:
 | Table | `min-w-full divide-y divide-neutral-200 dark:divide-dark-border` |
 | Thead | `bg-neutral-50 dark:bg-dark-surface` |
 | Th | `px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider` |
-| Td | `px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400 whitespace-nowrap` |
+| Td | `px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400` |
 | Tr hover | `hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors` |
 | Empty state row | `text-center py-12 text-neutral-500 dark:text-neutral-400` |
 | Pagination | `mt-4 flex items-center justify-between` |
+
+**Density variants:**
+- Comfortable: `px-4 py-3` (default)
+- Compact: `px-3 py-2 text-sm`
 
 **Subcomponents:**
 - `<x-ui.table>` — wrapper component
@@ -353,9 +426,7 @@ Same as checkboxes, with:
 - Use `<caption>` for table description
 - Ensure sufficient contrast on striped rows
 
----
-
-### 6.8 Cards
+### 8.8 Cards
 
 | Variant | Classes |
 |---------|---------|
@@ -366,9 +437,7 @@ Same as checkboxes, with:
 | Stat card | `bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-6 shadow-sm` |
 | Interactive card | `hover:shadow-md transition-shadow cursor-pointer` |
 
----
-
-### 6.9 Badges
+### 8.9 Badges
 
 | Variant | Classes |
 |---------|---------|
@@ -378,9 +447,7 @@ Same as checkboxes, with:
 | Danger | `... bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300` |
 | Neutral | `... bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300` |
 
----
-
-### 6.10 Avatars
+### 8.10 Avatars
 
 | Size | Classes |
 |------|---------|
@@ -393,9 +460,7 @@ Same as checkboxes, with:
 - Image: `object-cover`
 - Status indicator: `absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-dark-surface`
 
----
-
-### 6.11 Dropdowns
+### 8.11 Dropdowns
 
 | Element | Classes |
 |---------|---------|
@@ -406,17 +471,16 @@ Same as checkboxes, with:
 | Header | `px-4 py-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider` |
 
 **Subcomponents:**
-- `<x-ui.dropdown align="right">` — wrapper with Alpine.js open state
-- `<x-ui.dropdown-item href="...">` — menu item
+- `<x-ui.dropdown>` — wrapper with Alpine.js open state
+- `<x-ui.dropdown-item>` — menu item
 
-**Accessibility:**
-- `role="menu"`, `role="menuitem"`
-- Keyboard navigation: Arrow keys, Enter, Escape
-- Focus trap when open
+**Keyboard navigation:**
+- Arrow Up/Down to navigate items
+- Enter to select
+- Escape to close
+- Tab to close and move focus
 
----
-
-### 6.12 Tabs
+### 8.12 Tabs
 
 | Element | Classes |
 |---------|---------|
@@ -425,9 +489,14 @@ Same as checkboxes, with:
 | Tab active | `text-primary-600 dark:text-primary-400 border-primary-600 dark:border-primary-400` |
 | Tab panel | `mt-4` |
 
----
+**Keyboard navigation:**
+- Arrow Left/Right to navigate tabs
+- Home/End to go to first/last tab
+- Enter/Space to activate
 
-### 6.13 Modals
+### 8.13 Modals
+
+**CRITICAL FIX:** Use Alpine.js, not Livewire.
 
 | Element | Classes |
 |---------|---------|
@@ -450,10 +519,9 @@ Same as checkboxes, with:
 - Focus trap
 - Close on Escape
 - Return focus to trigger on close
+- `aria-labelledby` pointing to title
 
----
-
-### 6.14 Alerts
+### 8.14 Alerts
 
 | Variant | Classes |
 |---------|---------|
@@ -465,9 +533,7 @@ Same as checkboxes, with:
 - Icon: `h-5 w-5 flex-shrink-0 mt-0.5`
 - Dismissible: Add close button with `x-on:click="open = false"`
 
----
-
-### 6.15 Toasts
+### 8.15 Toasts
 
 Fixed position: `fixed bottom-4 right-4 z-50`
 Stack: `flex flex-col gap-2`
@@ -483,9 +549,7 @@ Stack: `flex flex-col gap-2`
 - Enter: `transition-all duration-300 ease-out transform translate-y-0 opacity-100`
 - Exit: `transform translate-y-2 opacity-0`
 
----
-
-### 6.16 Pagination
+### 8.16 Pagination
 
 | Element | Classes |
 |---------|---------|
@@ -495,9 +559,7 @@ Stack: `flex flex-col gap-2`
 | Page button | `px-3 py-1 rounded-md text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed` |
 | Page button active | `bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300` |
 
----
-
-### 6.17 Breadcrumbs
+### 8.17 Breadcrumbs
 
 | Element | Classes |
 |---------|---------|
@@ -506,9 +568,7 @@ Stack: `flex flex-col gap-2`
 | Separator | `text-neutral-400 dark:text-neutral-600` |
 | Current | `text-neutral-900 dark:text-white font-medium` |
 
----
-
-### 6.18 Statistics Cards
+### 8.18 Statistics Cards
 
 | Element | Classes |
 |---------|---------|
@@ -519,9 +579,7 @@ Stack: `flex flex-col gap-2`
 | Trend down | `... text-danger-600 dark:text-danger-400` |
 | Icon | `h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center` |
 
----
-
-### 6.19 Charts
+### 8.19 Charts
 
 Use a lightweight charting library (e.g., Chart.js or ApexCharts) wrapped in a card:
 
@@ -531,9 +589,7 @@ Use a lightweight charting library (e.g., Chart.js or ApexCharts) wrapped in a c
 | Title | `text-lg font-semibold text-neutral-900 dark:text-white mb-4` |
 | Canvas | `w-full h-[300px]` |
 
----
-
-### 6.20 Loading States
+### 8.20 Loading States
 
 | Type | Classes / Pattern |
 |------|-------------------|
@@ -550,9 +606,7 @@ Use a lightweight charting library (e.g., Chart.js or ApexCharts) wrapped in a c
 | variant | `spinner`, `dots` | Loading animation type |
 | size | `sm`, `md`, `lg` | Spinner size |
 
----
-
-### 6.21 Empty States
+### 8.21 Empty States
 
 | Element | Classes |
 |---------|---------|
@@ -564,9 +618,7 @@ Use a lightweight charting library (e.g., Chart.js or ApexCharts) wrapped in a c
 
 **Component:** `<x-ui.empty-state title="..." description="..." :action="..." />`
 
----
-
-### 6.22 Skeleton Loaders
+### 8.22 Skeleton Loaders
 
 | Element | Classes |
 |---------|---------|
@@ -576,133 +628,94 @@ Use a lightweight charting library (e.g., Chart.js or ApexCharts) wrapped in a c
 | Skeleton card | `h-32 w-full rounded-xl` |
 | Skeleton avatar | `h-10 w-10 rounded-full` |
 
----
-
-### 6.16 Pagination
+### 8.23 Filter Bar
 
 | Element | Classes |
 |---------|---------|
-| Container | `flex items-center justify-between px-4 py-3 border-t border-neutral-200 dark:border-dark-border` |
-| Info | `text-sm text-neutral-500 dark:text-neutral-400` |
-| Buttons | `flex items-center gap-1` |
-| Page button | `px-3 py-1 rounded-md text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed` |
-| Page button active | `bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300` |
+| Container | `bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-4 shadow-sm` |
+| Input group | `flex flex-col sm:flex-row gap-3` |
+| Search input | `flex-1` |
+| Select filters | `w-full sm:w-auto` |
+| Actions | `flex items-center gap-2` |
 
----
-
-### 6.17 Breadcrumbs
+### 8.24 Bulk Actions
 
 | Element | Classes |
 |---------|---------|
-| Container | `flex items-center gap-2 text-sm` |
-| Item | `text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300` |
-| Separator | `text-neutral-400 dark:text-neutral-600` |
-| Current | `text-neutral-900 dark:text-white font-medium` |
+| Bar | `bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg px-4 py-3 flex items-center justify-between` |
+| Text | `text-sm text-primary-800 dark:text-primary-200` |
+| Actions | `flex items-center gap-2` |
 
----
-
-### 6.18 Statistics Cards
+### 8.25 Command Palette
 
 | Element | Classes |
 |---------|---------|
-| Card | `bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-6 shadow-sm` |
-| Label | `text-sm font-medium text-neutral-500 dark:text-neutral-400` |
-| Value | `mt-2 text-3xl font-bold text-neutral-900 dark:text-white` |
-| Trend up | `mt-2 flex items-center gap-1 text-sm text-success-600 dark:text-success-400` |
-| Trend down | `... text-danger-600 dark:text-danger-400` |
-| Icon | `h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center` |
+| Trigger | `hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-300 dark:border-dark-border text-neutral-500 dark:text-neutral-400 hover:border-neutral-400 dark:hover:border-neutral-600 cursor-pointer` |
+| Dialog | `fixed inset-0 z-50 bg-black/50 backdrop-blur-sm` |
+| Input | `w-full px-4 py-3 text-base border-b border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text focus:outline-none` |
+| Results | `max-h-[400px] overflow-y-auto p-2` |
+| Item | `px-3 py-2 rounded-lg text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer` |
 
 ---
 
-### 6.19 Charts
+## 9. Accessibility (WCAG 2.1 AA)
 
-Use a lightweight charting library (e.g., Chart.js or ApexCharts) wrapped in a card:
-
-| Element | Classes |
-|---------|---------|
-| Wrapper | `bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-6 shadow-sm` |
-| Title | `text-lg font-semibold text-neutral-900 dark:text-white mb-4` |
-| Canvas | `w-full h-[300px]` |
-
----
-
-### 6.20 Loading States
-
-| Type | Classes / Pattern |
-|------|-------------------|
-| Spinner | `h-5 w-5 border-2 border-neutral-200 dark:border-neutral-700 border-t-primary-600 rounded-full animate-spin` |
-| Button loading | `relative !text-transparent` + spinner overlay |
-| Skeleton text | `h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse` |
-| Skeleton card | `space-y-3` with multiple skeleton elements |
-| Page loader | Fixed overlay with centered spinner |
-
----
-
-### 6.21 Empty States
-
-| Element | Classes |
-|---------|---------|
-| Container | `text-center py-12` |
-| Icon | `mx-auto h-12 w-12 text-neutral-400 dark:text-neutral-600 mb-4` |
-| Title | `text-lg font-medium text-neutral-900 dark:text-white mb-1` |
-| Description | `text-sm text-neutral-500 dark:text-neutral-400 mb-4` |
-| Action | `mt-4` |
-
----
-
-### 6.22 Skeleton Loaders
-
-| Element | Classes |
-|---------|---------|
-| Skeleton base | `bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse` |
-| Skeleton text | `h-4 w-full` |
-| Skeleton title | `h-6 w-3/4 mb-4` |
-| Skeleton card | `h-32 w-full rounded-xl` |
-| Skeleton avatar | `h-10 w-10 rounded-full` |
-
----
-
-## 7. Accessibility (WCAG 2.1 AA)
-
-### 7.1 Focus Management
+### 9.1 Focus Management
 
 - All interactive elements: `focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg`
 - Skip to main content link (visually hidden, focusable)
 - Focus trap in modals and dropdowns
 
-### 7.2 Color Contrast
+### 9.2 Color Contrast
 
 - Body text: `neutral-600` on white = 5.7:1 ✓
 - Headings: `neutral-900` on white = 16:1 ✓
 - Primary buttons: White on `primary-600` = 4.8:1 ✓
 - All text colors meet or exceed 4.5:1 ratio
 
-### 7.3 Semantic HTML
+### 9.3 Semantic HTML
 
 - Use `<nav>`, `<main>`, `<header>`, `<footer>`, `<aside>` for layout
 - Use `<button>` for actions, `<a>` for navigation
 - Use `<label>` for all form inputs
 - Use ARIA labels where text is not sufficient
 
-### 7.4 Keyboard Navigation
+### 9.4 Keyboard Navigation
 
 - All interactive elements reachable via Tab
 - Dropdowns: Arrow keys, Enter, Escape
 - Modals: Escape closes, focus trap
 - Tabs: Arrow keys navigate between tabs
 
+### 9.5 Reduced Motion
+
+Support `prefers-reduced-motion`:
+```css
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+```
+
+### 9.6 Screen Reader Utilities
+
+- `.sr-only`: Visually hidden but accessible to screen readers
+- `.focus-visible`: Show focus ring only on keyboard navigation
+
 ---
 
-## 8. Theme Switching (Light/Dark)
+## 10. Theme Switching (Light/Dark)
 
-### 8.1 Implementation
+### 10.1 Implementation
 
 - Store preference in `localStorage` as `theme`
 - Apply `dark` class to `<html>` element
 - Default to system preference: `prefers-color-scheme: dark`
 - Toggle button in header/navbar
 
-### 8.2 Dark Mode Classes
+### 10.2 Dark Mode Classes
 
 All components support dark mode via `dark:` prefixes:
 - Backgrounds: `dark:bg-dark-surface`
@@ -710,9 +723,18 @@ All components support dark mode via `dark:` prefixes:
 - Borders: `dark:border-dark-border`
 - Inputs: `dark:bg-dark-surface dark:border-dark-border dark:text-dark-text`
 
+### 10.3 Transition
+
+Add smooth transition for theme switching:
+```css
+* {
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+```
+
 ---
 
-## 9. File Structure
+## 11. File Structure
 
 ```
 resources/
@@ -759,7 +781,10 @@ resources/
 │       │   ├── chart.blade.php
 │       │   ├── loading.blade.php
 │       │   ├── empty-state.blade.php
-│       │   └── skeleton.blade.php
+│       │   ├── skeleton.blade.php
+│       │   ├── filter-bar.blade.php
+│       │   ├── bulk-actions.blade.php
+│       │   └── command-palette.blade.php
 │       └── layout/
 │           ├── sidebar-item.blade.php
 │           ├── sidebar.blade.php
@@ -770,7 +795,71 @@ resources/
 
 ---
 
-## 10. Implementation Order
+## 12. Mobile Navigation Pattern
+
+### 12.1 Off-Canvas Sidebar
+
+On mobile (`< lg`):
+- Sidebar is hidden by default
+- Hamburger button in header opens sidebar
+- Sidebar slides in from left with transform
+- Backdrop overlay appears behind sidebar
+- Close on: overlay click, Escape key, navigation item click
+- Body scroll locked when sidebar is open
+- Width: `w-72` (288px)
+
+### 12.2 Mobile Bottom Navigation (Optional)
+
+For student/parent mobile-first experience:
+- Fixed bottom bar with 4-5 primary actions
+- Icons only, labels on active
+- Height: `h-16`
+- Background: White/dark-surface with border-top
+
+---
+
+## 13. Dashboard Patterns
+
+### 13.1 Dashboard Grid
+
+```
+┌─────────────────────────────────────────┐
+│ Stats Row (4 columns on lg)             │
+│ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐       │
+│ │ Stat│ │ Stat│ │ Stat│ │ Stat│       │
+│ └─────┘ └─────┘ └─────┘ └─────┘       │
+├─────────────────────────────────────────┤
+│ Main Content (8 cols)  │ Sidebar (4)   │
+│ ┌─────────────────────┐ ┌───────────┐ │
+│ │ Chart / Table       │ │ Sidebar   │ │
+│ │                     │ │ Widgets   │ │
+│ └─────────────────────┘ └───────────┘ │
+└─────────────────────────────────────────┘
+```
+
+**Classes:**
+- Stats: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`
+- Content: `grid grid-cols-1 lg:grid-cols-12 gap-6`
+- Main: `lg:col-span-8`
+- Sidebar: `lg:col-span-4`
+
+### 13.2 Data Table Density
+
+| Density | Padding | Font Size | Use Case |
+|---------|---------|-----------|----------|
+| Comfortable | `px-4 py-3` | `text-sm` | Admin tables, detailed lists |
+| Compact | `px-3 py-2` | `text-sm` | Dense data, reports |
+
+### 13.3 Empty Table State
+
+When a table has no data:
+- Show empty state inside table body
+- Span all columns
+- Include icon, title, description, and action button
+
+---
+
+## 14. Implementation Order
 
 1. **Theme tokens** in `app.css`
 2. **Alpine.js** setup in `app.js`
@@ -780,5 +869,6 @@ resources/
 6. **Overlay components** (dropdown, modal, tabs)
 7. **Feedback components** (alert, toast, skeleton, empty-state, loading)
 8. **Navigation components** (pagination, breadcrumbs)
-9. **Specialty components** (stat-card, chart)
-10. **Light/dark mode toggle**
+9. **Specialty components** (stat-card, chart, filter-bar, bulk-actions)
+10. **Mobile navigation** (off-canvas sidebar, command palette)
+11. **Page layouts** (dashboard, management pages, public pages)

@@ -24,4 +24,27 @@ document.addEventListener('alpine:init', () => {
             document.documentElement.classList.toggle('dark', this.dark);
         }
     });
+
+    Alpine.store('sidebar', {
+        open: false,
+
+        toggle() {
+            this.open = !this.open;
+            this.updateBodyScroll();
+        },
+
+        open() {
+            this.open = true;
+            this.updateBodyScroll();
+        },
+
+        close() {
+            this.open = false;
+            this.updateBodyScroll();
+        },
+
+        updateBodyScroll() {
+            document.body.style.overflow = this.open ? 'hidden' : '';
+        }
+    });
 });
