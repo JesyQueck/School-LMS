@@ -33,7 +33,7 @@ document.addEventListener('alpine:init', () => {
             this.updateBodyScroll();
         },
 
-        open() {
+        show() {
             this.open = true;
             this.updateBodyScroll();
         },
