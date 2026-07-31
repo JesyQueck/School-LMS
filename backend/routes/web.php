@@ -9,6 +9,12 @@ use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Parent\AnnouncementsController as ParentAnnouncementsController;
+use App\Http\Controllers\Parent\AttendanceController as ParentAttendanceController;
+use App\Http\Controllers\Parent\ChildController;
+use App\Http\Controllers\Parent\DashboardController as ParentDashboardController;
+use App\Http\Controllers\Parent\FeesController as ParentFeesController;
+use App\Http\Controllers\Parent\ResultsController as ParentResultsController;
 use App\Http\Controllers\TeacherPortalController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,6 +39,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/teacher/attendance', [TeacherPortalController::class, 'storeAttendance'])->middleware('role:teacher')->name('teacher.attendance.store');
     Route::get('/parent/dashboard', [DashboardController::class, 'parent'])->middleware('role:parent');
     Route::get('/student/dashboard', [DashboardController::class, 'student'])->middleware('role:student');
+
+    Route::middleware('role:parent')->prefix('parent')->name('parent.')->group(function () {
+        Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/children/{student}', [ChildController::class, 'show'])->name('children.show');
+        Route::get('/children/{student}/results', [ParentResultsController::class, 'index'])->name('children.results');
+        Route::get('/children/{student}/attendance', [ParentAttendanceController::class, 'index'])->name('children.attendance');
+        Route::get('/children/{student}/fees', [ParentFeesController::class, 'index'])->name('children.fees');
+        Route::get('/announcements', [ParentAnnouncementsController::class, 'index'])->name('announcements');
+    });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [SchoolAdminController::class, 'index'])->name('index');
