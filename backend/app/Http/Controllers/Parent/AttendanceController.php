@@ -15,6 +15,8 @@ class AttendanceController extends Controller
     {
         $this->authorize('view', $student);
 
+        $student->load(['class', 'user']);
+
         $attendance = $student->attendance()
             ->with(['term', 'class'])
             ->latest('date')

@@ -18,7 +18,7 @@ class ResultsController extends Controller
     {
         $this->authorize('view', $student);
 
-        $student->load(['class']);
+        $student->load(['class', 'user']);
 
         $publishedTerms = $student->reportCards()
             ->where('is_published', true)

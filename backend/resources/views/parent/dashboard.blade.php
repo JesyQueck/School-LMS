@@ -9,7 +9,11 @@
     <h1>Parent Dashboard</h1>
     <h2>My Children</h2>
     @forelse($children as $child)
-        <p><a href="{{ route('parent.children.show', $child) }}">{{ $child->admission_no }}</a></p>
+        <p>
+            <a href="{{ route('parent.children.show', $child) }}">
+                {{ $child->user->name ?? $child->admission_no }} ({{ $child->admission_no }})
+            </a>
+        </p>
     @empty
         <p>No children linked to your account.</p>
     @endforelse
