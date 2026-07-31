@@ -25,6 +25,17 @@
             class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 lg:translate-x-0 lg:static lg:block flex flex-col"
             aria-label="Sidebar"
         >
+            <div class="lg:hidden flex justify-end p-2">
+                <button 
+                    @click="$store.sidebar.close()"
+                    class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
+                    aria-label="Close menu"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
             <x-layout.sidebar :title="config('app.name', 'School LMS')">
                 @if(auth()->check())
                     @php $role = auth()->user()->role; @endphp
@@ -41,16 +52,8 @@
                         <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic" />
                     @elseif($role === 'teacher')
                         <x-layout.sidebar-item href="/teacher/dashboard" icon="layout-dashboard" label="Dashboard" />
-                        <x-layout.sidebar-item href="/teacher/classes" icon="school" label="My Classes" />
-                        <x-layout.sidebar-item href="/teacher/attendance" icon="calendar-check" label="Attendance" />
-                        <x-layout.sidebar-item href="/teacher/results" icon="clipboard-list" label="Results" />
-                        <x-layout.sidebar-item href="/teacher/assignments" icon="book-open" label="Assignments" />
                     @elseif($role === 'parent')
                         <x-layout.sidebar-item href="/parent/dashboard" icon="layout-dashboard" label="Dashboard" />
-                        <x-layout.sidebar-item href="/parent/children" icon="users" label="My Children" />
-                        <x-layout.sidebar-item href="/parent/attendance" icon="calendar-check" label="Attendance" />
-                        <x-layout.sidebar-item href="/parent/results" icon="clipboard-list" label="Results" />
-                        <x-layout.sidebar-item href="/parent/fees" icon="wallet" label="Fees" />
                         <x-layout.sidebar-item href="/parent/announcements" icon="megaphone" label="Announcements" />
                     @elseif($role === 'student')
                         <x-layout.sidebar-item href="/student/dashboard" icon="layout-dashboard" label="Dashboard" />
