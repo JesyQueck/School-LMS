@@ -8,10 +8,15 @@ use App\Models\Result;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Term;
+use App\Services\ResultService;
 use Illuminate\Http\Request;
 
 class ResultsController extends Controller
 {
+    public function __construct(
+        protected ResultService $resultService,
+    ) {}
+
     public function index()
     {
         return view('admin.results.index', [
@@ -34,51 +39,15 @@ class ResultsController extends Controller
             'remark' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $total = null;
-        if (! empty($data['ca_score']) && ! empty($data['exam_score'])) {
-            $total = (float) $data['ca_score'] + (float) $data['exam_score'];
-        }
-
-        $grade = $this->calculateGrade($total);
-
-        Result::create(array_merge($data, [
-            'total' => $total,
-            'grade' => $grade,
-            'submitted_by' => $request->user()->id,
-        ]));
+        $this->resultService->createResult($data, $request->user());
 
         return redirect()->route('admin.results')->with('status', 'Result submitted.');
     }
 
     public function lock(Result $result)
     {
-        $result->update(['is_locked' => true]);
+        $this->resultService->lockResult($result);
 
         return redirect()->route('admin.results')->with('status', 'Result locked.');
-    }
-
-    protected function calculateGrade($total): ?string
-    {
-        if ($total === null) {
-            return null;
-        }
-
-        if ($total >= 70) {
-            return 'A';
-        }
-
-        if ($total >= 60) {
-            return 'B';
-        }
-
-        if ($total >= 50) {
-            return 'C';
-        }
-
-        if ($total >= 40) {
-            return 'D';
-        }
-
-        return 'F';
     }
 }

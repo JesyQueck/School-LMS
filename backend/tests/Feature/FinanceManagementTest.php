@@ -81,4 +81,59 @@ class FinanceManagementTest extends TestCase
         $this->assertDatabaseHas('payments', ['student_fee_id' => $studentFee->id, 'receipt_number' => 'RCPT-001']);
         $this->assertDatabaseHas('student_fees', ['id' => $studentFee->id, 'status' => 'paid']);
     }
+
+    public function test_partial_payment_leaves_fee_status_as_partial(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 2']);
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM102',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1500.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1500.00,
+            'status' => 'unpaid',
+        ]);
+
+        // Pay only part of the expected amount.
+        $paymentResponse = $this->post('/admin/finance/payments', [
+            'student_fee_id' => $studentFee->id,
+            'amount_paid' => '500.00',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-15',
+        ]);
+
+        $paymentResponse->assertRedirect('/admin/finance');
+        $this->assertDatabaseHas('student_fees', ['id' => $studentFee->id, 'status' => 'partial']);
+    }
 }

@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Term;
+use App\Services\ReportCardService;
 use Illuminate\Http\Request;
 
 class ReportCardController extends Controller
 {
+    public function __construct(
+        protected ReportCardService $reportCardService,
+    ) {}
+
     public function index()
     {
         return view('admin.report-cards.index', [
@@ -31,17 +36,14 @@ class ReportCardController extends Controller
             'next_term_begins' => ['nullable', 'date'],
         ]);
 
-        ReportCard::create(array_merge($data, [
-            'generated_at' => now(),
-            'is_published' => false,
-        ]));
+        $this->reportCardService->generateReportCard($data);
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card created.');
     }
 
-    public function publish(ReportCard $reportCard)
+    public function publish(ReportCard $reportCard, Request $request)
     {
-        $reportCard->update(['is_published' => true]);
+        $this->reportCardService->publish($reportCard, $request->user());
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card published.');
     }

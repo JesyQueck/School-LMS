@@ -9,10 +9,15 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Term;
+use App\Services\FeeService;
 use Illuminate\Http\Request;
 
 class FinanceController extends Controller
 {
+    public function __construct(
+        protected FeeService $feeService,
+    ) {}
+
     public function index()
     {
         return view('admin.finance.index', [
@@ -49,7 +54,7 @@ class FinanceController extends Controller
         ]);
 
         $studentFee = StudentFee::create($data);
-        $studentFee->update(['status' => 'unpaid']);
+        $studentFee->update(['status' => $this->feeService->recomputeStatus($studentFee)]);
 
         return redirect()->route('admin.finance')->with('status', 'Student fee created.');
     }
@@ -58,21 +63,15 @@ class FinanceController extends Controller
     {
         $data = $request->validate([
             'student_fee_id' => ['required', 'exists:student_fees,id'],
-            'receipt_number' => ['required', 'string', 'max:255'],
+            'receipt_number' => ['nullable', 'string', 'max:255'],
             'amount_paid' => ['required', 'numeric'],
             'payment_method' => ['nullable', 'string', 'max:255'],
             'payment_date' => ['required', 'date'],
         ]);
 
         $studentFee = StudentFee::findOrFail($data['student_fee_id']);
-        $data['recorded_by'] = $request->user()->id;
 
-        $payment = Payment::create($data);
-
-        $studentFee->update([
-            'status' => 'paid',
-            'amount_expected' => $studentFee->amount_expected,
-        ]);
+        $this->feeService->recordPayment($studentFee, $data, $request->user());
 
         return redirect()->route('admin.finance')->with('status', 'Payment recorded.');
     }

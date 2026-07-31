@@ -57,14 +57,17 @@ class ResultsManagementTest extends TestCase
             'term_id' => $term->id,
             'ca_score' => '15.50',
             'exam_score' => '45.50',
-            'remark' => 'Excellent',
         ]);
 
         $response->assertRedirect('/admin/results');
         $this->assertDatabaseHas('results', ['student_id' => $student->id, 'class_subject_id' => $classSubject->id, 'term_id' => $term->id]);
-        $this->assertDatabaseHas('results', ['student_id' => $student->id, 'class_subject_id' => $classSubject->id, 'term_id' => $term->id, 'remark' => 'Excellent']);
 
         $result = \App\Models\Result::where('student_id', $student->id)->firstOrFail();
+
+        // The Nigerian 9-tier grading scale should be applied (ca 15.50 + exam 45.50 = 61.00 => C4).
+        $this->assertSame(61.00, (float) $result->total);
+        $this->assertSame('C4', $result->grade);
+        $this->assertSame('Credit', $result->remark);
         $lockResponse = $this->post('/admin/results/' . $result->id . '/lock', []);
         $lockResponse->assertRedirect('/admin/results');
         $this->assertDatabaseHas('results', ['id' => $result->id, 'is_locked' => true]);
