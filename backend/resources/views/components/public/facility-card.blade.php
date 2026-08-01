@@ -11,16 +11,30 @@
         'palette' => 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
         'dumbbell' => 'M6 5v14M18 5v14M2 11h20M6 11h12M6 13h12M2 13h20',
     ];
+
+    $facilityImages = [
+        'book-open' => 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'flask-conical' => 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'cpu' => 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'music' => 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'trophy' => 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'palette' => 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'globe' => 'https://images.unsplash.com/photo-1488190211105-8b0ee654eaf2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'dumbbell' => 'https://images.unsplash.com/photo-1517836357463-d25dfeac2934?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    ];
+    $imgSrc = $facilityImages[$icon] ?? 'https://images.unsplash.com/photo-1580582932705-53aed7dede1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 @endphp
 
-<div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-    <div class="aspect-[16/10] bg-gradient-to-br from-primary-100 to-accent-100 dark:from-primary-900/30 dark:to-accent-900/30 flex items-center justify-center">
-        <div class="h-14 w-14 rounded-xl bg-white/80 dark:bg-dark-surface/80 flex items-center justify-center">
-            <svg class="h-7 w-7 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
+<div class="group bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">
+    <div class="aspect-16/10 overflow-hidden relative">
+        <img src="{{ $imgSrc }}" alt="{{ $title }}" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy">
+        <div class="absolute inset-0 bg-linear-to-t from-black/40 to-transparent"></div>
+        <div class="absolute bottom-4 left-4 h-11 w-11 rounded-xl bg-white/90 dark:bg-dark-surface/90 backdrop-blur-sm flex items-center justify-center shadow-lg">
+            <svg class="h-5 w-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
         </div>
     </div>
-    <div class="p-5">
-        <h3 class="text-base font-semibold text-neutral-900 dark:text-white mb-2">{{ $title }}</h3>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">{{ $description }}</p>
+    <div class="p-6">
+        <h3 class="text-base font-bold text-neutral-900 dark:text-white mb-2">{{ $title }}</h3>
+        <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">{{ $description }}</p>
     </div>
 </div>

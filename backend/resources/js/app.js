@@ -48,3 +48,38 @@ document.addEventListener('alpine:init', () => {
         }
     });
 });
+
+window.Alpine = Alpine;
+window.Alpine.start();
+
+/* ============================================
+   Scroll-triggered animations for premium feel
+   ============================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    const animatedElements = document.querySelectorAll('.animate-on-scroll');
+
+    const reveal = (element) => {
+        element.classList.add('is-visible');
+    };
+
+    if (!('IntersectionObserver' in window) || animatedElements.length === 0) {
+        animatedElements.forEach((el, index) => {
+            window.setTimeout(() => reveal(el), index * 40);
+        });
+    } else {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    reveal(entry.target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.12,
+            rootMargin: '0px 0px -40px 0px',
+        });
+
+        animatedElements.forEach(el => observer.observe(el));
+    }
+
+});

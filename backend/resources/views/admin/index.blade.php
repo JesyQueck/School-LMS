@@ -88,14 +88,14 @@
                 <div class="p-6">
                     <div class="space-y-4">
                         <div class="flex items-start gap-3">
-                            <div class="h-2 w-2 mt-2 rounded-full bg-primary-500 flex-shrink-0"></div>
+                            <div class="h-2 w-2 mt-2 rounded-full bg-primary-500 shrink-0"></div>
                             <div>
                                 <p class="text-sm font-medium text-neutral-900 dark:text-white">Welcome Back!</p>
                                 <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">School resumes on September 1st, 2026.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
-                            <div class="h-2 w-2 mt-2 rounded-full bg-accent-500 flex-shrink-0"></div>
+                            <div class="h-2 w-2 mt-2 rounded-full bg-accent-500 shrink-0"></div>
                             <div>
                                 <p class="text-sm font-medium text-neutral-900 dark:text-white">PTA Meeting</p>
                                 <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">All parents are invited to the PTA meeting.</p>

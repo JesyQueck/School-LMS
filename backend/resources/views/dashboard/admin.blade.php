@@ -18,7 +18,7 @@
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Attendance Overview</h3>
                 </div>
                 <div class="p-6">
-                    <div class="h-[300px] flex items-center justify-center text-neutral-500 dark:text-neutral-400">
+                    <div class="h-75 flex items-center justify-center text-neutral-500 dark:text-neutral-400">
                         Chart placeholder — integrate Chart.js or ApexCharts
                     </div>
                 </div>

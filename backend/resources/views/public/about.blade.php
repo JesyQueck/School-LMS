@@ -138,7 +138,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border shadow-sm overflow-hidden">
-                    <div class="aspect-[4/3] bg-gradient-to-br from-primary-100 to-accent-100 dark:from-primary-900/30 dark:to-accent-900/30 flex items-center justify-center">
+                    <div class="aspect-4/3 bg-linear-to-br from-primary-100 to-accent-100 dark:from-primary-900/30 dark:to-accent-900/30 flex items-center justify-center">
                         <div class="h-20 w-20 rounded-full bg-white dark:bg-dark-surface flex items-center justify-center text-2xl font-bold text-primary-700 dark:text-primary-300 shadow-sm">PC</div>
                     </div>
                     <div class="p-6 text-center">
@@ -148,7 +148,7 @@
                     </div>
                 </div>
                 <div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border shadow-sm overflow-hidden">
-                    <div class="aspect-[4/3] bg-gradient-to-br from-accent-100 to-primary-100 dark:from-accent-900/30 dark:to-primary-900/30 flex items-center justify-center">
+                    <div class="aspect-4/3 bg-linear-to-br from-accent-100 to-primary-100 dark:from-accent-900/30 dark:to-primary-900/30 flex items-center justify-center">
                         <div class="h-20 w-20 rounded-full bg-white dark:bg-dark-surface flex items-center justify-center text-2xl font-bold text-accent-700 dark:text-accent-300 shadow-sm">VP</div>
                     </div>
                     <div class="p-6 text-center">
