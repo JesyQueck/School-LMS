@@ -55,29 +55,18 @@ window.Alpine.start();
 
 /* ============================================
    Sidebar checkbox toggle
+   The sidebar and backdrop slide in/out via Tailwind's
+   peer-checked: variant on #sidebar-menu-checkbox.
+   Here we only handle closing when the backdrop is clicked.
    ============================================ */
 document.addEventListener('DOMContentLoaded', () => {
     const checkbox = document.getElementById('sidebar-menu-checkbox');
     const backdrop = document.getElementById('sidebar-backdrop');
-    const sidebar = document.getElementById('sidebar');
 
-    if (checkbox && backdrop && sidebar) {
-        // Toggle sidebar and backdrop based on checkbox state
-        checkbox.addEventListener('change', () => {
-            if (checkbox.checked) {
-                backdrop.classList.remove('hidden');
-                sidebar.style.transform = 'translateX(0)';
-            } else {
-                backdrop.classList.add('hidden');
-                sidebar.style.transform = 'translateX(-100%)';
-            }
-        });
-
-        // Close sidebar when clicking backdrop
+    if (checkbox && backdrop) {
+        // Close sidebar when clicking the backdrop
         backdrop.addEventListener('click', () => {
             checkbox.checked = false;
-            backdrop.classList.add('hidden');
-            sidebar.style.transform = 'translateX(-100%)';
         });
     }
 });

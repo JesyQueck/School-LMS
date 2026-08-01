@@ -15,14 +15,14 @@
         <!-- Mobile backdrop -->
         <div
             id="sidebar-backdrop"
-            class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"
+            class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-300 lg:hidden"
             aria-hidden="true"
         ></div>
 
         <!-- Sidebar -->
         <aside
             id="sidebar"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 flex flex-col -translate-x-full lg:translate-x-0 lg:relative"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:relative"
             aria-label="Sidebar"
         >
             <x-layout.sidebar :title="config('app.name', 'School LMS')">
