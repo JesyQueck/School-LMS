@@ -50,11 +50,6 @@
 
             {{-- Desktop actions --}}
             <div class="hidden lg:flex items-center gap-2">
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 bg-white dark:bg-dark-surface border border-neutral-200 dark:border-dark-border text-neutral-800 dark:text-neutral-200 text-sm px-5 py-2.5 shadow-premium hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700">
-                        Register
-                    </a>
-                @endif
                 <a href="{{ route('login') }}" class="inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 bg-primary-600 hover:bg-primary-700 text-white text-sm px-5 py-2.5 shadow-premium hover:shadow-premium-lg btn-shine">
                     Portal Login
                     <svg class="ml-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths['arrow-right'] }}"/></svg>
@@ -75,16 +70,6 @@
                 </a>
             @endforeach
             <div class="border-t border-neutral-200 dark:border-dark-border pt-3 mt-3 space-y-2">
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" onclick="document.getElementById('public-menu-checkbox').checked = false;" class="flex items-center justify-center font-semibold rounded-xl transition-colors duration-150 bg-white dark:bg-dark-surface border border-neutral-200 dark:border-dark-border text-neutral-800 dark:text-neutral-200 text-sm px-4 py-3 shadow-premium hover:bg-neutral-50 dark:hover:bg-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700">
-                        Register
-                    </a>
-                @endif
-                <a href="{{ route('login') }}" onclick="document.getElementById('public-menu-checkbox').checked = false;" class="flex items-center justify-center font-semibold rounded-xl transition-colors duration-150 bg-primary-600 hover:bg-primary-700 text-white text-sm px-4 py-3 shadow-premium">
-                    Portal Login
-                    <svg class="ml-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths['arrow-right'] }}"/></svg>
-                </a>
-            </div>
-        </div>
+
     </div>
 </nav>

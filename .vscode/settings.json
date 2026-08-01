@@ -8,5 +8,8 @@
             "approve": true,
             "matchCommandLine": true
         }
-    }
+    },
+    "css.customData": [
+        "./.vscode/tailwind-v4.css-data.json"
+    ]
 }

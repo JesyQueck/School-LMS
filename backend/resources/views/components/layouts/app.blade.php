@@ -10,21 +10,20 @@
     <x-layout.skip-link />
 
     <div class="flex h-screen overflow-hidden bg-neutral-50 dark:bg-dark-bg">
+        <input id="sidebar-menu-checkbox" type="checkbox" class="peer sr-only">
+
         <!-- Mobile backdrop -->
-        <div 
-            x-show="$store.sidebar.open" 
-            x-cloak
-            @click="$store.sidebar.close()"
-            class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        <div
+            id="sidebar-backdrop"
+            class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"
             aria-hidden="true"
         ></div>
 
         <!-- Sidebar -->
-        <aside 
-            :class="$store.sidebar.open ? 'translate-x-0' : '-translate-x-full'"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 lg:translate-x-0 lg:static lg:block flex flex-col"
+        <aside
+            id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 flex flex-col -translate-x-full lg:translate-x-0 lg:relative"
             aria-label="Sidebar"
-            x-cloak
         >
             <x-layout.sidebar :title="config('app.name', 'School LMS')">
                 @if(auth()->check())

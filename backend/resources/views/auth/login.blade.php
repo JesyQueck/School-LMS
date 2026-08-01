@@ -5,7 +5,6 @@
                 <div class="text-center mb-8">
                     <div class="mx-auto h-12 w-12 rounded-lg bg-primary-600 flex items-center justify-center text-white text-xl font-bold mb-4">S</div>
                     <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Sign in to your account</h2>
-                    <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Or <a href="{{ route('register') }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">create a free account</a></p>
                 </div>
 
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">

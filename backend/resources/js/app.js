@@ -1,4 +1,4 @@
-import 'alpinejs';
+import Alpine from 'alpinejs';
 
 document.addEventListener('alpine:init', () => {
     Alpine.store('theme', {
@@ -51,6 +51,36 @@ document.addEventListener('alpine:init', () => {
 
 window.Alpine = Alpine;
 window.Alpine.start();
+
+
+/* ============================================
+   Sidebar checkbox toggle
+   ============================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    const checkbox = document.getElementById('sidebar-menu-checkbox');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const sidebar = document.getElementById('sidebar');
+
+    if (checkbox && backdrop && sidebar) {
+        // Toggle sidebar and backdrop based on checkbox state
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                backdrop.classList.remove('hidden');
+                sidebar.style.transform = 'translateX(0)';
+            } else {
+                backdrop.classList.add('hidden');
+                sidebar.style.transform = 'translateX(-100%)';
+            }
+        });
+
+        // Close sidebar when clicking backdrop
+        backdrop.addEventListener('click', () => {
+            checkbox.checked = false;
+            backdrop.classList.add('hidden');
+            sidebar.style.transform = 'translateX(-100%)';
+        });
+    }
+});
 
 /* ============================================
    Scroll-triggered animations for premium feel
