@@ -1,76 +1,171 @@
 @import 'tailwindcss';
 
+/* Switch the `dark:` variant from the default (prefers-color-scheme) to a
+   .dark class on <html>, which the Alpine $store.theme.toggle() controls.
+   Without this, the toggle flips the class but the dark: utilities only
+   respond to the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../../resources/views/**/*.blade.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    /* Typography - Lexend Font Family */
+    --font-sans: 'Lexend', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 
-    /* Primary Brand */
-    --color-primary-50: #eff6ff;
-    --color-primary-100: #dbeafe;
-    --color-primary-200: #bfdbfe;
-    --color-primary-300: #93c5fd;
-    --color-primary-400: #60a5fa;
-    --color-primary-500: #3b82f6;
-    --color-primary-600: #2563eb;
-    --color-primary-700: #1d4ed8;
-    --color-primary-800: #1e40af;
-    --color-primary-900: #1e3a8a;
+    /* ============================================
+       GREENFIELD ACADEMY - PRIMARY BRAND COLORS
+       ============================================ */
+    --color-primary-50: #DCFCE7;
+    --color-primary-100: #DCFCE7;
+    --color-primary-200: #BBF7D0;
+    --color-primary-300: #86EFAC;
+    --color-primary-400: #4ADE80;
+    --color-primary-500: #15803D;
+    --color-primary-600: #15803D;
+    --color-primary-700: #166534;
+    --color-primary-800: #14532D;
+    --color-primary-900: #052E16;
 
-    /* Neutral (formerly secondary) */
-    --color-secondary-50: #f8fafc;
-    --color-secondary-100: #f1f5f9;
-    --color-secondary-200: #e2e8f0;
-    --color-secondary-300: #cbd5e1;
-    --color-secondary-400: #94a3b8;
-    --color-secondary-500: #64748b;
-    --color-secondary-600: #475569;
-    --color-secondary-700: #334155;
-    --color-secondary-800: #1e293b;
-    --color-secondary-900: #0f172a;
+    /* ============================================
+       GREENFIELD ACADEMY - ACCENT COLOR
+       ============================================ */
+    --color-accent-50: #FEF9C3;
+    --color-accent-100: #FEF08A;
+    --color-accent-200: #FDE047;
+    --color-accent-300: #FACC15;
+    --color-accent-400: #FBBF24;
+    --color-accent-500: #84CC16;
+    --color-accent-600: #65A30D;
+    --color-accent-700: #4D7C0F;
+    --color-accent-800: #3F6212;
+    --color-accent-900: #365314;
 
-    /* Accent */
-    --color-accent-50: #fdf4ff;
-    --color-accent-100: #fae8ff;
-    --color-accent-200: #f5d0fe;
-    --color-accent-300: #f0abfc;
-    --color-accent-400: #e879f9;
-    --color-accent-500: #d946ef;
-    --color-accent-600: #c026d3;
-    --color-accent-700: #a21caf;
-    --color-accent-800: #86198f;
-    --color-accent-900: #701a75;
+    /* ============================================
+       GREENFIELD ACADEMY - SEMANTIC COLORS
+       ============================================ */
+    --color-success-50: #DCFCE7;
+    --color-success-100: #BBF7D0;
+    --color-success-200: #86EFAC;
+    --color-success-300: #4ADE80;
+    --color-success-400: #22C55E;
+    --color-success-500: #16A34A;
+    --color-success-600: #15803D;
+    --color-success-700: #166534;
 
-    /* Semantic */
-    --color-success-50: #f0fdf4;
-    --color-success-500: #22c55e;
-    --color-success-600: #16a34a;
+    --color-warning-50: #FEF3C7;
+    --color-warning-100: #FDE68A;
+    --color-warning-200: #FCD34D;
+    --color-warning-300: #FBBF24;
+    --color-warning-400: #F59E0B;
+    --color-warning-500: #D97706;
+    --color-warning-600: #B45309;
 
-    --color-warning-50: #fffbeb;
-    --color-warning-500: #f59e0b;
-    --color-warning-600: #d97706;
+    --color-danger-50: #FEE2E2;
+    --color-danger-100: #FECACA;
+    --color-danger-200: #FCA5A5;
+    --color-danger-300: #F87171;
+    --color-danger-400: #EF4444;
+    --color-danger-500: #DC2626;
+    --color-danger-600: #B91C1C;
+    --color-danger-700: #991B1B;
 
-    --color-danger-50: #fef2f2;
-    --color-danger-500: #ef4444;
-    --color-danger-600: #dc2626;
+    --color-info-50: #E0F2FE;
+    --color-info-100: #BAE6FD;
+    --color-info-200: #7DD3FC;
+    --color-info-300: #38BDF8;
+    --color-info-400: #0EA5E9;
+    --color-info-500: #0284C7;
+    --color-info-600: #0369A1;
+    --color-info-700: #075985;
 
-    --color-info-50: #eff6ff;
-    --color-info-500: #3b82f6;
-    --color-info-600: #2563eb;
+    /* ============================================
+       GREENFIELD ACADEMY - NEUTRAL COLORS
+       ============================================ */
+    --color-neutral-50: #F8FAFC;
+    --color-neutral-100: #F1F5F9;
+    --color-neutral-200: #E2E8F0;
+    --color-neutral-300: #CBD5E1;
+    --color-neutral-400: #94A3B8;
+    --color-neutral-500: #64748B;
+    --color-neutral-600: #475569;
+    --color-neutral-700: #334155;
+    --color-neutral-800: #1E293B;
+    --color-neutral-900: #0F172A;
 
-    /* Dark mode surfaces */
-    --color-dark-bg: #0f172a;
-    --color-dark-surface: #1e293b;
+    /* ============================================
+       GREENFIELD ACADEMY - SURFACE & BACKGROUND
+       ============================================ */
+    --color-background: #F8FAFC;
+    --color-surface: #FFFFFF;
+    --color-surface-elevated: #FFFFFF;
+    --color-surface-secondary: #F1F5F9;
+
+    /* ============================================
+       GREENFIELD ACADEMY - TEXT COLORS
+       ============================================ */
+    --color-text-primary: #0F172A;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748B;
+
+    /* ============================================
+       GREENFIELD ACADEMY - BORDER COLORS
+       ============================================ */
+    --color-border: #E2E8F0;
+    --color-border-light: #F1F5F9;
+
+    /* ============================================
+       GREENFIELD ACADEMY - DARK MODE COLORS
+       ============================================ */
+    --color-dark-bg: #0F172A;
+    --color-dark-surface: #1E293B;
+    --color-dark-surface-elevated: #334155;
     --color-dark-border: #334155;
-    --color-dark-text: #f1f5f9;
+    --color-dark-text: #F1F5F9;
+    --color-dark-text-secondary: #CBD5E1;
+    --color-dark-text-muted: #94A3B8;
+
+    /* ============================================
+       GREENFIELD ACADEMY - SIDEBAR COLORS
+       ============================================ */
+    --color-sidebar-bg: #FFFFFF;
+    --color-sidebar-active: #DCFCE7;
+    --color-sidebar-text: #0F172A;
+    --color-sidebar-text-muted: #64748B;
+
+    --color-dark-sidebar-bg: #1E293B;
+    --color-dark-sidebar-active: #14532D;
+    --color-dark-sidebar-text: #F1F5F9;
+    --color-dark-sidebar-text-muted: #94A3B8;
+
+    /* ============================================
+       GREENFIELD ACADEMY - SHADOW SYSTEM
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
+
+    /* ============================================
+       GREENFIELD ACADEMY - RADIUS SYSTEM
+       ============================================ */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    --radius-full: 9999px;
 }
+
+/* ============================================
+   GLOBAL BASE STYLES
+   ============================================ */
 
 /* Smooth theme transition */
 * {
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 /* Respect reduced motion preference */
@@ -103,7 +198,7 @@
 }
 
 /* ============================================
-   Premium Website Animations & Utilities
+   PREMIUM ANIMATIONS & UTILITIES
    ============================================ */
 
 /* Smooth scroll for anchor links */
@@ -120,7 +215,7 @@ html {
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(24px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
@@ -136,7 +231,7 @@ html {
 @keyframes scaleIn {
     from {
         opacity: 0;
-        transform: scale(0.96);
+        transform: scale(0.95);
     }
     to {
         opacity: 1;
@@ -146,7 +241,7 @@ html {
 
 @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-8px); }
 }
 
 @keyframes shimmer {
@@ -159,11 +254,27 @@ html {
     50% { background-position: 100% 50%; }
 }
 
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
 /* Scroll-triggered animation classes */
 .animate-on-scroll {
-    opacity: 1;
-    transform: translateY(8px);
-    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .animate-on-scroll.is-visible {
@@ -173,19 +284,27 @@ html {
 
 /* Initial load animations */
 .animate-fade-in-up {
-    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in {
-    animation: fadeIn 0.8s ease both;
+    animation: fadeIn 0.6s ease both;
 }
 
 .animate-scale-in {
-    animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 5s ease-in-out infinite;
+}
+
+.animate-slide-in-right {
+    animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 2s ease-in-out infinite;
 }
 
 /* Animation delay utilities */
@@ -218,20 +337,24 @@ html {
 }
 
 .card-lift:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
 }
 
 /* Premium shadow utilities */
 .shadow-premium {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+}
+
+.shadow-premium-md {
+    box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
 }
 
 .shadow-premium-lg {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 30px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.06);
 }
 
 .shadow-premium-xl {
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.04), 0 20px 50px rgba(0, 0, 0, 0.10);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.04), 0 8px 10px -6px rgba(15, 23, 42, 0.06);
 }
 
 /* Glassmorphism effect */
@@ -259,7 +382,7 @@ html {
 
 .image-zoom:hover img,
 .image-zoom:hover .zoom-target {
-    transform: scale(1.06);
+    transform: scale(1.05);
 }
 
 /* Premium button shine effect */
@@ -311,18 +434,80 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color-neutral-300, #cbd5e1);
+    background: var(--color-neutral-300);
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-neutral-400, #94a3b8);
+    background: var(--color-neutral-400);
     background-clip: content-box;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-    background: var(--color-dark-border, #334155);
+    background: var(--color-dark-border);
     background-clip: content-box;
+}
+
+/* ============================================
+   TYPOGRAPHY UTILITIES
+   ============================================ */
+
+.text-display {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.text-h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.text-h2 {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+
+.text-h3 {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.text-h4 {
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.text-body-large {
+    font-size: 1.125rem;
+    font-weight: 400;
+    line-height: 1.7;
+}
+
+.text-body {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.6;
+}
+
+.text-small {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.text-caption {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.025em;
 }

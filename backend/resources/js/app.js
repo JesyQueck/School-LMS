@@ -47,6 +47,18 @@ document.addEventListener('alpine:init', () => {
             document.body.style.overflow = this.open ? 'hidden' : '';
         }
     });
+
+    Alpine.store('publicMenu', {
+        open: false,
+
+        toggle() {
+            this.open = !this.open;
+        },
+
+        close() {
+            this.open = false;
+        }
+    });
 });
 
 window.Alpine = Alpine;
