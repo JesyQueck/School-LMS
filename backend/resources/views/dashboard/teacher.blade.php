@@ -79,40 +79,25 @@
         <div class="lg:col-span-4">
             <x-ui.card elevated>
                 <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Quick Actions</h3>
+                    <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Your Assignments</h3>
                 </div>
                 <div class="p-6">
                     <div class="space-y-3">
-                        @if($classAssignment)
-                            <a href="{{ route('admin.class-assignments.show', $classAssignment) }}" class="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-                                <div class="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        @if($assignments->where('is_active', true)->count() > 0)
+                            @foreach($assignments->where('is_active', true) as $assignment)
+                                <div class="flex items-start gap-3 p-3 rounded-lg border border-neutral-200 dark:border-dark-border">
+                                    <div class="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $assignment->classSubject->subject->name ?? 'Unknown' }}</p>
+                                        <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $assignment->classSubject->class->name ?? 'Unknown' }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-neutral-900 dark:text-white">My Class Dashboard</p>
-                                    <p class="text-xs text-neutral-500 dark:text-neutral-400">Attendance, Report Cards & Communication</p>
-                                </div>
-                            </a>
+                            @endforeach
                         @else
-                            <div class="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-dark-border">
-                                <div class="h-10 w-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 flex items-center justify-center">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-neutral-900 dark:text-white">My Subjects</p>
-                                    <p class="text-xs text-neutral-500 dark:text-neutral-400">View your subject assignments</p>
-                                </div>
-                            </div>
+                            <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">No active subject assignments found.</p>
                         @endif
-                        <a href="{{ route('admin.assignments') }}" class="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-                            <div class="h-10 w-10 rounded-lg bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 flex items-center justify-center">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-neutral-900 dark:text-white">View Assignments</p>
-                                <p class="text-xs text-neutral-500 dark:text-neutral-400">Manage teacher assignments</p>
-                            </div>
-                        </a>
                     </div>
                 </div>
             </x-ui.card>
