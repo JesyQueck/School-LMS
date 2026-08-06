@@ -28,37 +28,37 @@ class DemoSeeder extends Seeder
     {
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@demo.school'],
-            ['name' => 'Admin User', 'password' => Hash::make('password'), 'role' => 'admin', 'needs_password_change' => true]
+            ['name' => 'Admin User', 'password' => Hash::make('password'), 'role' => 'admin']
         );
 
         $teacherUser1 = User::updateOrCreate(
             ['email' => 'teacher1@demo.school'],
-            ['name' => 'Mrs. Smith', 'password' => Hash::make('password'), 'role' => 'teacher', 'needs_password_change' => true]
+            ['name' => 'Mrs. Smith', 'password' => Hash::make('password'), 'role' => 'teacher']
         );
 
         $teacherUser2 = User::updateOrCreate(
             ['email' => 'teacher2@demo.school'],
-            ['name' => 'Mr. Jones', 'password' => Hash::make('password'), 'role' => 'teacher', 'needs_password_change' => true]
+            ['name' => 'Mr. Jones', 'password' => Hash::make('password'), 'role' => 'teacher']
         );
 
         $parentUser1 = User::updateOrCreate(
             ['email' => 'parent1@demo.school'],
-            ['name' => 'Mr. and Mrs. Doe', 'password' => Hash::make('password'), 'role' => 'parent', 'needs_password_change' => true]
+            ['name' => 'Mr. and Mrs. Doe', 'password' => Hash::make('password'), 'role' => 'parent']
         );
 
         $parentUser2 = User::updateOrCreate(
             ['email' => 'parent2@demo.school'],
-            ['name' => 'Mr. and Mrs. Smith', 'password' => Hash::make('password'), 'role' => 'parent', 'needs_password_change' => true]
+            ['name' => 'Mr. and Mrs. Smith', 'password' => Hash::make('password'), 'role' => 'parent']
         );
 
         $studentUser1 = User::updateOrCreate(
             ['email' => 'student1@demo.school'],
-            ['name' => 'John Doe', 'password' => Hash::make('password'), 'role' => 'student', 'needs_password_change' => true]
+            ['name' => 'John Doe', 'password' => Hash::make('password'), 'role' => 'student']
         );
 
         $studentUser2 = User::updateOrCreate(
             ['email' => 'student2@demo.school'],
-            ['name' => 'Jane Smith', 'password' => Hash::make('password'), 'role' => 'student', 'needs_password_change' => true]
+            ['name' => 'Jane Smith', 'password' => Hash::make('password'), 'role' => 'student']
         );
 
         $teacher1 = Teacher::updateOrCreate(

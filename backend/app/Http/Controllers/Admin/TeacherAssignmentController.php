@@ -23,8 +23,8 @@ class TeacherAssignmentController extends Controller
             'teachers' => Teacher::with('user')->get(),
             'classes' => SchoolClass::with('formTeacher')->get(),
             'classSubjects' => ClassSubject::with(['class', 'subject'])->get(),
-            'classAssignments' => ClassAssignment::with(['teacher.user', 'class', 'academicSession', 'term']),
-            'assignments' => TeacherClassSubject::with(['teacher.user', 'classSubject.class', 'classSubject.subject']),
+            'classAssignments' => ClassAssignment::with(['teacher.user', 'class', 'academicSession', 'term'])->get(),
+            'assignments' => TeacherClassSubject::with(['teacher.user', 'classSubject.class', 'classSubject.subject'])->get(),
             'sessions' => AcademicSession::all(),
             'terms' => Term::all(),
         ]);
