@@ -8,20 +8,20 @@
     ];
 
     $imageUrls = [
-        'default' => 'https://images.unsplash.com/photo-1523240795612-977054012b66?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'school' => 'https://images.unsplash.com/photo-1580582932705-53aed7dede1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'science' => 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'sports' => 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'meeting' => 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'default' => asset('images/facilities_img1.png'),
+        'school' => asset('images/facilities_img1.png'),
+        'science' => asset('images/science_lab_img.png'),
+        'sports' => asset('images/student-life.svg'),
+        'meeting' => asset('images/facilities_img1.png'),
     ];
     $imgSrc = $imageUrls[$image] ?? $image ?? $imageUrls['default'];
 @endphp
 
-<a href="{{ $href }}" class="group block bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">
+<a href="{{ $href }}" class="group block bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">
     <div class="aspect-16/10 overflow-hidden relative">
         <img src="{{ $imgSrc }}" alt="{{ $title }}" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy">
         @if($category)
-            <span class="absolute top-4 left-4 inline-flex items-center rounded-full bg-white/90 dark:bg-dark-surface/90 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300 shadow-sm">
+            <span class="absolute top-4 left-4 inline-flex items-center rounded-full bg-white/90 dark:bg-dark-surface/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-primary-700 dark:text-primary-300 shadow-sm">
                 {{ $category }}
             </span>
         @endif
