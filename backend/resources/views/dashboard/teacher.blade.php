@@ -5,11 +5,11 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        <x-ui.stat-card label="Total Students" :value="\$assignments->count() * 30" :trend="['direction' => 'neutral', 'value' => 'across your classes']" icon="users" />
-        <x-ui.stat-card label="Subject Assignments" :value="\$assignments->where('is_active', true)->count()" :trend="['direction' => 'neutral', 'value' => 'active subjects']" icon="book-open" />
+        <x-ui.stat-card label="Total Students" :value="$assignments->count() * 30" :trend="['direction' => 'neutral', 'value' => 'across your classes']" icon="users" />
+        <x-ui.stat-card label="Subject Assignments" :value="$assignments->where('is_active', true)->count()" :trend="['direction' => 'neutral', 'value' => 'active subjects']" icon="book-open" />
         <x-ui.stat-card label="Pending Grading" value="8" :trend="['direction' => 'down', 'value' => '3 due today']" icon="clipboard-list" />
-        @if(\$classAssignment)
-            <x-ui.stat-card label="My Class" :value="\$classAssignment->class->name ?? 'N/A'" :trend="['direction' => 'neutral', 'value' => 'Class Teacher']" icon="users-2" />
+        @if($classAssignment)
+            <x-ui.stat-card label="My Class" :value="$classAssignment->class->name ?? 'N/A'" :trend="['direction' => 'neutral', 'value' => 'Class Teacher']" icon="users-2" />
         @else
             <x-ui.stat-card label="Attendance" value="96%" :trend="['direction' => 'up', 'value' => '1.2% from last week']" icon="calendar-check" />
         @endif
@@ -31,7 +31,7 @@
                     <div class="space-y-4">
                         @if($classAssignment)
                             <p class="text-sm text-neutral-600 dark:text-neutral-400">
-                                You are the Class Teacher for <strong>{{ $classAssignment->class->name }}</strong> 
+                                You are the Class Teacher for <strong>{{ $classAssignment->class->name ?? 'Unknown' }}</strong>
                                 @if($classAssignment->term)
                                     ({{ $classAssignment->term->name }})
                                 @endif.
