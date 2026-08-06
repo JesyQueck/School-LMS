@@ -68,4 +68,23 @@ class TeacherAssignmentController extends Controller
 
         return redirect()->route('admin.assignments')->with('status', 'Class assignment removed.');
     }
+
+    public function destroy($id)
+    {
+        $assignment = TeacherClassSubject::findOrFail($id);
+        $assignment->delete();
+
+        return redirect()->route('admin.assignments')->with('status', 'Subject assignment removed.');
+    }
+
+    public function showClassAssignment(ClassAssignment $classAssignment)
+    {
+        return view('admin.assignments.class', [
+            'assignment' => $classAssignment->load(['teacher.user', 'class', 'academicSession', 'term']),
+            'classes' => SchoolClass::all(),
+            'sessions' => AcademicSession::all(),
+            'terms' => Term::all(),
+            'teachers' => Teacher::with('user')->get(),
+        ]);
+    }
 }

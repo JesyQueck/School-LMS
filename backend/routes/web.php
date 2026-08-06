@@ -102,7 +102,11 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/assignments', [TeacherAssignmentController::class, 'index'])->name('assignments');
         Route::post('/assignments', [TeacherAssignmentController::class, 'store'])->name('assignments.store');
+        Route::delete('/assignments/{assignment}', [TeacherAssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+        Route::get('/class-assignments', [TeacherAssignmentController::class, 'index'])->name('class-assignments.index');
         Route::post('/class-assignments', [TeacherAssignmentController::class, 'storeClassAssignment'])->name('class-assignments.store');
+        Route::get('/class-assignments/{classAssignment}', [TeacherAssignmentController::class, 'showClassAssignment'])->name('class-assignments.show');
         Route::delete('/class-assignments/{classAssignment}', [TeacherAssignmentController::class, 'destroyClassAssignment'])->name('class-assignments.destroy');
 
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
