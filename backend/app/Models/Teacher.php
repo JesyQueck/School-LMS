@@ -19,4 +19,22 @@ class Teacher extends Model
     {
         return $this->hasMany(TeacherClassSubject::class);
     }
+
+    public function classAssignments(): HasMany
+    {
+        return $this->hasMany(ClassAssignment::class);
+    }
+
+    public function currentClassAssignment(): BelongsTo
+    {
+        return $this->belongsTo(ClassAssignment::class, 'id')
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true));
+    }
+
+    public function hasClassAssignmentForSession($sessionId): bool
+    {
+        return $this->classAssignments()
+            ->where('academic_session_id', $sessionId)
+            ->exists();
+    }
 }

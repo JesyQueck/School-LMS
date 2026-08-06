@@ -102,6 +102,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/assignments', [TeacherAssignmentController::class, 'index'])->name('assignments');
         Route::post('/assignments', [TeacherAssignmentController::class, 'store'])->name('assignments.store');
+        Route::post('/class-assignments', [TeacherAssignmentController::class, 'storeClassAssignment'])->name('class-assignments.store');
+        Route::delete('/class-assignments/{classAssignment}', [TeacherAssignmentController::class, 'destroyClassAssignment'])->name('class-assignments.destroy');
 
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
         Route::post('/finance/fee-types', [FinanceController::class, 'createFeeType'])->name('finance.fee-types.store');

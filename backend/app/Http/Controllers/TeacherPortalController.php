@@ -5,13 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Teacher;
 use App\Models\TeacherClassSubject;
+use App\Services\TeacherDashboardService;
 use Illuminate\Http\Request;
 
 class TeacherPortalController extends Controller
 {
+    public function __construct(
+        protected TeacherDashboardService $dashboardService,
+    ) {}
+
     public function dashboard(Request $request)
     {
-        $teacher = Teacher::where('user_id', $request->user()->id)->first();
+        $user = $request->user();
+        $teacher = Teacher::where('user_id', $user->id)->first();
 
         $assignments = collect();
         if ($teacher) {
@@ -21,8 +27,12 @@ class TeacherPortalController extends Controller
                 ->get();
         }
 
+        $classAssignment = $this->dashboardService->getClassAssignment($user);
+
         return view('dashboard.teacher', [
             'assignments' => $assignments,
+            'classAssignment' => $classAssignment,
+            'canAccessClassFeatures' => $this->dashboardService->canAccessClassFeatures($user),
         ]);
     }
 
@@ -37,7 +47,7 @@ class TeacherPortalController extends Controller
         ]);
 
         Attendance::create(array_merge($data, [
-            'marked_by' => $request->user()->id,
+            'marked_by' => $request->user()->teacher?->id ?? $request->user()->id,
         ]));
 
         return redirect()->route('teacher.dashboard')->with('status', 'Attendance recorded.');
