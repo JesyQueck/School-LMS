@@ -24,8 +24,13 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $user = Auth::user();
 
-            return redirect()->intended($this->redirectTo(Auth::user()));
+            if ($user->needs_password_change) {
+                return redirect()->route('password.change');
+            }
+
+            return redirect()->intended($this->redirectTo($user));
         }
 
         throw ValidationException::withMessages([

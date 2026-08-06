@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Controllers\Admin\AcademicStructureController;
+use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordChangeController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Parent\AnnouncementsController as ParentAnnouncementsController;
@@ -15,12 +17,12 @@ use App\Http\Controllers\Parent\ChildController;
 use App\Http\Controllers\Parent\DashboardController as ParentDashboardController;
 use App\Http\Controllers\Parent\FeesController as ParentFeesController;
 use App\Http\Controllers\Parent\ResultsController as ParentResultsController;
+use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Student\AnnouncementsController as StudentAnnouncementsController;
 use App\Http\Controllers\Student\AttendanceController as StudentAttendanceController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\FeesController as StudentFeesController;
 use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
-use App\Http\Controllers\PublicController;
 use App\Http\Controllers\Student\ResultsController as StudentResultsController;
 use App\Http\Controllers\TeacherPortalController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +46,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
+});
+
+Route::middleware(['auth', 'password.only'])->group(function () {
+    Route::get('/change-password', [PasswordChangeController::class, 'show'])->name('password.change');
+    Route::post('/change-password', [PasswordChangeController::class, 'update'])->name('password.change.update');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
@@ -76,6 +83,9 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [SchoolAdminController::class, 'index'])->name('index');
+        Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
+        Route::get('/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
+        Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
         Route::get('/classes', [SchoolAdminController::class, 'classes'])->name('classes');
         Route::post('/classes', [SchoolAdminController::class, 'createClass'])->name('classes.store');
         Route::get('/teachers', [SchoolAdminController::class, 'teachers'])->name('teachers');

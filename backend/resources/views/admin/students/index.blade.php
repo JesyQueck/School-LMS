@@ -19,22 +19,25 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-4">
+        <div class="lg:col-span-5">
             <x-ui.card>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Enroll Student</h3>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Add a new student to the system.</p>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Create a new student account with user credentials after offline admission.</p>
                 </div>
                 <form method="POST" action="{{ route('admin.students.store') }}" class="p-6 space-y-4">
                     @csrf
                     <div>
-                        <label for="user_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Account <span class="text-danger-500">*</span></label>
-                        <select id="user_id" name="user_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
-                            <option value="">Select a user</option>
-                            @foreach($students as $student)
-                                <option value="{{ $student->user->id }}">{{ $student->user->name }} ({{ $student->user->email }})</option>
-                            @endforeach
-                        </select>
+                        <label for="name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Full Name <span class="text-danger-500">*</span></label>
+                        <input id="name" name="name" type="text" required placeholder="e.g. John Doe" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Email Address <span class="text-danger-500">*</span></label>
+                        <input id="email" name="email" type="email" required placeholder="e.g. john@example.com" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Phone Number</label>
+                        <input id="phone" name="phone" type="tel" placeholder="e.g. 08012345678" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                     </div>
                     <div>
                         <label for="class_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class</label>
@@ -46,14 +49,28 @@
                         </select>
                     </div>
                     <div>
-                        <label for="admission_number" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Admission Number</label>
-                        <input id="admission_number" name="admission_number" type="text" placeholder="e.g. ADM-003" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-500 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <label for="date_of_birth" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Date of Birth</label>
+                        <input id="date_of_birth" name="date_of_birth" type="date" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div>
+                        <label for="gender" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Gender</label>
+                        <select id="gender" name="gender" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="parent_email" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Parent Email (Optional)</label>
+                        <input id="parent_email" name="parent_email" type="email" placeholder="e.g. parent@example.com" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
                     </div>
                     <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">Enroll Student</button>
                 </form>
             </x-ui.card>
         </div>
-        <div class="lg:col-span-8">
+
+        <div class="lg:col-span-7">
             <x-ui.card>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
                     <div>
