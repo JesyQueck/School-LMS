@@ -1,4 +1,4 @@
-@props(['title' => '', 'description' => '', 'icon' => ''])
+@props(['title' => '', 'description' => '', 'icon' => '', 'image' => null])
 
 @php
     $iconPaths = [
@@ -13,7 +13,7 @@
     ];
 
     $facilityImages = [
-        'book-open' => asset('images/facilities_img1.png'),
+        'book-open' => asset('images/library_img.png'),
         'flask-conical' => asset('images/science_lab_img.png'),
         'cpu' => asset('images/computer_lab_img.png'),
         'music' => asset('images/facilities_img1.png'),
@@ -22,7 +22,9 @@
         'globe' => asset('images/facilities_img1.png'),
         'dumbbell' => asset('images/facilities_img1.png'),
     ];
-    $imgSrc = $facilityImages[$icon] ?? asset('images/facilities_img1.png');
+    // An explicit `image` prop wins over the icon-based map, so callers can
+    // disambiguate cards that share the same icon (e.g. Classrooms vs Library).
+    $imgSrc = $image ?? ($facilityImages[$icon] ?? asset('images/facilities_img1.png'));
 @endphp
 
 <div class="group bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">

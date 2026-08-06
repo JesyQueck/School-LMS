@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 class FinanceController extends Controller
 {
     use AuditsActions;
+
     public function __construct(
         protected FeeService $feeService,
     ) {}

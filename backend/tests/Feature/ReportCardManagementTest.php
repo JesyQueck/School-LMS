@@ -81,7 +81,7 @@ class ReportCardManagementTest extends TestCase
         $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'term_id' => $term->id, 'is_published' => false]);
 
         $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
-        $publishResponse = $this->post('/admin/report-cards/' . $reportCard->id . '/publish', []);
+        $publishResponse = $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $publishResponse->assertRedirect('/admin/report-cards');
         $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'is_published' => true]);
         $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'published_by' => $admin->id]);
@@ -145,7 +145,7 @@ class ReportCardManagementTest extends TestCase
         $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
 
         // Publishing should fail because the term has an unlocked result.
-        $publishResponse = $this->post('/admin/report-cards/' . $reportCard->id . '/publish', []);
+        $publishResponse = $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
 
         $publishResponse->assertStatus(500);
         $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'is_published' => false]);

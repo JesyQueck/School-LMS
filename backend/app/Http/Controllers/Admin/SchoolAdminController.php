@@ -117,7 +117,6 @@ class SchoolAdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
             'class_id' => ['nullable', 'exists:classes,id'],
             'date_of_birth' => ['nullable', 'date'],
             'gender' => ['nullable', 'string', 'max:20'],
@@ -129,7 +128,6 @@ class SchoolAdminController extends Controller
         $admissionNumber = 'ADM-'.Str::upper(Str::random(6));
 
         $studentData = [
-            'phone' => $data['phone'] ?? null,
             'date_of_birth' => $data['date_of_birth'] ?? null,
             'gender' => $data['gender'] ?? null,
             'admission_no' => $admissionNumber,
@@ -146,7 +144,6 @@ class SchoolAdminController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($temporaryPassword),
-            'phone' => $data['phone'] ?? null,
             'role' => 'student',
             'is_active' => true,
             'needs_password_change' => true,

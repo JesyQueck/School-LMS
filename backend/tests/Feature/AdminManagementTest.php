@@ -2,9 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\SchoolClass;
-use App\Models\Student;
-use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;

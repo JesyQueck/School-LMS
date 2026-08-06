@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 class ReportCardController extends Controller
 {
     use AuditsActions;
+
     public function __construct(
         protected ReportCardService $reportCardService,
     ) {}

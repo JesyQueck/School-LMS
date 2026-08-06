@@ -66,7 +66,7 @@ class ParentPortalTest extends TestCase
 
         $this->actingAs($parentUser);
 
-        $response = $this->get('/parent/children/' . $student->id);
+        $response = $this->get('/parent/children/'.$student->id);
         $response->assertForbidden();
     }
 
@@ -147,7 +147,7 @@ class ParentPortalTest extends TestCase
 
         $this->actingAs($parentUser);
 
-        $response = $this->get('/parent/children/' . $student->id . '/results');
+        $response = $this->get('/parent/children/'.$student->id.'/results');
         $response->assertOk();
         $response->assertSee('First Term');
         $response->assertDontSee('Second Term');
@@ -187,7 +187,7 @@ class ParentPortalTest extends TestCase
 
         $this->actingAs($parentUser);
 
-        $response = $this->get('/parent/children/' . $student->id . '/results');
+        $response = $this->get('/parent/children/'.$student->id.'/results');
         $response->assertForbidden();
     }
 
@@ -261,7 +261,7 @@ class ParentPortalTest extends TestCase
 
         $this->actingAs($parentUser);
 
-        $response = $this->get('/parent/children/' . $student->id . '/attendance');
+        $response = $this->get('/parent/children/'.$student->id.'/attendance');
         $response->assertOk();
         $response->assertSee('Present');
     }
@@ -309,7 +309,7 @@ class ParentPortalTest extends TestCase
 
         $this->actingAs($parentUser);
 
-        $response = $this->get('/parent/children/' . $student->id . '/fees');
+        $response = $this->get('/parent/children/'.$student->id.'/fees');
         $response->assertOk();
         $response->assertSee('Tuition');
         $response->assertSee('50,000.00');

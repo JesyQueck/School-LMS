@@ -6,10 +6,10 @@
     <title inertia>{{ config('app.name', 'Greenfield Academy') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-background">
+<body class="min-h-screen bg-background dark:bg-dark-bg text-neutral-900 dark:text-dark-text transition-colors duration-150">
     <x-layout.skip-link />
 
-    <div class="flex h-screen overflow-hidden bg-background">
+    <div class="flex h-screen overflow-hidden bg-background dark:bg-dark-bg">
         <input id="sidebar-menu-checkbox" type="checkbox" class="peer sr-only">
 
         <!-- Mobile backdrop -->

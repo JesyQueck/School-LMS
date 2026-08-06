@@ -32,7 +32,7 @@ class AuditLogTest extends TestCase
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $adminUser->id,
             'action' => 'class.created',
-            'target_model' => \App\Models\SchoolClass::class,
+            'target_model' => SchoolClass::class,
         ]);
     }
 

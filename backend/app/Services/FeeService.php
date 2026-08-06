@@ -18,8 +18,6 @@ class FeeService
      * - The fee status is recomputed as paid/partial/unpaid.
      * - The receipt number is generated automatically.
      * - The whole operation is wrapped in a transaction.
-     *
-     * @return Payment
      */
     public function recordPayment(StudentFee $studentFee, array $data, User $recordedBy): Payment
     {
@@ -85,6 +83,6 @@ class FeeService
      */
     public function generateReceiptNumber(): string
     {
-        return 'RCPT-' . now()->format('Ymd') . '-' . Str::upper(Str::random(6));
+        return 'RCPT-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
     }
 }

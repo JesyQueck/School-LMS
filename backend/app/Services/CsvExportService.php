@@ -6,11 +6,11 @@ use App\Models\Result;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CsvExportService
 {
-    public function exportStudents(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportStudents(Request $request): StreamedResponse
     {
         $students = Student::with(['user', 'class'])->get();
 
@@ -40,7 +40,7 @@ class CsvExportService
         return Response::stream($callback, 200, $headers);
     }
 
-    public function exportResults(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportResults(Request $request): StreamedResponse
     {
         $results = Result::with(['student', 'classSubject.subject', 'term'])->get();
 

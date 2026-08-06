@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -18,7 +19,7 @@ class Announcement extends Model
      * Scope announcements to those visible to a given role.
      * An announcement is visible if it targets "all" or the specific role.
      */
-    public function scopeForRole(\Illuminate\Database\Eloquent\Builder $query, string $role): \Illuminate\Database\Eloquent\Builder
+    public function scopeForRole(Builder $query, string $role): Builder
     {
         return $query->whereIn('target_role', ['all', $role]);
     }

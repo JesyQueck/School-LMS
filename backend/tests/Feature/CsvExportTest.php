@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\AcademicSession;
 use App\Models\ClassSubject;
-use App\Models\ReportCard;
 use App\Models\Result;
 use App\Models\SchoolClass;
 use App\Models\Student;

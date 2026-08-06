@@ -6,6 +6,7 @@ use App\Models\AcademicSession;
 use App\Models\Announcement;
 use App\Models\Attendance;
 use App\Models\ClassSubject;
+use App\Models\FeeType;
 use App\Models\ReportCard;
 use App\Models\Result;
 use App\Models\SchoolClass;
@@ -186,7 +187,7 @@ class StudentPortalTest extends TestCase
             'is_current' => true,
         ]);
 
-        $feeType = \App\Models\FeeType::create(['name' => 'Tuition', 'amount' => 50000, 'term_id' => $term->id]);
+        $feeType = FeeType::create(['name' => 'Tuition', 'amount' => 50000, 'term_id' => $term->id]);
         StudentFee::create([
             'student_id' => $student->id,
             'fee_type_id' => $feeType->id,

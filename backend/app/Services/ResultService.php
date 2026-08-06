@@ -27,7 +27,7 @@ class ResultService
             $total >= 50 => ['grade' => 'C6', 'remark' => 'Credit'],
             $total >= 45 => ['grade' => 'D7', 'remark' => 'Pass'],
             $total >= 40 => ['grade' => 'E8', 'remark' => 'Pass'],
-            default      => ['grade' => 'F9', 'remark' => 'Fail'],
+            default => ['grade' => 'F9', 'remark' => 'Fail'],
         };
     }
 

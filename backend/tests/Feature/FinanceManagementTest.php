@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\AcademicSession;
 use App\Models\FeeType;
-use App\Models\Payment;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
