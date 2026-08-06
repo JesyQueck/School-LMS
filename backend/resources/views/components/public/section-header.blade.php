@@ -12,9 +12,9 @@
     ];
 @endphp
 
-<div class="{{ $alignments[$align] ?? 'text-center mx-auto' }} mb-12 sm:mb-16 max-w-2xl animate-on-scroll">
+<div class="{{ $alignments[$align] ?? 'text-center mx-auto' }} mb-12 sm:mb-16 lg:mb-20 max-w-2xl animate-on-scroll">
     @if($badge)
-        <span class="inline-flex items-center gap-2 rounded-full bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/40 px-3.5 py-1.5 text-xs font-semibold text-primary-700 dark:text-primary-300 mb-5">
+        <span class="inline-flex items-center gap-2 rounded-full bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/40 px-3.5 py-1.5 text-xs font-bold text-primary-700 dark:text-primary-300 mb-5">
             <span class="h-1.5 w-1.5 rounded-full bg-primary-500"></span>
             {{ $badge }}
         </span>

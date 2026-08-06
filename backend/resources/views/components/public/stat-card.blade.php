@@ -1,4 +1,4 @@
-@props(['label' => '', 'value' => '', 'icon' => ''])
+@props(['label' => '', 'value' => '', 'icon' => '', 'description' => ''])
 
 @php
     $iconPaths = [
@@ -10,12 +10,15 @@
     ];
 @endphp
 
-<div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-6 shadow-sm text-center">
+<div class="bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border p-6 shadow-premium hover:shadow-premium-lg transition-all duration-300 text-center">
     @if($icon)
-        <div class="h-12 w-12 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center mx-auto mb-4">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
+        <div class="h-14 w-14 rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center mx-auto mb-4">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
         </div>
     @endif
-    <p class="text-3xl font-bold text-neutral-900 dark:text-white mb-1">{{ $value }}</p>
-    <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $label }}</p>
+    <p class="text-4xl font-bold text-neutral-900 dark:text-white mb-1 tracking-tight">{{ $value }}</p>
+    <p class="text-sm font-semibold text-neutral-600 dark:text-neutral-400 mb-1">{{ $label }}</p>
+    @if($description)
+        <p class="text-xs text-neutral-500 dark:text-neutral-500">{{ $description }}</p>
+    @endif
 </div>
