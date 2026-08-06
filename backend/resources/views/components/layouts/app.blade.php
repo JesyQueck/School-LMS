@@ -68,7 +68,7 @@
             </main>
 
             <x-layout.footer>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} Greenfield Academy. All rights reserved.</p>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} {{ config('app.name', 'Greenfield Academy') }}. All rights reserved.</p>
             </x-layout.footer>
         </div>
     </div>

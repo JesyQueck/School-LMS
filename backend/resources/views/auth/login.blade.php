@@ -3,9 +3,11 @@
         <div class="max-w-md w-full">
             <div class="bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium-lg p-8">
                 <div class="text-center mb-8">
-                    <div class="mx-auto h-14 w-14 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-bold shadow-lg mb-4">GA</div>
+                    <div class="mx-auto h-14 w-14 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-bold shadow-lg mb-4">
+                        {{ substr(config('app.name', 'Greenfield Academy'), 0, 2) }}
+                    </div>
                     <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Sign in to your account</h2>
-                    <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Welcome back to Greenfield Academy</p>
+                    <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Welcome back to {{ config('app.name', 'Greenfield Academy') }}</p>
                 </div>
 
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">
