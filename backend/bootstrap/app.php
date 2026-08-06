@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => RoleMiddleware::class,
-            'auth.password.only' => NeedsPasswordChangeMiddleware::class,
+            'password.only' => NeedsPasswordChangeMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
