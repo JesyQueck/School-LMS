@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title inertia>{{ config('app.name', 'Greenfield Academy') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen bg-background">
     <x-layout.skip-link />
 
-    <div class="flex h-screen overflow-hidden bg-neutral-50 dark:bg-dark-bg">
+    <div class="flex h-screen overflow-hidden bg-background">
         <input id="sidebar-menu-checkbox" type="checkbox" class="peer sr-only">
 
         <!-- Mobile backdrop -->
@@ -25,7 +25,7 @@
             class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:relative"
             aria-label="Sidebar"
         >
-            <x-layout.sidebar :title="config('app.name', 'School LMS')">
+            <x-layout.sidebar :title="config('app.name', 'Greenfield Academy')">
                 @if(auth()->check())
                     @php $role = auth()->user()->role; @endphp
 
@@ -47,7 +47,7 @@
                     @elseif($role === 'student')
                         <x-layout.sidebar-item href="/student/dashboard" icon="layout-dashboard" label="Dashboard" />
                         <x-layout.sidebar-item href="/student/results" icon="clipboard-list" label="Results" />
-                        <x-layout.sidebar-item href="/student/attendance" icon="calendar-check" label="Attendance" />
+                        <x-layout.sidebar-item href="/student/attendance" icon="calendar" label="Attendance" />
                         <x-layout.sidebar-item href="/student/fees" icon="wallet" label="Fees" />
                         <x-layout.sidebar-item href="/student/report-cards" icon="file-text" label="Report Cards" />
                         <x-layout.sidebar-item href="/student/announcements" icon="megaphone" label="Announcements" />
@@ -67,7 +67,7 @@
             </main>
 
             <x-layout.footer>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} School LMS. All rights reserved.</p>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} Greenfield Academy. All rights reserved.</p>
             </x-layout.footer>
         </div>
     </div>
