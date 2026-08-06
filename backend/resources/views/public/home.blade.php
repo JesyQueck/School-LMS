@@ -52,7 +52,7 @@
                 </div>
                 <div class="lg:col-span-5 animate-on-scroll" style="transition-delay: 0.15s;">
                     <div class="relative rounded-3xl overflow-hidden shadow-premium-xl image-zoom aspect-4/3">
-                        <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Students collaborating at Greenfield Academy" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/why_choose_us_img.png') }}" alt="Students collaborating at Greenfield Academy" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                     </div>
                 </div>
             </div>
@@ -107,7 +107,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="group bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg animate-on-scroll">
                     <div class="aspect-video overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="JSS 1 foundation year" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/Jss1_img.png') }}" alt="JSS 1 foundation year" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                         <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent"></div>
                         <span class="absolute top-4 left-4 inline-flex items-center rounded-full bg-white/90 dark:bg-dark-surface/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-neutral-900 dark:text-white shadow-sm">Year 1</span>
                     </div>
@@ -125,7 +125,7 @@
 
                 <div class="group bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg animate-on-scroll" style="transition-delay: 0.1s;">
                     <div class="aspect-video overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="JSS 2 intermediate year" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/Jss2_img.png') }}" alt="JSS 2 intermediate year" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                         <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent"></div>
                         <span class="absolute top-4 left-4 inline-flex items-center rounded-full bg-white/90 dark:bg-dark-surface/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-neutral-900 dark:text-white shadow-sm">Year 2</span>
                     </div>
@@ -143,7 +143,7 @@
 
                 <div class="group bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg animate-on-scroll" style="transition-delay: 0.2s;">
                     <div class="aspect-video overflow-hidden relative">
-                        <img src="https://images.unsplash.com/photo-1571260899304-425eee4c7efc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="JSS 3 examination year" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/Jss3_img.png') }}" alt="JSS 3 examination year" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                         <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent"></div>
                         <span class="absolute top-4 left-4 inline-flex items-center rounded-full bg-white/90 dark:bg-dark-surface/90 backdrop-blur-sm px-3 py-1 text-xs font-bold text-neutral-900 dark:text-white shadow-sm">Year 3</span>
                     </div>
@@ -205,7 +205,7 @@
                 <div class="lg:col-span-6 animate-on-scroll">
                     <div class="relative">
                         <div class="rounded-3xl overflow-hidden shadow-premium-xl image-zoom aspect-4/3">
-                            <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&q=80" alt="Students at assembly" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                            <img src="{{ asset('images/student-life.svg') }}" alt="Students at assembly" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                         </div>
                         <div class="absolute -bottom-6 -right-6 bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium-xl p-5 hidden sm:block">
                             <div class="flex items-center gap-3">
