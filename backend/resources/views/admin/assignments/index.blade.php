@@ -10,44 +10,87 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-4">
-            <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">New Assignment</h3>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Assign a teacher to a class-subject.</p>
-                </div>
-                <form method="POST" action="{{ route('admin.assignments.store') }}" class="p-6 space-y-4">
-                    @csrf
-                    <div>
-                        <label for="teacher_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Teacher <span class="text-danger-500">*</span></label>
-                        <select id="teacher_id" name="teacher_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
-                            <option value="">Select teacher</option>
-                            @foreach($teachers as $teacher)
-                                <option value="{{ $teacher->id }}">{{ $teacher->user->name ?? 'Unknown' }}</option>
-                            @endforeach
-                        </select>
+            <div class="space-y-4">
+                <x-ui.card>
+                    <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                        <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Subject Assignment</h3>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Assign a teacher to teach a subject to a class.</p>
                     </div>
-                    <div>
-                        <label for="class_subject_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class Subject <span class="text-danger-500">*</span></label>
-                        <select id="class_subject_id" name="class_subject_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
-                            <option value="">Select class-subject</option>
-                            @foreach($classSubjects as $cs)
-                                <option value="{{ $cs->id }}">{{ $cs->class->name ?? 'Unknown' }} - {{ $cs->subject->name ?? 'Unknown' }}</option>
-                            @endforeach
-                        </select>
+                    <form method="POST" action="{{ route('admin.assignments.store') }}" class="p-6 space-y-4">
+                        @csrf
+                        <div>
+                            <label for="teacher_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Teacher <span class="text-danger-500">*</span></label>
+                            <select id="teacher_id" name="teacher_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select teacher</option>
+                                @foreach($teachers as $teacher)
+                                    <option value="{{ $teacher->id }}">{{ $teacher->user->name ?? 'Unknown' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="class_subject_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class Subject <span class="text-danger-500">*</span></label>
+                            <select id="class_subject_id" name="class_subject_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select class-subject</option>
+                                @foreach($classSubjects as $cs)
+                                    <option value="{{ $cs->id }}">{{ $cs->class->name ?? 'Unknown' }} - {{ $cs->subject->name ?? 'Unknown' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input id="is_active" name="is_active" type="checkbox" value="1" checked class="h-4 w-4 rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500">
+                            <label for="is_active" class="text-sm text-neutral-700 dark:text-neutral-300">Active assignment</label>
+                        </div>
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm">Assign Subject</button>
+                    </form>
+                </x-ui.card>
+
+                <x-ui.card>
+                    <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                        <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Class Teacher Assignment</h3>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Assign a teacher as Class Teacher for a class period.</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input id="is_active" name="is_active" type="checkbox" value="1" checked class="h-4 w-4 rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500 dark:bg-dark-surface">
-                        <label for="is_active" class="text-sm text-neutral-700 dark:text-neutral-300">Active assignment</label>
-                    </div>
-                    <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">Assign Teacher</button>
-                </form>
-            </x-ui.card>
+                    <form method="POST" action="{{ route('admin.class-assignments.store') }}" class="p-6 space-y-4">
+                        @csrf
+                        <div>
+                            <label for="teacher_id_ct" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Teacher <span class="text-danger-500">*</span></label>
+                            <select id="teacher_id_ct" name="teacher_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select teacher</option>
+                                @foreach($teachers as $teacher)
+                                    <option value="{{ $teacher->id }}">{{ $teacher->user->name ?? 'Unknown' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="class_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class <span class="text-danger-500">*</span></label>
+                            <select id="class_id" name="class_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select class</option>
+                                @foreach($classes as $class)
+                                    <option value="{{ $class->id }}">{{ $class->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="academic_session_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Academic Session <span class="text-danger-500">*</span></label>
+                            <select id="academic_session_id" name="academic_session_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Select session</option>
+                                @foreach($sessions as $session)
+                                    <option value="{{ $session->id }}">{{ $session->name }} @if($session->is_current) (Current)@endif</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm">Assign Class Teacher</button>
+                    </form>
+                </x-ui.card>
+            </div>
         </div>
+
         <div class="lg:col-span-8">
             <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">All Assignments</h3>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $assignments->count() }} assignment{{ $assignments->count() !== 1 ? 's' : '' }} configured.</p>
+                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">All Assignments</h3>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $assignments->count() }} subject assignments.</p>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -88,6 +131,37 @@
                     </table>
                 </div>
             </x-ui.card>
+
+            @if($classAssignments->count())
+            <x-ui.card class="mt-6">
+                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Class Teacher Assignments</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $classAssignments->count() }} class teacher assignment{{ $classAssignments->count() !== 1 ? 's' : '' }}.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+                        <thead class="bg-neutral-50 dark:bg-dark-surface">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Teacher</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Class</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Session</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Term</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                            @foreach($classAssignments as $assignment)
+                                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                                    <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $assignment->teacher->user->name ?? 'Unknown' }}</td>
+                                    <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $assignment->class->name ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $assignment->academicSession->name ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $assignment->term?->name ?? 'N/A' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </x-ui.card>
+            @endif
         </div>
     </div>
 </x-layouts.app>
