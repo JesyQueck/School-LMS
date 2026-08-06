@@ -13,11 +13,11 @@
     $weekday = $dateObj->format('l');
 @endphp
 
-<a href="{{ $href }}" class="group flex gap-5 bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border p-5 shadow-premium card-lift hover:shadow-premium-lg">
-    <div class="flex flex-col items-center justify-center bg-linear-to-br from-primary-500 to-primary-700 rounded-2xl px-4 py-3 min-w-18 text-white shadow-lg shrink-0">
-        <span class="text-[10px] font-semibold uppercase tracking-wider opacity-90">{{ $month }}</span>
+<a href="{{ $href }}" class="group flex gap-5 bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border p-5 shadow-premium card-lift hover:shadow-premium-lg">
+    <div class="flex flex-col items-center justify-center bg-linear-to-br from-primary-500 to-primary-700 rounded-2xl px-4 py-3 min-w-[72px] text-white shadow-lg shrink-0">
+        <span class="text-[10px] font-bold uppercase tracking-wider opacity-90">{{ $month }}</span>
         <span class="text-2xl font-bold leading-none mt-0.5">{{ $day }}</span>
-        <span class="text-[9px] font-medium opacity-75 mt-1">{{ $weekday }}</span>
+        <span class="text-[9px] font-semibold opacity-75 mt-1">{{ $weekday }}</span>
     </div>
     <div class="flex-1 min-w-0">
         <h3 class="text-base font-bold text-neutral-900 dark:text-white mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ $title }}</h3>

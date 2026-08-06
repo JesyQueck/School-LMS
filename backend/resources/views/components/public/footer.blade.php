@@ -35,11 +35,11 @@
     ];
 @endphp
 
-<footer class="bg-neutral-950 dark:bg-black text-neutral-400 transition-colors duration-150">
+<footer class="bg-neutral-950 dark:bg-black text-neutral-400 transition-colors duration-200">
     {{-- Top accent line --}}
     <div class="h-1 animated-gradient"></div>
 
-    <div class="max-w-[7xl] mx-auto px-6 sm:px-8 lg:px-10">
+    <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
         {{-- Main footer content --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 py-16 lg:py-20">
             {{-- Brand column --}}
@@ -70,7 +70,7 @@
 
             {{-- Explore links --}}
             <div class="lg:col-span-2">
-                <h3 class="text-[11px] font-semibold text-white uppercase tracking-[0.15em] mb-5">Explore</h3>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-5">Explore</h3>
                 <ul class="space-y-3.5">
                     @foreach($footerLinks['explore'] as $link)
                         <li><a href="{{ $link['href'] }}" class="text-sm text-neutral-400 hover:text-white transition-colors duration-200">{{ $link['label'] }}</a></li>
@@ -80,7 +80,7 @@
 
             {{-- Community links --}}
             <div class="lg:col-span-2">
-                <h3 class="text-[11px] font-semibold text-white uppercase tracking-[0.15em] mb-5">Community</h3>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-5">Community</h3>
                 <ul class="space-y-3.5">
                     @foreach($footerLinks['community'] as $link)
                         <li><a href="{{ $link['href'] }}" class="text-sm text-neutral-400 hover:text-white transition-colors duration-200">{{ $link['label'] }}</a></li>
@@ -90,7 +90,7 @@
 
             {{-- Contact + Newsletter --}}
             <div class="lg:col-span-4">
-                <h3 class="text-[11px] font-semibold text-white uppercase tracking-[0.15em] mb-5">Get in Touch</h3>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-5">Get in Touch</h3>
                 <ul class="space-y-4 mb-6">
                     <li class="flex items-start gap-3">
                         <div class="h-9 w-9 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
@@ -112,7 +112,7 @@
                     </li>
                 </ul>
 
-                <h3 class="text-[11px] font-semibold text-white uppercase tracking-[0.15em] mb-3">Newsletter</h3>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-3">Newsletter</h3>
                 <form class="flex gap-2" onsubmit="event.preventDefault();">
                     <label for="newsletter-email" class="sr-only">Email address</label>
                     <input id="newsletter-email" type="email" placeholder="Enter your email" class="flex-1 min-w-0 rounded-xl border border-white/10 bg-white/5 text-white placeholder-neutral-500 px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">

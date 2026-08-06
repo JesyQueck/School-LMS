@@ -13,19 +13,19 @@
     ];
 
     $facilityImages = [
-        'book-open' => 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'flask-conical' => 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'cpu' => 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'music' => 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'trophy' => 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'palette' => 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'globe' => 'https://images.unsplash.com/photo-1488190211105-8b0ee654eaf2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'dumbbell' => 'https://images.unsplash.com/photo-1517836357463-d25dfeac2934?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+        'book-open' => asset('images/facilities_img1.png'),
+        'flask-conical' => asset('images/science_lab_img.png'),
+        'cpu' => asset('images/computer_lab_img.png'),
+        'music' => asset('images/facilities_img1.png'),
+        'trophy' => asset('images/facilities_img1.png'),
+        'palette' => asset('images/facilities_img1.png'),
+        'globe' => asset('images/facilities_img1.png'),
+        'dumbbell' => asset('images/facilities_img1.png'),
     ];
-    $imgSrc = $facilityImages[$icon] ?? 'https://images.unsplash.com/photo-1580582932705-53aed7dede1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+    $imgSrc = $facilityImages[$icon] ?? asset('images/facilities_img1.png');
 @endphp
 
-<div class="group bg-white dark:bg-dark-surface rounded-2xl border border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">
+<div class="group bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">
     <div class="aspect-16/10 overflow-hidden relative">
         <img src="{{ $imgSrc }}" alt="{{ $title }}" class="w-full h-full object-cover zoom-target transition-transform duration-700 group-hover:scale-105" loading="lazy">
         <div class="absolute inset-0 bg-linear-to-t from-black/40 to-transparent"></div>

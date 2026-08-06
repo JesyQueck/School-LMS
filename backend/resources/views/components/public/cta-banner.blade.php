@@ -13,7 +13,7 @@
 
     <div class="relative max-w-7xl mx-auto px-8 sm:px-12 lg:px-16 py-16 lg:py-24">
         <div class="max-w-3xl mx-auto text-center">
-            <span class="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-white mb-6">
+            <span class="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-1.5 text-xs font-bold text-white mb-6">
                 <span class="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
                 Admissions Open · 2026/2027
             </span>
