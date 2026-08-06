@@ -16,10 +16,10 @@
 @endphp
 
 <div class="relative inline-flex shrink-0">
-    <div {{ $attributes->merge(['class' => $sizes[$size] . ' rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center font-medium overflow-hidden']) }}>
+    <div {{ $attributes->merge(['class' => $sizes[$size] . ' rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center font-bold overflow-hidden ring-2 ring-primary-200 dark:ring-primary-800']) }}>
         {{ $slot }}
     </div>
     @if($status)
-        <span class="absolute bottom-0 right-0 h-3 w-3 rounded-full {{ $statusColors[$status] ?? $statusColors['offline'] }} border-2 border-white dark:border-dark-surface"></span>
+        <span class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full {{ $statusColors[$status] ?? $statusColors['offline'] }} border-2 border-white dark:border-dark-surface"></span>
     @endif
 </div>

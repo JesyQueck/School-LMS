@@ -1,3 +1,3 @@
-<div {{ $attributes->merge(['class' => 'mt-4']) }} role="tabpanel">
+<div {{ $attributes->merge(['class' => 'mt-6']) }} role="tabpanel">
     {{ $slot }}
 </div>

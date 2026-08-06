@@ -7,9 +7,9 @@
     ];
 @endphp
 
-<button 
-    type="button" 
-    {{ $attributes->merge(['class' => 'px-4 py-2 text-sm font-medium border-b-2 transition-colors ' . ($active ? $states['active'] : $states['inactive'])]) }}
+<button
+    type="button"
+    {{ $attributes->merge(['class' => 'px-4 py-2.5 text-sm font-semibold border-b-2 transition-all duration-200 ' . ($active ? $states['active'] : $states['inactive'])]) }}
     role="tab"
     {{ $attributes->get('aria-selected', $active ? 'true' : 'false') }}
 >

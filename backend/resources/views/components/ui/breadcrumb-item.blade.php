@@ -2,8 +2,8 @@
 
 <li class="flex items-center">
     @if($active)
-        <span class="text-neutral-900 dark:text-white font-medium" aria-current="page">{{ $slot }}</span>
+        <span class="text-neutral-900 dark:text-white font-semibold" aria-current="page">{{ $slot }}</span>
     @else
-        <a href="{{ $href }}" class="text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors">{{ $slot }}</a>
+        <a href="{{ $href }}" class="text-neutral-500 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">{{ $slot }}</a>
     @endif
 </li>
