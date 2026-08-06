@@ -31,6 +31,7 @@
 
                     @if($role === 'admin')
                         <x-layout.sidebar-item href="/admin/dashboard" icon="layout-dashboard" label="Dashboard" />
+                        <x-layout.sidebar-item href="/admin/accounts" icon="user-check" label="Accounts" />
                         <x-layout.sidebar-item href="/admin/classes" icon="school" label="Classes" />
                         <x-layout.sidebar-item href="/admin/teachers" icon="graduation-cap" label="Teachers" />
                         <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />
