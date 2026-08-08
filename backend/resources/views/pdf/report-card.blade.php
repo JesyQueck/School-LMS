@@ -201,7 +201,7 @@
 
         <div class="mb-4">
             <p class="text-sm mb-1"><strong>Position in Class:</strong> {{ $reportCard->position_in_class ?? '—' }} of {{ $reportCard->total_students_in_class ?? '—' }}</p>
-            <p class="text-sm mb-1"><strong>Average Percentage:</strong> {{ number_format(($reportCard->student->results->where('term_id', $term->id ?? null)->avg('total') ?? 0, 1) }}%</p>
+            <p class="text-sm mb-1"><strong>Average Percentage:</strong> {{ number_format($reportCard->student->results->where('term_id', $term->id ?? null)->avg('total') ?? 0, 1) }}%</p>
             @if(isset($reportCard->student->attendance) && $reportCard->student->attendance->count() > 0)
             <p class="text-sm mb-1"><strong>Attendance:</strong> {{ $reportCard->student->attendance->where('term_id', $term->id ?? null)->where('status', 'present')->count() }}/{{ $reportCard->student->attendance->where('term_id', $term->id ?? null)->count() }} days present</p>
             @endif

@@ -245,10 +245,13 @@ $reportCard = ReportCard::updateOrCreate(
             'student.results.classSubject.subject',
             'student.user',
             'student.class',
+            'student.attendance',
             'term'
         ]);
 
-        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard'));
+        $term = $reportCard->term;
+
+        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard', 'term'));
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }

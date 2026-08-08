@@ -30,9 +30,10 @@ class ReportCardController extends Controller
             abort(403);
         }
 
-        $reportCard->load(['student.results.classSubject.subject', 'student.class', 'term']);
+        $reportCard->load(['student.results.classSubject.subject', 'student.user', 'student.class', 'student.attendance', 'term']);
+        $term = $reportCard->term;
 
-        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard'));
+        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard', 'term'));
 
         return $pdf->download("report-card-{$student->admission_no}-{$reportCard->term->name}.pdf");
     }
