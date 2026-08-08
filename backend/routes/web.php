@@ -25,6 +25,7 @@ use App\Http\Controllers\Student\FeesController as StudentFeesController;
 use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
 use App\Http\Controllers\Student\ResultsController as StudentResultsController;
 use App\Http\Controllers\TeacherPortalController;
+use App\Http\Controllers\Teacher\ReportCardController as TeacherReportCardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicController::class, 'home'])->name('home');
@@ -57,10 +58,28 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'admin'])->middleware('role:admin');
-    Route::get('/teacher/dashboard', [TeacherPortalController::class, 'dashboard'])->middleware('role:teacher')->name('teacher.dashboard');
-    Route::post('/teacher/attendance', [TeacherPortalController::class, 'storeAttendance'])->middleware('role:teacher')->name('teacher.attendance.store');
-    Route::get('/parent/dashboard', [DashboardController::class, 'parent'])->middleware('role:parent');
-    Route::get('/student/dashboard', [DashboardController::class, 'student'])->middleware('role:student');
+
+    Route::middleware('role:teacher')->prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/dashboard', [TeacherPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/class/attendance', [TeacherPortalController::class, 'classAttendance'])->name('class.attendance');
+        Route::get('/attendance', [TeacherPortalController::class, 'attendance'])->name('attendance');
+        Route::post('/attendance', [TeacherPortalController::class, 'storeAttendance'])->name('attendance.store');
+        Route::post('/attendance/start', [TeacherPortalController::class, 'startAttendance'])->name('attendance.start');
+        Route::get('/assignments', [TeacherPortalController::class, 'mySubjects'])->name('assignments');
+        Route::get('/results', [ResultsController::class, 'teacherResults'])->name('results');
+        Route::get('/class-attendance', [TeacherPortalController::class, 'classAttendance'])->name('class-attendance');
+        Route::get('/report-cards', [TeacherReportCardController::class, 'index'])->name('report-cards.index');
+        Route::post('/report-cards', [TeacherReportCardController::class, 'store'])->name('report-cards.store');
+        Route::get('/report-cards/student/{student}', [TeacherReportCardController::class, 'getStudentResults'])->name('report-cards.student.results');
+        Route::post('/report-cards/{reportCard}/submit', [TeacherReportCardController::class, 'submitForReview'])->name('report-cards.submit');
+        Route::get('/report-cards/{reportCard}/download', [TeacherReportCardController::class, 'download'])->name('report-cards.download');
+        Route::get('/class-performance', [TeacherReportCardController::class, 'classPerformance'])->name('class-performance');
+        Route::get('/parents', [AccountController::class, 'parentCommunication'])->name('parents');
+        Route::get('/assessments', [AccountController::class, 'assessments'])->name('assessments');
+        Route::get('/profile', [AccountController::class, 'teacherProfile'])->name('profile');
+        Route::get('/scores', [\App\Http\Controllers\Teacher\SubjectResultsController::class, 'scores'])->name('scores');
+        Route::post('/scores', [\App\Http\Controllers\Teacher\SubjectResultsController::class, 'store'])->name('scores.store');
+    });
 
     Route::middleware('role:parent')->prefix('parent')->name('parent.')->group(function () {
         Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
@@ -122,6 +141,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards');
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
         Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
+        Route::post('/report-cards/{reportCard}/approve', [ReportCardController::class, 'approve'])->name('report-cards.approve');
+        Route::post('/report-cards/{reportCard}/return', [ReportCardController::class, 'returnForCorrection'])->name('report-cards.return');
+        Route::post('/report-cards/publish-all/{term}', [ReportCardController::class, 'publishAll'])->name('report-cards.publish-all');
         Route::get('/report-cards/{reportCard}/download', [ReportCardController::class, 'download'])->name('report-cards.download');
     });
 });
