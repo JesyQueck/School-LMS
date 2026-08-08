@@ -9,12 +9,14 @@ use App\Models\ReportCard;
 use App\Models\Result;
 use App\Models\Student;
 use App\Models\Term;
+use App\Traits\AuditsActions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReportCardController extends Controller
 {
+    use AuditsActions;
     public function index(Request $request)
     {
         $teacher = auth()->user()->teacher;
@@ -65,8 +67,8 @@ class ReportCardController extends Controller
 
         $hasScores = $student->results()->where('term_id', $term->id)->exists();
         
-        $reportCard = ReportCard::updateOrCreate(
-            ['student_id' => $studentId, 'term_id' => $term->id],
+$reportCard = ReportCard::updateOrCreate(
+            ['student_id' => $studentId, 'term_id' => $termId],
             [
                 'class_teacher_remark' => $validated['comment'],
                 'affective_domain' => $validated['affective_domain'] ?? null,
@@ -75,6 +77,14 @@ class ReportCardController extends Controller
                 'status' => $hasScores ? 'subject_scores_pending' : 'draft',
             ]
         );
+
+        $this->audit($request, 'report_card.comment_added', ReportCard::class, $reportCard->id, null, [
+            'student_id' => $studentId,
+            'comment' => $validated['comment'],
+            'affective_domain' => $validated['affective_domain'] ?? null,
+            'psychomotor_assessment' => $validated['psychomotor_assessment'] ?? null,
+            'health_remarks' => $validated['health_remarks'] ?? null,
+        ]);
 
         return redirect()->route('teacher.report-cards.index')->with('status', 'Comment saved successfully.');
     }
@@ -203,6 +213,10 @@ class ReportCardController extends Controller
         }
 
         $reportCard->update(['status' => 'pending_principal_approval']);
+
+        $this->audit($request, 'report_card.submitted', ReportCard::class, $reportCard->id, 
+            ['status' => 'review'], 
+            ['status' => 'pending_principal_approval']);
 
         $this->notifyPrincipalPendingApproval();
 

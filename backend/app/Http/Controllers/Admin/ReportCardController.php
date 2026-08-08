@@ -80,7 +80,12 @@ class ReportCardController extends Controller
 
     public function returnForCorrection(ReportCard $reportCard, Request $request)
     {
+        $oldStatus = $reportCard->status;
         $reportCard->update(['status' => 'returned']);
+
+        $this->audit($request, 'report_card.returned', ReportCard::class, $reportCard->id, 
+            ['status' => $oldStatus], 
+            ['status' => 'returned']);
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card returned for correction.');
     }
@@ -95,6 +100,7 @@ class ReportCardController extends Controller
             'next_term_begins' => ['nullable', 'date'],
         ]);
 
+        $oldStatus = $reportCard->status;
         $reportCard->update([
             'principal_remark' => $validated['principal_remark'] ?? null,
             'promotion_decision' => $validated['promotion_decision'] ?? null,
@@ -104,14 +110,23 @@ class ReportCardController extends Controller
             'status' => 'approved',
         ]);
 
+        $this->audit($request, 'report_card.approved', ReportCard::class, $reportCard->id, 
+            ['status' => $oldStatus, 'principal_remark' => null], 
+            ['status' => 'approved', 'principal_remark' => $validated['principal_remark']]);
+
         return redirect()->route('admin.report-cards')->with('status', 'Report card approved.');
     }
 
     public function publish(ReportCard $reportCard, Request $request)
     {
+        $oldStatus = $reportCard->status;
+        $oldPublished = $reportCard->is_published;
+
         $this->reportCardService->publish($reportCard, $request->user());
 
-        $this->audit($request, 'report_card.published', ReportCard::class, $reportCard->id, ['is_published' => false], ['is_published' => true]);
+        $this->audit($request, 'report_card.published', ReportCard::class, $reportCard->id, 
+            ['status' => $oldStatus, 'is_published' => $oldPublished], 
+            ['status' => 'published', 'is_published' => true]);
 
         $reportCard->load('student.user');
         

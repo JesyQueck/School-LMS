@@ -10,8 +10,11 @@ use App\Models\Student;
 use App\Services\TeacherDashboardService;
 use Illuminate\Http\Request;
 
+use App\Traits\AuditsActions;
+
 class TeacherPortalController extends Controller
 {
+    use AuditsActions;
     public function __construct(
         protected TeacherDashboardService $dashboardService,
     ) {}
@@ -72,6 +75,13 @@ class TeacherPortalController extends Controller
         }
 
         $request->session()->forget('attendance_started_today_' . $date);
+
+        $this->audit($request, 'attendance.marked', \App\Models\Attendance::class, null, null, [
+            'class_id' => $class_id,
+            'term_id' => $term_id,
+            'date' => $date,
+            'student_count' => count($data['status']),
+        ]);
 
         return redirect()->route('teacher.attendance')->with('status', 'Attendance recorded.');
     }

@@ -7,10 +7,13 @@ use App\Models\ClassAssignment;
 use App\Models\Result;
 use App\Models\Student;
 use App\Models\TeacherClassSubject;
+use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 
 class SubjectResultsController extends Controller
 {
+    use AuditsActions;
+
     public function scores()
     {
         $teacher = auth()->user()?->teacher;
@@ -65,10 +68,14 @@ class SubjectResultsController extends Controller
             'results' => ['required', 'array'],
         ]);
 
+        $subjectIdsProcessed = [];
+
         foreach ($request->input('results', []) as $classSubjectId => $studentScores) {
             if (!is_numeric($classSubjectId)) {
                 continue;
             }
+
+            $subjectIdsProcessed[] = $classSubjectId;
 
             foreach ($studentScores as $studentId => $scores) {
                 $student = Student::find($studentId);
@@ -95,6 +102,19 @@ class SubjectResultsController extends Controller
             }
         }
 
+        $this->audit($request, 'scores.entered', 'subject_results', null, null, [
+            'teacher_id' => $teacher->id,
+            'class_id' => $validated['class_id'],
+            'term_id' => $validated['term_id'],
+            'subjects' => $subjectIdsProcessed,
+            'student_count' => count($request->input('results', [])),
+        ]);
+
         return redirect()->route('teacher.scores')->with('status', 'Scores saved successfully.');
+    }
+
+    protected function logScoreChange(Request $request, string $action, array $details = []): void
+    {
+        $this->audit($request, $action, 'score_entry', null, null, $details);
     }
 }
