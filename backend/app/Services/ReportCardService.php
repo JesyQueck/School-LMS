@@ -48,11 +48,16 @@ class ReportCardService
         return DB::transaction(function () use ($reportCard, $publishedBy) {
             $reportCard->update([
                 'is_published' => true,
+                'status' => 'published',
                 'published_by' => $publishedBy->id,
                 'published_at' => now(),
             ]);
 
-            return $reportCard->refresh();
+            $reportCard->refresh();
+            
+            $reportCard->update(['status' => 'locked']);
+
+            return $reportCard;
         });
     }
 

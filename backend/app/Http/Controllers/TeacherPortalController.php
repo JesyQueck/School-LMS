@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\ClassAssignment;
 use App\Models\Teacher;
 use App\Models\TeacherClassSubject;
+use App\Models\Student;
 use App\Services\TeacherDashboardService;
 use Illuminate\Http\Request;
 
@@ -39,17 +41,117 @@ class TeacherPortalController extends Controller
     public function storeAttendance(Request $request)
     {
         $data = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
             'class_id' => ['required', 'exists:classes,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'date' => ['required', 'date'],
-            'status' => ['required', 'string', 'max:255'],
+            'status' => ['required', 'array'],
         ]);
 
-        Attendance::create(array_merge($data, [
-            'marked_by' => $request->user()->teacher?->id ?? $request->user()->id,
-        ]));
+        $teacher = $request->user()->teacher;
+        $class_id = $data['class_id'];
+        $term_id = $data['term_id'];
+        $date = $data['date'];
 
-        return redirect()->route('teacher.dashboard')->with('status', 'Attendance recorded.');
+        foreach ($data['status'] as $student_id => $status) {
+            if (!is_numeric($student_id)) {
+                continue;
+            }
+
+            Attendance::updateOrCreate(
+                [
+                    'student_id' => $student_id,
+                    'date' => $date,
+                ],
+                [
+                    'class_id' => $class_id,
+                    'term_id' => $term_id,
+                    'status' => $status,
+                    'marked_by' => $teacher?->id ?? $request->user()->id,
+                ]
+            );
+        }
+
+        $request->session()->forget('attendance_started_today_' . $date);
+
+        return redirect()->route('teacher.attendance')->with('status', 'Attendance recorded.');
+    }
+
+    public function classAttendance(Request $request)
+    {
+        $user = $request->user();
+        $teacher = Teacher::where('user_id', $user->id)->first();
+
+        $classAssignments = ClassAssignment::with(['class', 'term'])
+            ->where('teacher_id', $teacher?->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->get();
+
+        $activeClassAssignment = $classAssignments->first();
+
+        $students = collect();
+        if ($activeClassAssignment) {
+            $students = \App\Models\Student::where('class_id', $activeClassAssignment->class_id)
+                ->with(['user', 'fees', 'attendances' => fn($q) => $q->where('term_id', $activeClassAssignment->term_id)])
+                ->get();
+        }
+
+        return view('teacher.my-class.index', [
+            'classAssignment' => $activeClassAssignment,
+            'students' => $students,
+        ]);
+    }
+
+    public function attendance(Request $request)
+    {
+        $user = $request->user();
+        $teacher = Teacher::where('user_id', $user->id)->first();
+
+        $classAssignments = ClassAssignment::with(['class', 'term'])
+            ->where('teacher_id', $teacher?->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->get();
+
+        $activeClassAssignment = $classAssignments->first();
+
+        $students = collect();
+        if ($activeClassAssignment) {
+            $students = Student::where('class_id', $activeClassAssignment->class_id)
+                ->with(['user', 'fees'])
+                ->get();
+        }
+
+        $showAttendanceForm = $request->session()->has('attendance_started_today_' . now()->toDateString());
+
+        return view('teacher.attendance.index', [
+            'classAssignment' => $activeClassAssignment,
+            'students' => $students,
+            'showAttendanceForm' => $showAttendanceForm,
+        ]);
+    }
+
+    public function startAttendance(Request $request)
+    {
+        $data = $request->validate([
+            'class_id' => ['required', 'exists:classes,id'],
+            'term_id' => ['required', 'exists:terms,id'],
+        ]);
+
+        $request->session()->put('attendance_started_today_' . now()->toDateString(), true);
+
+        return redirect()->route('teacher.attendance');
+    }
+
+    public function mySubjects()
+    {
+        $teacher = Teacher::where('user_id', auth()->id())->first();
+
+        $assignments = TeacherClassSubject::with(['classSubject.subject', 'classSubject.class'])
+            ->where('teacher_id', $teacher?->id)
+            ->where('is_active', true)
+            ->get();
+
+        return view('teacher.assignments.index', [
+            'assignments' => $assignments,
+        ]);
     }
 }
