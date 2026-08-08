@@ -96,6 +96,11 @@ class DemoSeeder extends Seeder
             ['start_date' => '2027-01-15', 'end_date' => '2027-04-09', 'is_current' => false]
         );
 
+        $term3 = Term::updateOrCreate(
+            ['academic_session_id' => $session->id, 'name' => 'Third Term'],
+            ['start_date' => '2027-04-15', 'end_date' => '2027-07-31', 'is_current' => false]
+        );
+
         $class1 = SchoolClass::updateOrCreate(['name' => 'JSS 1'], ['form_teacher_id' => $teacher1->id]);
         $class2 = SchoolClass::updateOrCreate(['name' => 'JSS 2'], ['form_teacher_id' => $teacher2->id]);
 
