@@ -31,4 +31,20 @@ class ResultsController extends Controller
 
         return view('parent.results', compact('student', 'results'));
     }
+
+    public function reportCards(Request $request, Student $student)
+    {
+        $this->authorize('view', $student);
+
+        $student->load(['class', 'reportCards.term' => function ($q) {
+            $q->where('is_published', true);
+        }]);
+
+        $publishedReportCards = $student->reportCards()
+            ->where('is_published', true)
+            ->with('term')
+            ->get();
+
+        return view('parent.report-cards', compact('student', 'publishedReportCards'));
+    }
 }

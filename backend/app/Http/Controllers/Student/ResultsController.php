@@ -22,4 +22,13 @@ class ResultsController extends Controller
 
         return view('student.results', compact('student', 'results'));
     }
+
+    public function assignments(Request $request)
+    {
+        $student = $request->user()->student;
+
+        $student->load('class');
+
+        return view('student.assignments', compact('student'));
+    }
 }
