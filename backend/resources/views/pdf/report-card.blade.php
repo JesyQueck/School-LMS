@@ -9,76 +9,75 @@
         body { font-family: 'Inter', sans-serif; color: #000000; background: #e9e9e4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .font-display { font-family: 'Source Serif 4', Georgia, serif; }
         @page { size: A4; margin: 0; }
-        .sheet { width: 210mm; min-height: 297mm; margin: 10mm auto; background: #FDFCF8; position: relative; box-shadow: 0 4px 24px rgba(0,0,0,0.15); padding: 12mm; }
-        @media print { body { background: none; } .sheet { margin: 0; box-shadow: none; padding: 12mm; } }
-        
-        .school-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; border-bottom: 2px solid #16324F; margin-bottom: 16px; }
-        .school-left { display: flex; align-items: center; gap: 12px; }
-        .school-logo { width: 48px; height: 48px; border: 2px solid #16324F; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .school-logo-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 10px; font-weight: 700; color: #059669; }
-        .school-name { font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; font-weight: 700; color: #16324F; }
-        .school-details { font-size: 11px; color: #6b7280; line-height: 1.3; }
-        .published-badge { display: inline-block; border: 1px solid #1B6B3A; padding: 2px 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #1B6B3A; background-color: #dcfce7; }
-        
-        .title-block { text-align: center; margin-bottom: 20px; }
-        .title-block .section-title { font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700; color: #059669; letter-spacing: 0.25em; text-transform: uppercase; }
-        .title-block .subtitle { font-size: 12px; color: #6b7280; margin-top: 4px; }
-        
-        .student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; font-size: 13px; margin-bottom: 20px; }
-        .info-row { display: flex; align-items: baseline; gap: 8px; }
-        .info-label { text-transform: uppercase; font-size: 10px; letter-spacing: 0.025em; color: #6b7280; min-width: 80px; }
-        .info-value { font-weight: 600; color: #000000; }
-        
-        table.results th { background: #059669; color: #fff; font-weight: 600; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; }
-        table.results th.text-left { text-align: left; }
-        table.results td { border: 1px solid #C9CDD3; color: #000000; }
-        table.results th { border: 1px solid #C9CDD3; }
+        .sheet { width: 210mm; min-height: 297mm; margin: 5mm auto; background: #ffffff; position: relative; box-shadow: 0 1px 6px rgba(0,0,0,0.1); padding: 10mm; }
+        @media print { body { background: none; } .sheet { margin: 0; box-shadow: none; padding: 10mm; } }
+
+        .school-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 12px; border-bottom: 2px solid #16324F; margin-bottom: 16px; }
+        .school-logo { width: 48px; height: 48px; border: 2px solid #16324F; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .school-logo-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 12px; font-weight: 700; color: #059669; }
+        .school-center { flex: 1; text-align: center; }
+        .school-name { font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; font-weight: 700; color: #16324F; margin-bottom: 2px; }
+        .school-details { font-size: 10px; color: #6b7280; line-height: 1.4; }
+        .published-badge { display: inline-block; border: 1px solid #1B6B3A; padding: 3px 10px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #1B6B3A; background-color: #dcfce7; }
+
+        .title-block { text-align: center; margin-bottom: 16px; }
+        .title-block .section-title { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; color: #059669; letter-spacing: 0.25em; text-transform: uppercase; }
+        .title-block .subtitle { font-size: 11px; color: #6b7280; margin-top: 3px; }
+
+        .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 13px; margin-bottom: 16px; }
+        .info-item { border: 1px solid #C9CDD3; padding: 8px 10px; border-radius: 4px; }
+        .info-item .label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.025em; color: #6b7280; display: block; margin-bottom: 3px; }
+        .info-item .value { font-weight: 600; color: #000000; }
+
+        table.results { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
+        table.results th { background: #059669; color: #fff; font-weight: 600; font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; padding: 8px 6px; text-align: left; border: 1px solid #059669; }
+        table.results td { border: 1px solid #C9CDD3; color: #000000; padding: 6px 6px; text-align: center; }
+        table.results td.text-left { text-align: left; }
+        table.results th.col-subject { width: 28%; }
+        table.results th.col-ca, table.results th.col-exam, table.results th.col-total, table.results th.col-grade { width: 10%; }
+        table.results th.col-remark { width: 22%; }
         table.results tbody tr:nth-child(even) { background: #F4F2EA; }
-        table.results td.text-center { text-align: center; }
-        .results-col-subject { width: 25%; padding: 8px 10px; }
-        .results-col-num { width: 12%; padding: 8px 6px; text-align: center; }
-        .results-col-remark { width: 25%; padding: 8px 10px; }
         .font-semibold { font-weight: 600; }
         .font-bold { font-weight: 700; }
         .italic { font-style: italic; }
-        
-        .summary-block { font-size: 13px; margin-bottom: 20px; }
-        .summary-block p { margin-bottom: 4px; }
+        .text-red { color: #A3312B; }
+        .text-navy { color: #16324F; }
+
+        .summary-block { font-size: 12px; margin-bottom: 16px; }
+        .summary-block p { margin-bottom: 3px; }
         .summary-block strong { font-weight: 600; color: #000000; }
-        
-        .remark-section { border: 1px solid #C9CDD3; border-radius: 4px; padding: 12px; margin-bottom: 12px; }
-        .remark-section p.section-label { text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; color: #6b7280; margin: 0 0 8px 0; }
-        .remark-section p.remark-text { font-size: 12px; font-style: italic; color: #000000; min-height: 36px; }
-        .remark-section.no-border { border: 1px solid #C9CDD3; border-radius: 4px; padding: 12px; margin-bottom: 12px; }
-        
-        .signature-line { font-size: 10px; color: #6b7280; margin-top: 16px; padding-top: 8px; border-top: 1px solid #C9CDD3; }
-        
-        .grading-key { border: 1px solid #C9CDD3; border-radius: 4px; padding: 12px; background: #F9F8F3; margin-bottom: 20px; }
-        .grading-key .key-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #16324F; }
-        .grading-key .key-item { font-size: 9px; color: #6b7280; }
-        .grading-key .key-item span.text-red { color: #A3312B; font-weight: 700; }
-        .grading-key .key-item span { margin-right: 4px; }
-        
+        .summary-block span { font-weight: 500; color: #000000; }
+
+        .remarks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .remark-card { border: 1px solid #C9CDD3; border-radius: 4px; padding: 10px; }
+        .remark-card.full-width { grid-column: 1 / -1; }
+        .remark-card .section-label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; color: #6b7280; margin: 0 0 6px 0; }
+        .remark-card .remark-text { font-size: 11px; font-style: italic; color: #000000; min-height: 32px; }
+        .remark-card .signature-line { font-size: 9px; color: #6b7280; margin-top: 12px; padding-top: 6px; border-top: 1px solid #C9CDD3; }
+
+        .grading-key { border: 1px solid #C9CDD3; border-radius: 4px; padding: 10px; background: #F9F8F3; margin-bottom: 16px; }
+        .grading-key .key-content { font-size: 9px; color: #6b7280; line-height: 1.5; }
+        .grading-key .key-content span.font-bold { color: #16324F; }
+        .grading-key .key-content span.text-red { color: #A3312B; font-weight: 700; }
+
         .footer { border-top: 1px solid #16324F; padding-top: 8px; font-size: 10px; color: #6b7280; }
         .footer .next-term { }
-        .footer .copyright { text-align: center; }
+        .footer .copyright { text-align: center; margin-top: 4px; }
     </style>
 </head>
 <body>
 <div class="sheet">
-    <!-- School Header -->
+    <!-- School Header: Logo Left, Name Center, Status Right -->
     <div class="school-header">
-        <div class="school-left">
-            <div class="school-logo">
-                <span class="school-logo-text">{{ substr($school->name ?? 'GHS', 0, 3) }}</span>
-            </div>
-            <div>
-                <h1 class="school-name">{{ $school->name ?? 'Greenfield High School' }}</h1>
-                <p class="school-details">
-                    {{ $school->address ?? '123 Education Lane, Victoria Island, Lagos' }}<br>
-                    {{ $school->phone ?? '+234 800 000 0000' }} | {{ $school->email ?? 'info@greenfieldhs.edu' }}
-                </p>
-            </div>
+        <div class="school-logo">
+            <span class="school-logo-text">{{ substr($school->name ?? 'GHS', 0, 3) }}</span>
+        </div>
+        <div class="school-center">
+            <h1 class="school-name">{{ $school->name ?? 'Greenfield High School' }}</h1>
+            <p class="school-details">
+                {{ $school->address ?? '123 Education Lane, Victoria Island, Lagos' }}<br>
+                {{ $school->phone ?? '+234 800 000 0000' }} | {{ $school->email ?? 'info@greenfieldhs.edu' }}
+            </p>
         </div>
         <div>
             <span class="published-badge">
@@ -93,23 +92,23 @@
         <p class="subtitle">{{ $term->name ?? 'First Term' }} {{ $term->year ?? date('Y') }} Session</p>
     </div>
 
-    <!-- Student Info -->
-    <div class="student-info">
-        <div class="info-row">
-            <span class="info-label">Name:</span>
-            <span class="info-value">{{ $reportCard->student->full_name ?? '—' }}</span>
+    <!-- Student Info Grid -->
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="label">Name:</span>
+            <span class="value">{{ $reportCard->student->full_name ?? '—' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Admission No:</span>
-            <span class="info-value">{{ $reportCard->student->admission_no ?? '—' }}</span>
+        <div class="info-item">
+            <span class="label">Admission No:</span>
+            <span class="value">{{ $reportCard->student->admission_no ?? '—' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Class:</span>
-            <span class="info-value">{{ $reportCard->student->class->name ?? '—' }}</span>
+        <div class="info-item">
+            <span class="label">Class:</span>
+            <span class="value">{{ $reportCard->student->class->name ?? '—' }}</span>
         </div>
-        <div class="info-row">
-            <span class="info-label">Date of Birth:</span>
-            <span class="info-value">
+        <div class="info-item">
+            <span class="label">Date of Birth:</span>
+            <span class="value">
                 @if($reportCard->student->date_of_birth)
                     {{ \Carbon\Carbon::parse($reportCard->student->date_of_birth)->format('d M Y') }}
                 @else
@@ -119,16 +118,16 @@
         </div>
     </div>
 
-    <!-- Results Table -->
-    <table class="results w-full border-collapse" style="margin-bottom: 20px; font-size: 12px;">
+    <!-- Results Table - Full Width, Large -->
+    <table class="results">
         <thead>
             <tr>
-                <th class="text-left results-col-subject">Subject</th>
-                <th class="results-col-num">CA</th>
-                <th class="results-col-num">Exam</th>
-                <th class="results-col-num">Total</th>
-                <th class="results-col-num">Grade</th>
-                <th class="text-left results-col-remark">Remark</th>
+                <th class="col-subject">Subject</th>
+                <th class="col-ca">CA</th>
+                <th class="col-exam">Exam</th>
+                <th class="col-total">Total</th>
+                <th class="col-grade">Grade</th>
+                <th class="col-remark">Remark</th>
             </tr>
         </thead>
         <tbody>
@@ -155,16 +154,16 @@
                     $remark = $result->remark ?? ($remarkMap[$result->grade ?? $grade ?? 'F9'] ?? 'N/A');
                 @endphp
                 <tr>
-                    <td class="results-col-subject" style="padding: 6px 10px;">{{ $result->classSubject->subject->name ?? '—' }}</td>
-                    <td class="results-col-num" style="padding: 6px 4px; text-align: center;">{{ $result->ca_score ?? 0 }}</td>
-                    <td class="results-col-num" style="padding: 6px 4px; text-align: center;">{{ $result->exam_score ?? 0 }}</td>
-                    <td class="results-col-num" style="padding: 6px 4px; text-align: center; font-weight: 600;">{{ number_format($total, 0) }}</td>
-                    <td class="results-col-num" style="padding: 6px 4px; text-align: center; font-weight: 700; color: {{ $isFail ? '#A3312B' : '#16324F' }};">{{ $displayGrade }}</td>
-                    <td class="results-col-remark" style="padding: 6px 10px;">{{ $remark }}</td>
+                    <td class="text-left" style="padding: 8px 10px;">{{ $result->classSubject->subject->name ?? '—' }}</td>
+                    <td>{{ $result->ca_score ?? 0 }}</td>
+                    <td>{{ $result->exam_score ?? 0 }}</td>
+                    <td class="font-semibold">{{ number_format($total, 0) }}</td>
+                    <td class="font-bold" style="color: {{ $isFail ? '#A3312B' : '#16324F' }};">{{ $displayGrade }}</td>
+                    <td class="text-left">{{ $remark }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" style="padding: 8px 10px; text-align: center; color: #6b7280;">
+                    <td colspan="6" style="padding: 12px 10px; text-align: center; color: #6b7280;">
                         No results available for this term.
                     </td>
                 </tr>
@@ -186,58 +185,56 @@
         @endif
     </div>
 
-    <!-- Remarks Sections -->
-    <div class="remark-section">
-        <p class="section-label">Class Teacher's Remark</p>
-        <p class="remark-text">{{ $reportCard->class_teacher_remark ?? '—' }}</p>
-        <p class="signature-line">
-            Signature: ______________________ &nbsp; Date: ____________
-        </p>
-    </div>
+    <!-- Remarks Grid -->
+    <div class="remarks-grid">
+        <div class="remark-card">
+            <span class="section-label">Class Teacher's Remark</span>
+            <p class="remark-text">{{ $reportCard->class_teacher_remark ?? '—' }}</p>
+            <p class="signature-line">
+                Signature: ______________________ &nbsp; Date: ____________
+            </p>
+        </div>
 
-    <div class="remark-section">
-        <p class="section-label">Affective Domain</p>
-        <p class="remark-text">{{ $reportCard->affective_domain ?? '—' }}</p>
-    </div>
+        <div class="remark-card">
+            <span class="section-label">Affective Domain</span>
+            <p class="remark-text">{{ $reportCard->affective_domain ?? '—' }}</p>
+        </div>
 
-    <div class="remark-section">
-        <p class="section-label">Psychomotor Assessment</p>
-        <p class="remark-text">{{ $reportCard->psychomotor_assessment ?? '—' }}</p>
-    </div>
+        <div class="remark-card">
+            <span class="section-label">Psychomotor Assessment</span>
+            <p class="remark-text">{{ $reportCard->psychomotor_assessment ?? '—' }}</p>
+        </div>
 
-    <div class="remark-section">
-        <p class="section-label">Health Remarks</p>
-        <p class="remark-text">{{ $reportCard->health_remarks ?? '—' }}</p>
-    </div>
+        <div class="remark-card">
+            <span class="section-label">Health Remarks</span>
+            <p class="remark-text">{{ $reportCard->health_remarks ?? '—' }}</p>
+        </div>
 
-    <div class="remark-section">
-        <p class="section-label">Principal's Remark</p>
-        <p class="remark-text">{{ $reportCard->principal_remark ?? '—' }}</p>
-        <p class="signature-line">
-            Signature: ______________________ &nbsp; Date: ____________
-        </p>
+        <div class="remark-card full-width">
+            <span class="section-label">Principal's Remark</span>
+            <p class="remark-text">{{ $reportCard->principal_remark ?? '—' }}</p>
+            <p class="signature-line">
+                Signature: ______________________ &nbsp; Date: ____________
+            </p>
+        </div>
     </div>
 
     <!-- Grading Key -->
     <div class="grading-key">
-        <div class="flex flex-wrap items-center gap-1" style="font-size: 9px; color: #6b7280;">
-            <span class="key-label">Grading Key:</span>
-            <span class="key-item">A1 (75-100) Excellent <span>&middot;</span></span>
-            <span class="key-item">B2 (70-74) V.Good <span>&middot;</span></span>
-            <span class="key-item">B3 (65-69) Good <span>&middot;</span></span>
-            <span class="key-item">C4-C6 (50-64) Credit <span>&middot;</span></span>
-            <span class="key-item">D7 (45-49) Pass <span>&middot;</span></span>
-            <span class="key-item">E8 (40-44) Pass <span>&middot;</span></span>
-            <span class="key-item text-red">F9 (0-39) Fail</span>
+        <div class="key-content">
+            <span class="font-bold">Grading Key:</span>
+            A1 (75-100) Excellent &middot; B2 (70-74) V.Good &middot; B3 (65-69) Good &middot;
+            C4-C6 (50-64) Credit &middot; D7 (45-49) Pass &middot; E8 (40-44) Pass &middot;
+            <span class="text-red">F9 (0-39) Fail</span>
         </div>
     </div>
 
     <!-- Footer -->
     <div class="footer">
-        <div>
+        <div class="next-term">
             Next Term Begins: <span class="font-semibold" style="color: #000000;">{{ $reportCard->next_term_begins ? \Carbon\Carbon::parse($reportCard->next_term_begins)->format('d M Y') : 'TBA' }}</span>
         </div>
-        <div class="copyright" style="text-align: center;">
+        <div class="copyright">
             &copy; {{ date('Y') }} {{ $school->name ?? 'Greenfield Academy' }}. All rights reserved.
         </div>
     </div>
