@@ -1,32 +1,73 @@
 <x-layouts.app title="Report Cards">
     <div class="mb-6">
         <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="{{ route('parent.dashboard') }}">Parent</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('parent.children.show', $student) }}">Children</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="/parent/dashboard">Parent</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="/parent/children/{{ $student->id }}">
+                {{ $student->full_name ?? 'Child' }}
+            </x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item active>Report Cards</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
-    </div>
-
-    <div class="mb-4">
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $student->full_name ?? 'Student' }}</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Published report cards for {{ $student->admission_no ?? '' }}</p>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">{{ $student->full_name ?? 'Student' }} - Report Cards</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->class->name ?? 'N/A' }} &middot; {{ $student->admission_no ?? 'N/A' }}</p>
     </div>
 
     <x-ui.card>
+        <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
+            <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Published Report Cards</h3>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Official academic performance records for {{ $currentTerm->name ?? 'Current Term' }}.</p>
+        </div>
         <div class="p-6">
-            @forelse($publishedReportCards as $reportCard)
-                <div class="flex items-center justify-between p-4 rounded-lg border border-neutral-200 dark:border-dark-border mb-3 last:mb-0">
-                    <div>
-                        <h3 class="text-sm font-medium text-neutral-900 dark:text-white">{{ $reportCard->term->name ?? 'Term' }} Report Card</h3>
-                        <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $reportCard->term->session ?? '' }} Session</p>
+            @forelse($reportCards as $reportCard)
+            <div class="flex items-center justify-between py-4 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 last:pb-0 first:pt-0">
+                <div class="flex items-start gap-3">
+                    <div class="h-10 w-10 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </div>
-                    <a href="{{ route('admin.report-cards.download', $reportCard) }}" class="text-xs px-3 py-1 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-                        Download PDF
-                    </a>
+                    <div>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $reportCard->term->name ?? 'Term ' . $reportCard->term_id }}</p>
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                            Position: {{ $reportCard->position_in_class ?? 'N/A' }} of {{ $reportCard->total_students_in_class ?? 'N/A' }}
+                        </p>
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                            Promotion: {{ ucfirst($reportCard->promotion_decision ?? 'pending') }}
+                        </p>
+                    </div>
                 </div>
+                
+                <div class="flex items-center gap-2">
+                    @if($reportCard->is_published)
+                    <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
+                        Published
+                    </span>
+                    @else
+                    <span class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                        Pending
+                    </span>
+                    @endif
+                    
+                    @if($reportCard->is_published)
+                    <a href="{{ route('parent.children.report-cards.download', [$student->id, $reportCard->id]) }}" 
+                       class="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 19V5m0 0L7 10m5-5l5 5"/></svg>
+                    </a>
+                    @endif
+                </div>
+            </div>
             @empty
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-8">No published report cards available.</p>
+            <div class="text-center py-8">
+                <div class="mx-auto h-12 w-12 text-neutral-400 dark:text-neutral-600 mb-3">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">No published report cards yet.</p>
+                <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Report cards will appear here once published by the school.</p>
+            </div>
             @endforelse
         </div>
     </x-ui.card>
+
+    <div class="mt-4">
+        <a href="{{ route('parent.children.show', $student->id) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+            ← Back to Child Overview
+        </a>
+    </div>
 </x-layouts.app>

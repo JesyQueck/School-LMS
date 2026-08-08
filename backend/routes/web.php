@@ -24,6 +24,8 @@ use App\Http\Controllers\Student\DashboardController as StudentDashboardControll
 use App\Http\Controllers\Student\FeesController as StudentFeesController;
 use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
 use App\Http\Controllers\Student\ResultsController as StudentResultsController;
+use App\Http\Controllers\Parent\ParentReportCardController;
+use App\Http\Controllers\Parent\ParentTimetableController;
 use App\Http\Controllers\TeacherPortalController;
 use App\Http\Controllers\Teacher\ReportCardController as TeacherReportCardController;
 use Illuminate\Support\Facades\Route;
@@ -84,15 +86,14 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:parent')->prefix('parent')->name('parent.')->group(function () {
         Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/children', [ChildController::class, 'index'])->name('children.index');
         Route::get('/children/{student}', [ChildController::class, 'show'])->name('children.show');
         Route::get('/children/{student}/results', [ParentResultsController::class, 'index'])->name('children.results');
         Route::get('/children/{student}/attendance', [ParentAttendanceController::class, 'index'])->name('children.attendance');
         Route::get('/children/{student}/fees', [ParentFeesController::class, 'index'])->name('children.fees');
-        Route::get('/children/{student}/timetable', [ChildController::class, 'timetable'])->name('children.timetable');
-        Route::get('/children/{student}/report-cards', [ParentResultsController::class, 'reportCards'])->name('children.report-cards');
+        Route::get('/children/{student}/report-cards', [ParentReportCardController::class, 'index'])->name('children.report-cards');
+        Route::get('/children/{student}/report-cards/{reportCard}/download', [ParentReportCardController::class, 'download'])->name('children.report-cards.download');
+        Route::get('/timetable', [ParentTimetableController::class, 'index'])->name('timetable');
         Route::get('/announcements', [ParentAnnouncementsController::class, 'index'])->name('announcements');
-        Route::get('/messages', [ParentAnnouncementsController::class, 'messages'])->name('messages');
     });
 
     Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {
@@ -102,10 +103,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');
         Route::get('/report-cards', [StudentReportCardController::class, 'index'])->name('report-cards');
         Route::get('/report-cards/{reportCard}/download', [StudentReportCardController::class, 'download'])->name('report-cards.download');
-        Route::get('/timetable', [StudentAttendanceController::class, 'timetable'])->name('timetable');
-        Route::get('/assignments', [StudentResultsController::class, 'assignments'])->name('assignments');
         Route::get('/announcements', [StudentAnnouncementsController::class, 'index'])->name('announcements');
-        Route::get('/profile', [StudentDashboardController::class, 'profile'])->name('profile');
     });
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {

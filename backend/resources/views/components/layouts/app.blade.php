@@ -45,6 +45,7 @@
                         <x-teacher-nav />
                     @elseif($role === 'parent')
                         <x-layout.sidebar-item href="/parent/dashboard" icon="layout-dashboard" label="Dashboard" />
+                        <x-layout.sidebar-item href="/parent/timetable" icon="calendar" label="Timetable" />
                         <x-layout.sidebar-item href="/parent/announcements" icon="megaphone" label="Announcements" />
                         <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @elseif($role === 'student')
