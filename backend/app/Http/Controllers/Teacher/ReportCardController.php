@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassAssignment;
+use App\Models\ClassSubject;
 use App\Models\ReportCard;
 use App\Models\Result;
 use App\Models\Student;
 use App\Models\Term;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportCardController extends Controller
 {
@@ -173,6 +175,33 @@ class ReportCardController extends Controller
 
     public function submitForReview(ReportCard $reportCard, Request $request)
     {
+        $teacher = auth()->user()->teacher;
+        
+        $classAssignment = ClassAssignment::where('teacher_id', $teacher->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->first();
+
+        if (!$classAssignment) {
+            return back()->with('error', 'No active class assignment found.');
+        }
+
+        $hasScores = Result::where('student_id', $reportCard->student_id)
+            ->where('term_id', $classAssignment->term_id)
+            ->whereNotNull('ca_score')
+            ->whereNotNull('exam_score')
+            ->exists();
+
+        if (!$hasScores) {
+            return back()->with('error', 'Cannot submit report card: subject scores are still pending for this student.');
+        }
+
+        if (empty($reportCard->class_teacher_remark) && 
+            empty($reportCard->affective_domain) && 
+            empty($reportCard->psychomotor_assessment) && 
+            empty($reportCard->health_remarks)) {
+            return back()->with('error', 'Cannot submit report card: class teacher comments are required.');
+        }
+
         $reportCard->update(['status' => 'pending_principal_approval']);
 
         return redirect()->route('teacher.report-cards.index')->with('status', 'Report card submitted for principal review.');
@@ -209,5 +238,92 @@ class ReportCardController extends Controller
         }
 
         return view('teacher.class-performance', compact('students', 'classAssignment'));
+    }
+
+    public function getSubmissionProgress(Request $request)
+    {
+        $teacher = auth()->user()->teacher;
+        
+        $classAssignment = ClassAssignment::with(['class', 'term'])
+            ->where('teacher_id', $teacher->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->first();
+
+        if (!$classAssignment) {
+            return response()->json(['error' => 'No class assignment found'], 404);
+        }
+
+        $subjectAssignments = \App\Models\TeacherClassSubject::with(['classSubject.subject', 'classSubject.class'])
+            ->where('classSubject.class_id', $classAssignment->class_id)
+            ->where('is_active', true)
+            ->get();
+
+        $students = Student::where('class_id', $classAssignment->class_id)->get();
+        
+        $submissionProgress = [];
+        $totalStudents = $students->count();
+        $totalSubjects = $subjectAssignments->count();
+
+        foreach ($subjectAssignments as $assignment) {
+            $subjectName = $assignment->classSubject->subject->name ?? 'Unknown';
+            $teacherName = $assignment->teacher->user->name ?? $assignment->teacher->name ?? 'Unknown';
+            
+            $submittedCount = Result::where('class_subject_id', $assignment->class_subject_id)
+                ->where('term_id', $classAssignment->term_id)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->whereNotNull('ca_score')
+                ->whereNotNull('exam_score')
+                ->distinct('student_id')
+                ->count('student_id');
+
+            $submissionProgress[] = [
+                'subject' => $subjectName,
+                'teacher' => $teacherName,
+                'submitted' => $submittedCount,
+                'total' => $totalStudents,
+                'completed' => $submittedCount == $totalStudents,
+            ];
+        }
+
+        $allScoresSubmitted = collect($submissionProgress)->every(fn($p) => $p['completed']);
+        
+        $attendanceCount = 0;
+        if ($totalStudents > 0) {
+            $attendanceCount = \App\Models\Attendance::whereIn('student_id', $students->pluck('id'))
+                ->where('term_id', $classAssignment->term_id)
+                ->whereDate('date', '<=', now())
+                ->distinct('student_id')
+                ->count('student_id');
+        }
+        $attendanceSubmitted = $attendanceCount > 0;
+
+        $reportCard = ReportCard::whereIn('student_id', $students->pluck('id'))
+            ->where('term_id', $classAssignment->term_id)
+            ->first();
+        
+        $commentsCompleted = false;
+        if ($reportCard) {
+            $hasAllComments = $students->every(function($student) use ($classAssignment) {
+                $rc = ReportCard::where('student_id', $student->id)
+                    ->where('term_id', $classAssignment->term_id)
+                    ->first();
+                return $rc && ($rc->class_teacher_remark || $rc->affective_domain || $rc->psychomotor_assessment || $rc->health_remarks);
+            });
+            $commentsCompleted = $hasAllComments;
+        }
+
+        $isReadyToSubmit = $allScoresSubmitted && $attendanceSubmitted && $commentsCompleted;
+
+        return response()->json([
+            'class' => $classAssignment->class->name ?? 'Unknown',
+            'term' => $classAssignment->term->name ?? 'Current',
+            'total_students' => $totalStudents,
+            'total_subjects' => $totalSubjects,
+            'submission_progress' => $submissionProgress,
+            'all_scores_submitted' => $allScoresSubmitted,
+            'attendance_submitted' => $attendanceSubmitted,
+            'comments_completed' => $commentsCompleted,
+            'is_ready_to_submit' => $isReadyToSubmit,
+        ]);
     }
 }

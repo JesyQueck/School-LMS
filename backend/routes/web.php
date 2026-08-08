@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/report-cards', [TeacherReportCardController::class, 'index'])->name('report-cards.index');
         Route::post('/report-cards', [TeacherReportCardController::class, 'store'])->name('report-cards.store');
         Route::get('/report-cards/student/{student}', [TeacherReportCardController::class, 'getStudentResults'])->name('report-cards.student.results');
+        Route::get('/report-cards/progress', [TeacherReportCardController::class, 'getSubmissionProgress'])->name('report-cards.progress');
         Route::post('/report-cards/{reportCard}/submit', [TeacherReportCardController::class, 'submitForReview'])->name('report-cards.submit');
         Route::get('/report-cards/{reportCard}/download', [TeacherReportCardController::class, 'download'])->name('report-cards.download');
         Route::get('/class-performance', [TeacherReportCardController::class, 'classPerformance'])->name('class-performance');

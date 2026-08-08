@@ -29,48 +29,33 @@
                 </div>
                 <div class="p-6">
                     <div class="space-y-4">
-                        @if($classAssignment)
-                            <p class="text-sm text-neutral-600 dark:text-neutral-400">
-                                You are the Class Teacher for <strong>{{ $classAssignment->class->name ?? 'Unknown' }}</strong>
-                                @if($classAssignment->term)
-                                    ({{ $classAssignment->term->name }})
-                                @endif.
-                            </p>
-                            @if($assignments->where('is_active', true)->count() > 0)
-                                <p class="text-sm text-neutral-600 dark:text-neutral-400">
-                                    You also teach:
-                                    <ul class="list-disc list-inside mt-1">
-                                        @foreach($assignments->where('is_active', true) as $ta)
-                                            <li class="text-sm">{{ $ta->classSubject->subject->name ?? 'Unknown' }} ({{ $ta->classSubject->class->name ?? 'Unknown' }})</li>
-                                        @endforeach
-                                    </ul>
-                                </p>
-                            @endif
-                        @else
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between py-3 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div>
-                                        <p class="text-sm font-semibold text-neutral-900 dark:text-white">JSS 3-A</p>
-                                        <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Mathematics</p>
-                                    </div>
-                                    <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400">8:00 - 9:00</span>
-                                </div>
-                                <div class="flex items-center justify-between py-3 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div>
-                                        <p class="text-sm font-semibold text-neutral-900 dark:text-white">JSS 2-B</p>
-                                        <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">English</p>
-                                    </div>
-                                    <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400">9:00 - 10:00</span>
-                                </div>
-                                <div class="flex items-center justify-between py-3 border-b border-neutral-100 dark:border-neutral-800">
-                                    <div>
-                                        <p class="text-sm font-semibold text-neutral-900 dark:text-white">JSS 1-C</p>
-                                        <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Physics</p>
-                                    </div>
-                                    <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400">10:30 - 11:30</span>
-                                </div>
-                            </div>
-                        @endif
+@if($classAssignment)
+        <div class="border border-neutral-200 dark:border-dark-border rounded-lg overflow-hidden">
+            <div class="bg-neutral-50 dark:bg-neutral-800 px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
+                <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Score Submission Tracker</h3>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $classAssignment->class->name ?? '' }} - {{ $classAssignment->term->name ?? '' }}</p>
+            </div>
+            <div class="p-4" id="submission-tracker">
+                <div class="space-y-3" id="tracker-loading">
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400">Loading submission status...</p>
+                </div>
+                <div id="tracker-content" class="hidden">
+                    <div id="tracker-list" class="space-y-2"></div>
+                    <div id="tracker-summary" class="mt-4 pt-3 border-t border-neutral-200 dark:border-dark-border">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-neutral-600 dark:text-neutral-400">Progress:</span>
+                            <span id="tracker-progress" class="font-medium text-neutral-900 dark:text-white"></span>
+                        </div>
+                        <div id="tracker-submit-btn" class="mt-3 hidden">
+                            <a href="{{ route('teacher.report-cards.index') }}" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors text-center block">
+                                Ready - Proceed to Report Cards
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
                     </div>
                 </div>
             </x-ui.card>
@@ -102,5 +87,102 @@
                 </div>
             </x-ui.card>
         </div>
+        
+        @if($classAssignment)
+        <x-ui.card>
+            <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
+                <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Completion Checklist</h3>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Verify all requirements before submitting report cards</p>
+            </div>
+            <div class="p-4" id="completion-checklist">
+                <div class="space-y-3" id="checklist-loading">
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400">Checking requirements...</p>
+                </div>
+                <div id="checklist-content" class="hidden">
+                    <ul class="space-y-2 text-sm" id="checklist-items"></ul>
+                    <div id="checklist-submit-section" class="mt-4 pt-3 border-t border-neutral-200 dark:border-dark-border text-center hidden">
+                        <a href="{{ route('teacher.report-cards.index') }}" id="checklist-submit-btn" class="inline-block px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors">
+                            Proceed to Report Cards
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </x-ui.card>
+        @endif
     </div>
-</x-layouts.app>
+    
+    @push('scripts')
+    @if($classAssignment)
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const trackerEl = document.getElementById('submission-tracker');
+            const checklistEl = document.getElementById('completion-checklist');
+            
+            if (trackerEl) {
+                fetch('{{ route('teacher.report-cards.progress') }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    data.submission_progress.forEach(item => {
+                        html += '<div class="flex items-center justify-between py-2">' +
+                            '<div class="flex items-center gap-2">' +
+                                '<span class="text-sm text-neutral-700 dark:text-neutral-300">' + item.subject + '</span>' +
+                                '<span class="text-xs text-neutral-500 dark:text-neutral-400">(' + item.teacher + ')</span>' +
+                            '</div>' +
+                            '<span class="text-lg">' + (item.completed ? '✔' : '❌') + '</span>' +
+                        '</div>';
+                    });
+                    document.getElementById('tracker-list').innerHTML = html;
+                    document.getElementById('tracker-progress').textContent = 
+                        data.all_scores_submitted ? 'All scores submitted!' : 
+                        (data.total_subjects - data.submission_progress.filter(p => !p.completed).length) + '/' + data.total_subjects + ' subjects submitted';
+                    
+                    const submitBtn = document.getElementById('tracker-submit-btn');
+                    if (data.is_ready_to_submit) {
+                        submitBtn.classList.remove('hidden');
+                    }
+                    
+                    document.getElementById('tracker-loading').classList.add('hidden');
+                    document.getElementById('tracker-content').classList.remove('hidden');
+                })
+                .catch(err => {
+                    document.getElementById('tracker-loading').innerHTML = 
+                        '<p class="text-sm text-red-500">Error loading submission status</p>';
+                });
+            }
+            
+            if (checklistEl) {
+                fetch('{{ route('teacher.report-cards.progress') }}', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    let items = '';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.all_scores_submitted ? '✔' : '❌') + '</span> All subject scores submitted</li>';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.attendance_submitted ? '✔' : '❌') + '</span> Attendance generated</li>';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.comments_completed ? '✔' : '❌') + '</span> Grades calculated</li>';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.comments_completed ? '✔' : '❌') + '</span> Average calculated</li>';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.comments_completed ? '✔' : '❌') + '</span> Affective Domain completed</li>';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.comments_completed ? '✔' : '❌') + '</span> Psychomotor Assessment completed</li>';
+                    items += '<li class="flex items-center gap-2"><span class="text-green-500">' + (data.comments_completed ? '✔' : '❌') + '</span> Teacher Comment entered</li>';
+                    
+                    document.getElementById('checklist-items').innerHTML = items;
+                    
+                    if (data.is_ready_to_submit) {
+                        document.getElementById('checklist-submit-section').classList.remove('hidden');
+                    }
+                    
+                    document.getElementById('checklist-loading').classList.add('hidden');
+                    document.getElementById('checklist-content').classList.remove('hidden');
+                })
+                .catch(err => {
+                    document.getElementById('checklist-loading').innerHTML = 
+                        '<p class="text-sm text-red-500">Error loading checklist</p>';
+                });
+            }
+        });
+    </script>
+    @endif
+    @endpush
