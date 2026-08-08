@@ -24,6 +24,9 @@ use App\Http\Controllers\Student\DashboardController as StudentDashboardControll
 use App\Http\Controllers\Student\FeesController as StudentFeesController;
 use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
 use App\Http\Controllers\Student\ResultsController as StudentResultsController;
+use App\Http\Controllers\Student\AssignmentController as StudentAssignmentController;
+use App\Http\Controllers\Student\TimetableController as StudentTimetableController;
+use App\Http\Controllers\Student\ProfileController as StudentProfileController;
 use App\Http\Controllers\Parent\ParentReportCardController;
 use App\Http\Controllers\Parent\ParentTimetableController;
 use App\Http\Controllers\TeacherPortalController;
@@ -103,6 +106,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');
         Route::get('/report-cards', [StudentReportCardController::class, 'index'])->name('report-cards');
         Route::get('/report-cards/{reportCard}/download', [StudentReportCardController::class, 'download'])->name('report-cards.download');
+        Route::get('/assignments', [StudentAssignmentController::class, 'index'])->name('assignments');
+        Route::get('/timetable', [StudentTimetableController::class, 'index'])->name('timetable');
+        Route::get('/profile', [StudentProfileController::class, 'index'])->name('profile');
         Route::get('/announcements', [StudentAnnouncementsController::class, 'index'])->name('announcements');
     });
 

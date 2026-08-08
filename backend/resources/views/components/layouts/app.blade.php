@@ -54,6 +54,9 @@
                         <x-layout.sidebar-item href="/student/attendance" icon="calendar" label="Attendance" />
                         <x-layout.sidebar-item href="/student/fees" icon="wallet" label="Fees" />
                         <x-layout.sidebar-item href="/student/report-cards" icon="file-text" label="Report Cards" />
+                        <x-layout.sidebar-item href="/student/assignments" icon="book-open" label="Assignments" />
+                        <x-layout.sidebar-item href="/student/timetable" icon="calendar-check" label="Timetable" />
+                        <x-layout.sidebar-item href="/student/profile" icon="user" label="Profile" />
                         <x-layout.sidebar-item href="/student/announcements" icon="megaphone" label="Announcements" />
                         <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @endif
