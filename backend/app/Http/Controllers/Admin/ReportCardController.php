@@ -87,7 +87,22 @@ class ReportCardController extends Controller
 
     public function approve(ReportCard $reportCard, Request $request)
     {
-        $reportCard->update(['status' => 'approved']);
+        $validated = $request->validate([
+            'principal_remark' => ['nullable', 'string'],
+            'promotion_decision' => ['nullable', 'string', 'in:promoted,repeated,transferred'],
+            'position_in_class' => ['nullable', 'integer'],
+            'total_students_in_class' => ['nullable', 'integer'],
+            'next_term_begins' => ['nullable', 'date'],
+        ]);
+
+        $reportCard->update([
+            'principal_remark' => $validated['principal_remark'] ?? null,
+            'promotion_decision' => $validated['promotion_decision'] ?? null,
+            'position_in_class' => $validated['position_in_class'] ?? $reportCard->position_in_class,
+            'total_students_in_class' => $validated['total_students_in_class'] ?? $reportCard->total_students_in_class,
+            'next_term_begins' => $validated['next_term_begins'] ?? $reportCard->next_term_begins,
+            'status' => 'approved',
+        ]);
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card approved.');
     }
@@ -115,8 +130,8 @@ class ReportCardController extends Controller
         $termId = $request->route('term_id') ?? $request->input('term_id');
         
         $updated = ReportCard::where('term_id', $termId)
-            ->where('status', 'review')
-            ->update(['is_published' => true, 'status' => 'approved']);
+            ->where('status', 'approved')
+            ->update(['is_published' => true, 'status' => 'published']);
 
         $this->audit($request, 'report_cards.published_all', ReportCard::class, null, null, ['term_id' => $termId]);
 
