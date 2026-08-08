@@ -206,7 +206,6 @@
             <p class="text-sm mb-1"><strong>Attendance:</strong> {{ $reportCard->student->attendance->where('term_id', $term->id ?? null)->where('status', 'present')->count() }}/{{ $reportCard->student->attendance->where('term_id', $term->id ?? null)->count() }} days present</p>
             @endif
         </div>
-        @endif
 
         <div class="mb-4">
             <div class="border p-3" style="border-color: var(--line);">
