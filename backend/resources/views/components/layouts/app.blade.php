@@ -40,11 +40,13 @@
                         <x-layout.sidebar-item href="/admin/report-cards" icon="file-text" label="Report Cards" />
                         <x-layout.sidebar-item href="/admin/assignments" icon="book-open" label="Assignments" />
                         <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic" />
+                        <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @elseif($role === 'teacher')
-                        <x-layout.sidebar-item href="/teacher/dashboard" icon="layout-dashboard" label="Dashboard" />
+                        <x-teacher-nav />
                     @elseif($role === 'parent')
                         <x-layout.sidebar-item href="/parent/dashboard" icon="layout-dashboard" label="Dashboard" />
                         <x-layout.sidebar-item href="/parent/announcements" icon="megaphone" label="Announcements" />
+                        <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @elseif($role === 'student')
                         <x-layout.sidebar-item href="/student/dashboard" icon="layout-dashboard" label="Dashboard" />
                         <x-layout.sidebar-item href="/student/results" icon="clipboard-list" label="Results" />
@@ -52,6 +54,7 @@
                         <x-layout.sidebar-item href="/student/fees" icon="wallet" label="Fees" />
                         <x-layout.sidebar-item href="/student/report-cards" icon="file-text" label="Report Cards" />
                         <x-layout.sidebar-item href="/student/announcements" icon="megaphone" label="Announcements" />
+                        <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @endif
                 @endif
             </x-layout.sidebar>
