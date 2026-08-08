@@ -20,12 +20,4 @@ class AnnouncementsController extends Controller
 
         return view('parent.announcements', compact('announcements'));
     }
-
-    /**
-     * Placeholder for future messaging system.
-     */
-    public function messages(Request $request)
-    {
-        return view('parent.messages');
-    }
 }

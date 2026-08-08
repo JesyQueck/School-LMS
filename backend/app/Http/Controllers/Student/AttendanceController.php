@@ -18,15 +18,4 @@ class AttendanceController extends Controller
 
         return view('student.attendance', compact('student', 'attendance'));
     }
-
-    public function timetable(Request $request)
-    {
-        $student = $request->user()->student;
-
-        $student->load(['class.classSubjects.subject', 'class.classSubjects.timetable' => function ($q) {
-            $q->with('subject', 'teacher');
-        }]);
-
-        return view('student.timetable', compact('student'));
-    }
 }

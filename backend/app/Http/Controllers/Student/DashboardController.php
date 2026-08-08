@@ -20,13 +20,4 @@ class DashboardController extends Controller
 
         return view('student.dashboard', compact('student', 'announcements'));
     }
-
-    public function profile(Request $request)
-    {
-        $student = $request->user()->student;
-
-        $student->load(['class', 'user', 'parents']);
-
-        return view('student.profile', compact('student'));
-    }
 }
