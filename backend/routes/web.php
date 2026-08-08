@@ -59,6 +59,19 @@ Route::middleware(['auth', 'password.only'])->group(function () {
     Route::post('/change-password', [PasswordChangeController::class, 'update'])->name('password.change.update');
 });
 
+Route::middleware('auth')->group(function () {
+    Route::post('/notifications/mark-all-read', function () {
+        \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true, 'read_at' => now()]);
+        return back()->with('status', 'All notifications marked as read.');
+    })->name('notifications.mark-all-read');
+    
+    Route::post('/notifications/{notification}/read', function (\App\Models\Notification $notification) {
+        if ($notification->user_id !== auth()->id()) abort(403);
+        $notification->update(['is_read' => true, 'read_at' => now()]);
+        return response()->json(['status' => 'ok']);
+    })->name('notifications.read');
+});
+
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {

@@ -6,6 +6,7 @@
     </div>
     <div class="flex items-center gap-2 sm:gap-3">
         {{ $actions ?? '' }}
+        <x-notification-bell />
         <button
             @click="$store.theme.toggle()"
             type="button"
