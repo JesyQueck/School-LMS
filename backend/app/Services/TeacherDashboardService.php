@@ -47,6 +47,28 @@ class TeacherDashboardService
             ->get();
     }
 
+    public function isClassTeacher(User $user): bool
+    {
+        if ($user->role !== 'teacher' || ! $user->teacher) {
+            return false;
+        }
+
+        return ClassAssignment::where('teacher_id', $user->teacher->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->exists();
+    }
+
+    public function isSubjectTeacher(User $user): bool
+    {
+        if ($user->role !== 'teacher' || ! $user->teacher) {
+            return false;
+        }
+
+        return TeacherClassSubject::where('teacher_id', $user->teacher->id)
+            ->where('is_active', true)
+            ->exists();
+    }
+
     public function getAllowedRoutes(User $user): array
     {
         if ($user->role !== 'teacher') {

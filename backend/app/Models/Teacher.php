@@ -20,6 +20,12 @@ class Teacher extends Model
         return $this->hasMany(TeacherClassSubject::class);
     }
 
+    public function subjectAssignments()
+    {
+        return $this->hasMany(TeacherClassSubject::class)
+            ->where('is_active', true);
+    }
+
     public function classAssignments(): HasMany
     {
         return $this->hasMany(ClassAssignment::class);
