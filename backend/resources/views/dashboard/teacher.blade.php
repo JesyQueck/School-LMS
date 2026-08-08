@@ -9,7 +9,7 @@
         <x-ui.stat-card label="Subject Assignments" :value="$assignments->where('is_active', true)->count()" :trend="['direction' => 'neutral', 'value' => 'active subjects']" icon="book-open" />
         <x-ui.stat-card label="Pending Grading" value="8" :trend="['direction' => 'down', 'value' => '3 due today']" icon="clipboard-list" />
         @if($classAssignment)
-            <x-ui.stat-card label="My Class" :value="$classAssignment->class->name ?? 'N/A'" :trend="['direction' => 'neutral', 'value' => 'Class Teacher']" icon="users-2" />
+            <x-ui.stat-card label="My Class" :value="$classAssignment->class->name ?? 'N/A'" :trend="['direction' => 'neutral', 'value' => 'Class Teacher']" icon="school" />
         @else
             <x-ui.stat-card label="Attendance" value="96%" :trend="['direction' => 'up', 'value' => '1.2% from last week']" icon="calendar-check" />
         @endif
