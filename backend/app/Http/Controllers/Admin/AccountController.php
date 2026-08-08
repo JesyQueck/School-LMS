@@ -143,4 +143,19 @@ class AccountController extends Controller
 
         return $parent;
     }
+
+    public function parentCommunication()
+    {
+        return view('teacher.parents.communicate');
+    }
+
+    public function assessments()
+    {
+        return view('teacher.assessments');
+    }
+
+    public function teacherProfile()
+    {
+        return view('teacher.profile');
+    }
 }

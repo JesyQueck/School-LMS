@@ -65,4 +65,33 @@ class ResultsController extends Controller
     {
         return $this->csvExportService->exportResults($request);
     }
+
+    public function classAttendance()
+    {
+        $class = auth()->user()->teacher?->currentClassAssignment?->class;
+
+        return view('teacher.class-attendance', [
+            'class' => $class,
+        ]);
+    }
+
+    public function teacherResults()
+    {
+        return view('teacher.results');
+    }
+
+    public function generateForClass()
+    {
+        $classAssignment = auth()->user()->teacher?->currentClassAssignment?->load(['class', 'students']);
+
+        return view('teacher.report-cards.generate', [
+            'class' => $classAssignment?->class,
+            'students' => $classAssignment?->students ?? collect(),
+        ]);
+    }
+
+    public function classPerformance()
+    {
+        return view('teacher.class-performance');
+    }
 }
