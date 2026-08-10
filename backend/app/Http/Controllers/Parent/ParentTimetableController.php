@@ -3,52 +3,60 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClassSubject;
 use App\Models\Student;
-use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ParentTimetableController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $user = auth()->user();
-        $parent = $user->parent;
-        $children = Student::whereIn('id', $parent->children ?? [])
-            ->with(['class', 'user'])
+        $parent = $request->user()->parentProfile;
+        $children = $parent
+            ? $parent->students()->with(['class', 'user'])->get()
+            : collect();
+
+        $selectedId = $request->query('student');
+        $selected = $children->firstWhere('id', $selectedId) ?? $children->first();
+
+        $periods = $selected ? $this->buildPeriods($selected) : collect();
+
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+        return view('parent.timetable', compact('children', 'selected', 'periods', 'days'));
+    }
+
+    protected function buildPeriods(Student $student)
+    {
+        $classId = $student->class_id;
+        if (!$classId) {
+            return collect();
+        }
+
+        $classSubjects = ClassSubject::with(['subject', 'teacherAssignments.teacher.user'])
+            ->where('class_id', $classId)
             ->get();
 
-        $timetableSlots = [
-            ['day' => 'Monday', 'periods' => [
-                ['time' => '8:00-9:00', 'subject' => 'Mathematics', 'teacher' => 'Mr. Smith'],
-                ['time' => '9:00-10:00', 'subject' => 'English', 'teacher' => 'Ms. Johnson'],
-                ['time' => '10:15-11:15', 'subject' => 'Physics', 'teacher' => 'Dr. Brown'],
-                ['time' => '11:15-12:15', 'subject' => 'Chemistry', 'teacher' => 'Dr. Lee'],
-            ]],
-            ['day' => 'Tuesday', 'periods' => [
-                ['time' => '8:00-9:00', 'subject' => 'Biology', 'teacher' => 'Dr. Adams'],
-                ['time' => '9:00-10:00', 'subject' => 'Mathematics', 'teacher' => 'Mr. Smith'],
-                ['time' => '10:15-11:15', 'subject' => 'English', 'teacher' => 'Ms. Johnson'],
-                ['time' => '11:15-12:15', 'subject' => 'History', 'teacher' => 'Mr. Wilson'],
-            ]],
-            ['day' => 'Wednesday', 'periods' => [
-                ['time' => '8:00-9:00', 'subject' => 'Chemistry', 'teacher' => 'Dr. Lee'],
-                ['time' => '9:00-10:00', 'subject' => 'Biology', 'teacher' => 'Dr. Adams'],
-                ['time' => '10:15-11:15', 'subject' => 'Mathematics', 'teacher' => 'Mr. Smith'],
-                ['time' => '11:15-12:15', 'subject' => 'Geography', 'teacher' => 'Ms. Davis'],
-            ]],
-            ['day' => 'Thursday', 'periods' => [
-                ['time' => '8:00-9:00', 'subject' => 'English', 'teacher' => 'Ms. Johnson'],
-                ['time' => '9:00-10:00', 'subject' => 'Physics', 'teacher' => 'Dr. Brown'],
-                ['time' => '10:15-11:15', 'subject' => 'Chemistry', 'teacher' => 'Dr. Lee'],
-                ['time' => '11:15-12:15', 'subject' => 'Mathematics', 'teacher' => 'Mr. Smith'],
-            ]],
-            ['day' => 'Friday', 'periods' => [
-                ['time' => '8:00-9:00', 'subject' => 'History', 'teacher' => 'Mr. Wilson'],
-                ['time' => '9:00-10:00', 'subject' => 'Geography', 'teacher' => 'Ms. Davis'],
-                ['time' => '10:15-11:15', 'subject' => 'Biology', 'teacher' => 'Dr. Adams'],
-                ['time' => '11:15-12:15', 'subject' => 'English', 'teacher' => 'Ms. Johnson'],
-            ]],
-        ];
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        $periods = collect();
+        $dayIndex = 0;
+        $periodNumber = 1;
 
-        return view('parent.timetable', compact('children', 'timetableSlots'));
+        foreach ($classSubjects as $index => $cs) {
+            $teacher = $cs->teacherAssignments->first()?->teacher?->user;
+            $periods->push([
+                'day' => $days[$dayIndex % count($days)],
+                'period' => $periodNumber,
+                'subject' => $cs->subject->name ?? 'Unknown Subject',
+                'teacher' => $teacher ? $teacher->name : 'Not assigned',
+            ]);
+
+            $dayIndex++;
+            if ($dayIndex % count($days) === 0) {
+                $periodNumber++;
+            }
+        }
+
+        return $periods->sortBy(['day', 'period'])->values();
     }
 }

@@ -13,15 +13,12 @@ class ParentReportCardController extends Controller
     public function index($studentId)
     {
         $student = Student::with(['user', 'class'])->findOrFail($studentId);
-        $currentTerm = Term::where('is_current', true)->first();
 
-        $reportCards = ReportCard::where('student_id', $student->id)
-            ->where('term_id', $currentTerm?->id)
-            ->where('is_published', true)
-            ->with('term')
-            ->get();
+        $terms = Term::orderBy('id')->with(['reportCards' => function ($query) use ($studentId) {
+            $query->where('student_id', $studentId);
+        }])->get();
 
-        return view('parent.report-cards', compact('student', 'reportCards', 'currentTerm'));
+        return view('parent.report-cards', compact('student', 'terms'));
     }
 
     public function download($studentId, ReportCard $reportCard)
