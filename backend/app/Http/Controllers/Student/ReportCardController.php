@@ -15,9 +15,10 @@ class ReportCardController extends Controller
 
         $reportCards = $student->reportCards()
             ->where('is_published', true)
-            ->with('term')
+            ->with(['term.academicSession', 'student.class'])
             ->latest()
-            ->get();
+            ->get()
+            ->groupBy(fn ($rc) => $rc->term->academicSession->name ?? 'Unknown Session');
 
         return view('student.report-cards', compact('student', 'reportCards'));
     }

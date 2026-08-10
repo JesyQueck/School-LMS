@@ -5,14 +5,11 @@ namespace Tests\Feature;
 use App\Models\AcademicSession;
 use App\Models\Announcement;
 use App\Models\Attendance;
-use App\Models\ClassSubject;
 use App\Models\FeeType;
 use App\Models\ReportCard;
-use App\Models\Result;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
-use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,83 +38,57 @@ class StudentPortalTest extends TestCase
         $response->assertSee('Jane Doe');
     }
 
-    public function test_student_sees_only_published_results(): void
+    public function test_student_cannot_access_removed_results_page(): void
     {
         $studentUser = User::factory()->create(['role' => 'student']);
         $class = SchoolClass::create(['name' => 'JSS 1']);
-        $student = Student::create([
+        Student::create([
             'user_id' => $studentUser->id,
             'class_id' => $class->id,
             'admission_no' => 'ADM602',
         ]);
 
-        $session = AcademicSession::create([
-            'name' => '2026/2027',
-            'start_date' => '2026-09-01',
-            'end_date' => '2027-07-31',
-            'is_current' => true,
-        ]);
+        $this->actingAs($studentUser);
 
-        $publishedTerm = Term::create([
-            'academic_session_id' => $session->id,
-            'name' => 'First Term',
-            'start_date' => '2026-09-01',
-            'end_date' => '2026-12-20',
-            'is_current' => true,
-        ]);
+        $response = $this->get('/student/results');
+        $response->assertNotFound();
+    }
 
-        $unpublishedTerm = Term::create([
-            'academic_session_id' => $session->id,
-            'name' => 'Second Term',
-            'start_date' => '2027-01-01',
-            'end_date' => '2027-03-31',
-            'is_current' => false,
-        ]);
-
-        $subject = Subject::create(['name' => 'Mathematics']);
-        $classSubject = ClassSubject::create([
+    public function test_student_cannot_access_removed_assignments_page(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        Student::create([
+            'user_id' => $studentUser->id,
             'class_id' => $class->id,
-            'subject_id' => $subject->id,
-        ]);
-
-        ReportCard::create([
-            'student_id' => $student->id,
-            'term_id' => $publishedTerm->id,
-            'is_published' => true,
-        ]);
-
-        ReportCard::create([
-            'student_id' => $student->id,
-            'term_id' => $unpublishedTerm->id,
-            'is_published' => false,
-        ]);
-
-        Result::create([
-            'student_id' => $student->id,
-            'class_subject_id' => $classSubject->id,
-            'term_id' => $publishedTerm->id,
-            'ca_score' => 30,
-            'exam_score' => 50,
-            'total' => 80,
-            'grade' => 'A',
-        ]);
-
-        Result::create([
-            'student_id' => $student->id,
-            'class_subject_id' => $classSubject->id,
-            'term_id' => $unpublishedTerm->id,
-            'ca_score' => 25,
-            'exam_score' => 45,
-            'total' => 70,
-            'grade' => 'B',
+            'admission_no' => 'ADM603',
         ]);
 
         $this->actingAs($studentUser);
 
-        $response = $this->get('/student/results');
-        $response->assertOk();
-        $response->assertSee('First Term');
-        $response->assertDontSee('Second Term');
+        $response = $this->get('/student/assignments');
+        $response->assertNotFound();
+    }
+
+    public function test_student_dashboard_does_not_show_assignment_or_results_links(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM604',
+            'first_name' => 'Jane',
+            'last_name' => 'Doe',
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/dashboard');
+        $response->assertSee('Report Cards');
+        $response->assertDontSee('My Results');
+        $response->assertDontSee('Assignments');
+        $response->assertDontSee('Upcoming Assignments');
     }
 
     public function test_student_can_view_attendance(): void
@@ -266,12 +237,138 @@ class StudentPortalTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'is_published' => true,
+            'class_teacher_remark' => 'Good student',
+            'position_in_class' => 3,
+            'total_students_in_class' => 40,
         ]);
 
         $this->actingAs($studentUser);
 
         $response = $this->get('/student/report-cards');
         $response->assertOk();
+        $response->assertSee('2026/2027');
         $response->assertSee('First Term');
+        $response->assertSee('JSS 1');
+        $response->assertSee('Published');
+        $response->assertSee('3 of 40');
+    }
+
+    public function test_student_cannot_view_unpublished_report_cards(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM607',
+        ]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'is_published' => false,
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/report-cards');
+        $response->assertOk();
+        $response->assertDontSee('First Term');
+    }
+
+    public function test_student_cannot_download_unpublished_report_card(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM608',
+        ]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $reportCard = ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'is_published' => false,
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get("/student/report-cards/{$reportCard->id}/download");
+        $response->assertForbidden();
+    }
+
+    public function test_student_cannot_view_another_student_report_card(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM609',
+        ]);
+
+        $otherStudentUser = User::factory()->create(['role' => 'student']);
+        $otherStudent = Student::create([
+            'user_id' => $otherStudentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM610',
+        ]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $reportCard = ReportCard::create([
+            'student_id' => $otherStudent->id,
+            'term_id' => $term->id,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get("/student/report-cards/{$reportCard->id}/download");
+        $response->assertForbidden();
     }
 }
