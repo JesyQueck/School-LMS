@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AcademicStructureController;
 use App\Http\Controllers\Admin\AccountController;
+use App\Http\Controllers\Admin\AnnouncementsController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
@@ -23,8 +25,6 @@ use App\Http\Controllers\Student\AttendanceController as StudentAttendanceContro
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Student\FeesController as StudentFeesController;
 use App\Http\Controllers\Student\ReportCardController as StudentReportCardController;
-use App\Http\Controllers\Student\ResultsController as StudentResultsController;
-use App\Http\Controllers\Student\AssignmentController as StudentAssignmentController;
 use App\Http\Controllers\Student\TimetableController as StudentTimetableController;
 use App\Http\Controllers\Student\ProfileController as StudentProfileController;
 use App\Http\Controllers\Parent\ParentReportCardController;
@@ -57,19 +57,6 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'password.only'])->group(function () {
     Route::get('/change-password', [PasswordChangeController::class, 'show'])->name('password.change');
     Route::post('/change-password', [PasswordChangeController::class, 'update'])->name('password.change.update');
-});
-
-Route::middleware('auth')->group(function () {
-    Route::post('/notifications/mark-all-read', function () {
-        \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true, 'read_at' => now()]);
-        return back()->with('status', 'All notifications marked as read.');
-    })->name('notifications.mark-all-read');
-    
-    Route::post('/notifications/{notification}/read', function (\App\Models\Notification $notification) {
-        if ($notification->user_id !== auth()->id()) abort(403);
-        $notification->update(['is_read' => true, 'read_at' => now()]);
-        return response()->json(['status' => 'ok']);
-    })->name('notifications.read');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
@@ -114,12 +101,10 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {
         Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
-        Route::get('/results', [StudentResultsController::class, 'index'])->name('results');
         Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance');
         Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');
         Route::get('/report-cards', [StudentReportCardController::class, 'index'])->name('report-cards');
         Route::get('/report-cards/{reportCard}/download', [StudentReportCardController::class, 'download'])->name('report-cards.download');
-        Route::get('/assignments', [StudentAssignmentController::class, 'index'])->name('assignments');
         Route::get('/timetable', [StudentTimetableController::class, 'index'])->name('timetable');
         Route::get('/profile', [StudentProfileController::class, 'index'])->name('profile');
         Route::get('/announcements', [StudentAnnouncementsController::class, 'index'])->name('announcements');
@@ -157,13 +142,21 @@ Route::middleware('auth')->group(function () {
         Route::post('/finance/fee-types', [FinanceController::class, 'createFeeType'])->name('finance.fee-types.store');
         Route::post('/finance/student-fees', [FinanceController::class, 'createStudentFee'])->name('finance.student-fees.store');
         Route::post('/finance/payments', [FinanceController::class, 'createPayment'])->name('finance.payments.store');
+        Route::get('/finance/student-fees/{studentFee}', [FinanceController::class, 'showStudentFee'])->name('finance.student-fees.show');
+        Route::get('/finance/payments/{payment}/receipt', [FinanceController::class, 'paymentReceipt'])->name('finance.payments.receipt');
 
         Route::get('/results', [ResultsController::class, 'index'])->name('results');
         Route::get('/results/export', [ResultsController::class, 'exportResults'])->name('results.export');
         Route::post('/results', [ResultsController::class, 'store'])->name('results.store');
         Route::post('/results/{result}/lock', [ResultsController::class, 'lock'])->name('results.lock');
 
-        Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards');
+        Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements');
+        Route::get('/announcements/create', [AnnouncementsController::class, 'create'])->name('announcements.create');
+        Route::post('/announcements', [AnnouncementsController::class, 'store'])->name('announcements.store');
+
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
+
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
         Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
         Route::post('/report-cards/{reportCard}/approve', [ReportCardController::class, 'approve'])->name('report-cards.approve');

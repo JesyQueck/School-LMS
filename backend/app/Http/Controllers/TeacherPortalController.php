@@ -43,35 +43,57 @@ class TeacherPortalController extends Controller
 
     public function storeAttendance(Request $request)
     {
-        $data = $request->validate([
+        $teacher = $request->user()->teacher;
+
+        $validated = $request->validate([
             'class_id' => ['required', 'exists:classes,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'date' => ['required', 'date'],
-            'status' => ['required', 'array'],
         ]);
 
-        $teacher = $request->user()->teacher;
-        $class_id = $data['class_id'];
-        $term_id = $data['term_id'];
-        $date = $data['date'];
+        $class_id = $validated['class_id'];
+        $term_id = $validated['term_id'];
+        $date = $validated['date'];
 
-        foreach ($data['status'] as $student_id => $status) {
-            if (!is_numeric($student_id)) {
-                continue;
+        $statusData = $request->input('status');
+
+        if (is_array($statusData)) {
+            foreach ($statusData as $student_id => $status) {
+                if (!is_numeric($student_id)) {
+                    continue;
+                }
+
+                Attendance::updateOrCreate(
+                    [
+                        'student_id' => $student_id,
+                        'date' => $date,
+                    ],
+                    [
+                        'class_id' => $class_id,
+                        'term_id' => $term_id,
+                        'status' => $status,
+                        'marked_by' => $teacher?->id ?? $request->user()->id,
+                    ]
+                );
             }
+        } else {
+            $student_id = $request->input('student_id');
+            $status = $statusData;
 
-            Attendance::updateOrCreate(
-                [
-                    'student_id' => $student_id,
-                    'date' => $date,
-                ],
-                [
-                    'class_id' => $class_id,
-                    'term_id' => $term_id,
-                    'status' => $status,
-                    'marked_by' => $teacher?->id ?? $request->user()->id,
-                ]
-            );
+            if ($student_id && $status) {
+                Attendance::updateOrCreate(
+                    [
+                        'student_id' => $student_id,
+                        'date' => $date,
+                    ],
+                    [
+                        'class_id' => $class_id,
+                        'term_id' => $term_id,
+                        'status' => $status,
+                        'marked_by' => $teacher?->id ?? $request->user()->id,
+                    ]
+                );
+            }
         }
 
         $request->session()->forget('attendance_started_today_' . $date);
@@ -80,10 +102,11 @@ class TeacherPortalController extends Controller
             'class_id' => $class_id,
             'term_id' => $term_id,
             'date' => $date,
-            'student_count' => count($data['status']),
+            'student_id' => $student_id ?? null,
+            'status' => $statusData,
         ]);
 
-        return redirect()->route('teacher.attendance')->with('status', 'Attendance recorded.');
+        return redirect()->route('teacher.dashboard')->with('status', 'Attendance recorded.');
     }
 
     public function classAttendance(Request $request)

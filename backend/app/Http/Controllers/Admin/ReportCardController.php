@@ -129,29 +129,6 @@ class ReportCardController extends Controller
             ['status' => 'published', 'is_published' => true]);
 
         $reportCard->load('student.user');
-        
-        if ($reportCard->student && $reportCard->student->user) {
-            \App\Models\Notification::create([
-                'user_id' => $reportCard->student->user->id,
-                'recipient_role' => 'student',
-                'title' => 'Report Card Published',
-                'message' => 'Your report card for ' . ($reportCard->term->name ?? 'Current Term') . ' has been published.',
-                'type' => 'success',
-                'is_read' => false,
-            ]);
-        }
-
-        $parentUser = \App\Models\ParentProfile::where('student_id', $reportCard->student_id)?->first()?->user;
-        if ($parentUser) {
-            \App\Models\Notification::create([
-                'user_id' => $parentUser->id,
-                'recipient_role' => 'parent',
-                'title' => 'Report Card Published',
-                'message' => 'Report card for ' . ($reportCard->student->full_name ?? 'your child') . ' has been published.',
-                'type' => 'info',
-                'is_read' => false,
-            ]);
-        }
 
         return redirect()->route('admin.report-cards')->with('status', 'Report card published.');
     }

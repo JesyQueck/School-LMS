@@ -218,25 +218,7 @@ $reportCard = ReportCard::updateOrCreate(
             ['status' => 'review'], 
             ['status' => 'pending_principal_approval']);
 
-        $this->notifyPrincipalPendingApproval();
-
         return redirect()->route('teacher.report-cards.index')->with('status', 'Report card submitted for principal review.');
-    }
-
-    protected function notifyPrincipalPendingApproval(): void
-    {
-        $pendingCount = ReportCard::where('status', 'pending_principal_approval')->count();
-        $adminUser = \App\Models\User::where('role', 'admin')->first();
-        if ($adminUser) {
-            \App\Models\Notification::create([
-                'user_id' => $adminUser->id,
-                'recipient_role' => 'admin',
-                'title' => 'Report Cards Awaiting Approval',
-                'message' => $pendingCount . ' report cards are awaiting your approval.',
-                'type' => 'info',
-                'is_read' => false,
-            ]);
-        }
     }
 
     public function download(ReportCard $reportCard)
