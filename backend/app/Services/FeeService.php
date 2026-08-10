@@ -85,4 +85,43 @@ class FeeService
     {
         return 'RCPT-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
     }
+
+    /**
+     * School-wide finance summary.
+     *
+     * @return array{expected:float, collected:float, outstanding:float, collection_rate:float, paid:int, partial:int, unpaid:int}
+     */
+    public function financeSummary(): array
+    {
+        $studentFees = StudentFee::with('payments')->get();
+
+        $expected = (float) $studentFees->sum(fn ($f) => $f->amount_expected ?? 0);
+        $collected = (float) $studentFees->sum(fn ($f) => $f->payments->sum('amount_paid'));
+
+        $paid = 0;
+        $partial = 0;
+        $unpaid = 0;
+
+        foreach ($studentFees as $fee) {
+            $totalPaid = (float) $fee->payments->sum('amount_paid');
+            $exp = (float) $fee->amount_expected;
+            if ($totalPaid >= $exp && $exp > 0) {
+                $paid++;
+            } elseif ($totalPaid > 0) {
+                $partial++;
+            } else {
+                $unpaid++;
+            }
+        }
+
+        return [
+            'expected' => $expected,
+            'collected' => $collected,
+            'outstanding' => max(0, $expected - $collected),
+            'collection_rate' => $expected > 0 ? round(($collected / $expected) * 100, 1) : 0,
+            'paid' => $paid,
+            'partial' => $partial,
+            'unpaid' => $unpaid,
+        ];
+    }
 }

@@ -20,7 +20,9 @@ class AuditLogTest extends TestCase
 
     public function test_admin_can_create_class_and_audit_log_is_recorded(): void
     {
-        $adminUser = User::factory()->create(['role' => 'admin']);
+        $adminUser = User::factory()->create([
+            'role' => 'admin',
+        ]);
 
         $this->actingAs($adminUser);
 
@@ -29,6 +31,7 @@ class AuditLogTest extends TestCase
         ]);
 
         $response->assertRedirect('/admin/classes');
+
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $adminUser->id,
             'action' => 'class.created',
@@ -38,35 +41,54 @@ class AuditLogTest extends TestCase
 
     public function test_admin_can_create_student_and_audit_log_is_recorded(): void
     {
-        $adminUser = User::factory()->create(['role' => 'admin']);
-        $class = SchoolClass::create(['name' => 'JSS 1']);
-        $studentUser = User::factory()->create();
+        $adminUser = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $class = SchoolClass::create([
+            'name' => 'JSS 1',
+        ]);
 
         $this->actingAs($adminUser);
 
         $response = $this->post('/admin/students', [
-            'user_id' => $studentUser->id,
+            'name' => 'Jane Student',
+            'email' => 'jane.student@example.com',
             'class_id' => $class->id,
-            'admission_number' => 'ADM701',
+            'date_of_birth' => '2012-05-10',
+            'gender' => 'female',
+            'password' => 'Password123',
         ]);
 
         $response->assertRedirect('/admin/students');
+
+        $student = Student::whereHas('user', function ($query) {
+            $query->where('email', 'jane.student@example.com');
+        })->first();
+
+        $this->assertNotNull($student);
+
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $adminUser->id,
             'action' => 'student.created',
             'target_model' => Student::class,
+            'target_id' => $student->id,
         ]);
     }
 
     public function test_admin_can_create_result_and_audit_log_is_recorded(): void
     {
-        $adminUser = User::factory()->create(['role' => 'admin']);
+        $adminUser = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
         $session = AcademicSession::create([
             'name' => '2026/2027',
             'start_date' => '2026-09-01',
             'end_date' => '2027-07-31',
             'is_current' => true,
         ]);
+
         $term = Term::create([
             'academic_session_id' => $session->id,
             'name' => 'First Term',
@@ -74,12 +96,20 @@ class AuditLogTest extends TestCase
             'end_date' => '2026-12-20',
             'is_current' => true,
         ]);
-        $class = SchoolClass::create(['name' => 'JSS 1']);
-        $subject = Subject::create(['name' => 'English']);
+
+        $class = SchoolClass::create([
+            'name' => 'JSS 1',
+        ]);
+
+        $subject = Subject::create([
+            'name' => 'English',
+        ]);
+
         $classSubject = ClassSubject::create([
             'class_id' => $class->id,
             'subject_id' => $subject->id,
         ]);
+
         $student = Student::create([
             'user_id' => User::factory()->create()->id,
             'class_id' => $class->id,
@@ -98,6 +128,7 @@ class AuditLogTest extends TestCase
         ]);
 
         $response->assertRedirect('/admin/results');
+
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $adminUser->id,
             'action' => 'result.created',
@@ -107,13 +138,17 @@ class AuditLogTest extends TestCase
 
     public function test_admin_can_lock_result_and_audit_log_is_recorded(): void
     {
-        $adminUser = User::factory()->create(['role' => 'admin']);
+        $adminUser = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
         $session = AcademicSession::create([
             'name' => '2026/2027',
             'start_date' => '2026-09-01',
             'end_date' => '2027-07-31',
             'is_current' => true,
         ]);
+
         $term = Term::create([
             'academic_session_id' => $session->id,
             'name' => 'First Term',
@@ -121,17 +156,26 @@ class AuditLogTest extends TestCase
             'end_date' => '2026-12-20',
             'is_current' => true,
         ]);
-        $class = SchoolClass::create(['name' => 'JSS 1']);
-        $subject = Subject::create(['name' => 'English']);
+
+        $class = SchoolClass::create([
+            'name' => 'JSS 1',
+        ]);
+
+        $subject = Subject::create([
+            'name' => 'English',
+        ]);
+
         $classSubject = ClassSubject::create([
             'class_id' => $class->id,
             'subject_id' => $subject->id,
         ]);
+
         $student = Student::create([
             'user_id' => User::factory()->create()->id,
             'class_id' => $class->id,
             'admission_no' => 'ADM703',
         ]);
+
         $result = Result::create([
             'student_id' => $student->id,
             'class_subject_id' => $classSubject->id,
@@ -148,6 +192,7 @@ class AuditLogTest extends TestCase
         $response = $this->post("/admin/results/{$result->id}/lock");
 
         $response->assertRedirect('/admin/results');
+
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $adminUser->id,
             'action' => 'result.locked',
@@ -158,13 +203,17 @@ class AuditLogTest extends TestCase
 
     public function test_admin_can_publish_report_card_and_audit_log_is_recorded(): void
     {
-        $adminUser = User::factory()->create(['role' => 'admin']);
+        $adminUser = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
         $session = AcademicSession::create([
             'name' => '2026/2027',
             'start_date' => '2026-09-01',
             'end_date' => '2027-07-31',
             'is_current' => true,
         ]);
+
         $term = Term::create([
             'academic_session_id' => $session->id,
             'name' => 'First Term',
@@ -172,11 +221,17 @@ class AuditLogTest extends TestCase
             'end_date' => '2026-12-20',
             'is_current' => true,
         ]);
+
+        $class = SchoolClass::create([
+            'name' => 'JSS 1',
+        ]);
+
         $student = Student::create([
             'user_id' => User::factory()->create()->id,
-            'class_id' => SchoolClass::create(['name' => 'JSS 1'])->id,
+            'class_id' => $class->id,
             'admission_no' => 'ADM704',
         ]);
+
         $reportCard = ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
@@ -185,9 +240,12 @@ class AuditLogTest extends TestCase
 
         $this->actingAs($adminUser);
 
-        $response = $this->post("/admin/report-cards/{$reportCard->id}/publish");
+        $response = $this->post(
+            "/admin/report-cards/{$reportCard->id}/publish"
+        );
 
         $response->assertRedirect('/admin/report-cards');
+
         $this->assertDatabaseHas('audit_logs', [
             'user_id' => $adminUser->id,
             'action' => 'report_card.published',

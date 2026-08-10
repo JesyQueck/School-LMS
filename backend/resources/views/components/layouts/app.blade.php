@@ -30,34 +30,62 @@
                     @php $role = auth()->user()->role; @endphp
 
                     @if($role === 'admin')
-                        <x-layout.sidebar-item href="/admin/dashboard" icon="layout-dashboard" label="Dashboard" />
-                        <x-layout.sidebar-item href="/admin/accounts" icon="user-check" label="Accounts" />
+                        <x-layout.sidebar-item href="/admin" icon="layout-dashboard" label="Dashboard" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
                         <x-layout.sidebar-item href="/admin/classes" icon="school" label="Classes" />
-                        <x-layout.sidebar-item href="/admin/teachers" icon="graduation-cap" label="Teachers" />
-                        <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />
+                        <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic Structure" />
+                        <x-layout.sidebar-item href="/admin/assignments" icon="book-open" label="Teacher Assignments" />
                         <x-layout.sidebar-item href="/admin/results" icon="clipboard-list" label="Results" />
-                        <x-layout.sidebar-item href="/admin/finance" icon="wallet" label="Finance" />
                         <x-layout.sidebar-item href="/admin/report-cards" icon="file-text" label="Report Cards" />
-                        <x-layout.sidebar-item href="/admin/assignments" icon="book-open" label="Assignments" />
-                        <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
+                        <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />
+                        <x-layout.sidebar-item href="/admin/teachers" icon="graduation-cap" label="Teachers" />
+                        <x-layout.sidebar-item href="/admin/accounts" icon="user-check" label="Accounts" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Finance</div>
+                        <x-layout.sidebar-item href="/admin/finance" icon="wallet" label="Finance" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Communication</div>
+                        <x-layout.sidebar-item href="/admin/announcements" icon="megaphone" label="Announcements" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">System</div>
+                        <x-layout.sidebar-item href="/admin/audit-logs" icon="clipboard" label="Audit Logs" />
+                        <x-layout.sidebar-item href="/admin/accounts" icon="settings" label="Settings" />
+
                         <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @elseif($role === 'teacher')
                         <x-teacher-nav />
                     @elseif($role === 'parent')
                         <x-layout.sidebar-item href="/parent/dashboard" icon="layout-dashboard" label="Dashboard" />
-                        <x-layout.sidebar-item href="/parent/timetable" icon="calendar" label="Timetable" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">My Children</div>
+                        <x-layout.sidebar-item href="/parent/dashboard" icon="users" label="All Children" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
+                        <x-layout.sidebar-item href="/parent/timetable" icon="calendar-check" label="Timetable" />
                         <x-layout.sidebar-item href="/parent/announcements" icon="megaphone" label="Announcements" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Account</div>
                         <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @elseif($role === 'student')
                         <x-layout.sidebar-item href="/student/dashboard" icon="layout-dashboard" label="Dashboard" />
-                        <x-layout.sidebar-item href="/student/results" icon="clipboard-list" label="Results" />
-                        <x-layout.sidebar-item href="/student/attendance" icon="calendar" label="Attendance" />
-                        <x-layout.sidebar-item href="/student/fees" icon="wallet" label="Fees" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
                         <x-layout.sidebar-item href="/student/report-cards" icon="file-text" label="Report Cards" />
-                        <x-layout.sidebar-item href="/student/assignments" icon="book-open" label="Assignments" />
                         <x-layout.sidebar-item href="/student/timetable" icon="calendar-check" label="Timetable" />
-                        <x-layout.sidebar-item href="/student/profile" icon="user" label="Profile" />
+                        <x-layout.sidebar-item href="/student/attendance" icon="calendar" label="Attendance" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Finance</div>
+                        <x-layout.sidebar-item href="/student/fees" icon="wallet" label="My Fees" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Communication</div>
                         <x-layout.sidebar-item href="/student/announcements" icon="megaphone" label="Announcements" />
+
+                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Account</div>
+                        <x-layout.sidebar-item href="/student/profile" icon="user" label="My Profile" />
+                        <x-layout.sidebar-item href="/change-password" icon="settings" label="Change Password" />
                         <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
                     @endif
                 @endif

@@ -21,15 +21,53 @@ class FinanceController extends Controller
         protected FeeService $feeService,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
+        $studentFees = StudentFee::with(['student', 'feeType', 'term', 'payments'])
+            ->when($request->filled('class_id'), fn ($q) => $q->whereHas('student', fn ($s) => $s->where('class_id', $request->class_id)))
+            ->when($request->filled('term_id'), fn ($q) => $q->where('term_id', $request->term_id))
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->search;
+                $q->whereHas('student', fn ($s) => $s
+                    ->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('admission_no', 'like', "%{$search}%"));
+            })
+            ->latest()
+            ->get();
+
+        if ($request->filled('status')) {
+            $status = $request->status;
+            $studentFees = $studentFees->filter(fn ($fee) => $this->feeService->recomputeStatus($fee) === $status)->values();
+        }
+
+        $studentFees->each(fn ($fee) => $fee->computed_status = $this->feeService->recomputeStatus($fee));
+
+        $payments = Payment::with(['studentFee.student', 'studentFee.feeType', 'recordedBy'])
+            ->latest('payment_date')
+            ->get();
+
         return view('admin.finance.index', [
+            'finance' => $this->feeService->financeSummary(),
             'feeTypes' => FeeType::with(['term', 'class'])->get(),
-            'studentFees' => StudentFee::with(['student', 'feeType', 'term', 'payments'])->get(),
-            'payments' => Payment::with(['studentFee', 'recordedBy'])->get(),
+            'studentFees' => $studentFees,
+            'payments' => $payments,
             'students' => Student::with('class')->get(),
             'terms' => Term::all(),
             'classes' => SchoolClass::all(),
+            'filters' => $request->only(['class_id', 'term_id', 'status', 'search']),
+        ]);
+    }
+
+    public function showStudentFee(StudentFee $studentFee)
+    {
+        $studentFee->load(['student.class', 'feeType', 'term', 'payments.recordedBy']);
+
+        return view('admin.finance.student-fee', [
+            'studentFee' => $studentFee,
+            'status' => $this->feeService->recomputeStatus($studentFee),
+            'paid' => $studentFee->payments->sum('amount_paid'),
+            'outstanding' => $this->feeService->outstandingBalance($studentFee),
         ]);
     }
 
@@ -42,9 +80,9 @@ class FinanceController extends Controller
             'class_id' => ['nullable', 'exists:classes,id'],
         ]);
 
-        FeeType::create($data);
+        $feeType = FeeType::create($data);
 
-        $this->audit($request, 'fee_type.created', FeeType::class, FeeType::query()->latest('id')->value('id'), null, $data);
+        $this->audit($request, 'fee_type.created', FeeType::class, $feeType->id, null, $data);
 
         return redirect()->route('admin.finance')->with('status', 'Fee type created.');
     }
@@ -71,18 +109,35 @@ class FinanceController extends Controller
         $data = $request->validate([
             'student_fee_id' => ['required', 'exists:student_fees,id'],
             'receipt_number' => ['nullable', 'string', 'max:255'],
-            'amount_paid' => ['required', 'numeric'],
+            'amount_paid' => ['required', 'numeric', 'gt:0'],
             'payment_method' => ['nullable', 'string', 'max:255'],
             'payment_date' => ['required', 'date'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string'],
         ]);
 
         $studentFee = StudentFee::findOrFail($data['student_fee_id']);
 
-        $this->feeService->recordPayment($studentFee, $data, $request->user());
+        try {
+            $payment = $this->feeService->recordPayment($studentFee, $data, $request->user());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['amount_paid' => $e->getMessage()])->withInput();
+        }
 
-        $payment = Payment::query()->latest('id')->first();
-        $this->audit($request, 'payment.created', Payment::class, $payment?->id, null, $data);
+        $this->audit($request, 'payment.created', Payment::class, $payment->id, null, $data);
 
         return redirect()->route('admin.finance')->with('status', 'Payment recorded.');
+    }
+
+    public function paymentReceipt(Request $request, Payment $payment)
+    {
+        $payment->load(['studentFee.student.class', 'studentFee.feeType', 'studentFee.term', 'recordedBy']);
+
+        if ($request->has('download')) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.finance.receipt-pdf', compact('payment'));
+            return $pdf->download("receipt-{$payment->receipt_number}.pdf");
+        }
+
+        return view('admin.finance.receipt', compact('payment'));
     }
 }
