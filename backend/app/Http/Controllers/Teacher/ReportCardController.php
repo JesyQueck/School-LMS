@@ -67,8 +67,11 @@ class ReportCardController extends Controller
 
         $hasScores = $student->results()->where('term_id', $term->id)->exists();
         
-$reportCard = ReportCard::updateOrCreate(
-            ['student_id' => $studentId, 'term_id' => $termId],
+        $reportCard = ReportCard::updateOrCreate(
+            [
+                'student_id' => $studentId,
+                'term_id' => $term->id,
+            ],
             [
                 'class_teacher_remark' => $validated['comment'],
                 'affective_domain' => $validated['affective_domain'] ?? null,
