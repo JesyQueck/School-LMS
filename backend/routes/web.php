@@ -159,6 +159,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
 
+        Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
         Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
         Route::post('/report-cards/{reportCard}/approve', [ReportCardController::class, 'approve'])->name('report-cards.approve');

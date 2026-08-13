@@ -75,7 +75,7 @@ class ReportCardController extends Controller
 
         $this->audit($request, 'report_card.updated', ReportCard::class, $reportCard->id, null, $studentData);
 
-        return redirect()->route('admin.report-cards')->with('status', 'Report card saved.');
+        return redirect()->route('admin.report-cards.index')->with('status', 'Report card saved.');
     }
 
     public function returnForCorrection(ReportCard $reportCard, Request $request)
@@ -87,7 +87,7 @@ class ReportCardController extends Controller
             ['status' => $oldStatus], 
             ['status' => 'returned']);
 
-        return redirect()->route('admin.report-cards')->with('status', 'Report card returned for correction.');
+        return redirect()->route('admin.report-cards.index')->with('status', 'Report card returned for correction.');
     }
 
     public function approve(ReportCard $reportCard, Request $request)
@@ -114,7 +114,7 @@ class ReportCardController extends Controller
             ['status' => $oldStatus, 'principal_remark' => null], 
             ['status' => 'approved', 'principal_remark' => $validated['principal_remark']]);
 
-        return redirect()->route('admin.report-cards')->with('status', 'Report card approved.');
+        return redirect()->route('admin.report-cards.index')->with('status', 'Report card approved.');
     }
 
     public function publish(ReportCard $reportCard, Request $request)
@@ -130,7 +130,7 @@ class ReportCardController extends Controller
 
         $reportCard->load('student.user');
 
-        return redirect()->route('admin.report-cards')->with('status', 'Report card published.');
+        return redirect()->route('admin.report-cards.index')->with('status', 'Report card published.');
     }
 
     public function download(ReportCard $reportCard)
@@ -153,6 +153,6 @@ class ReportCardController extends Controller
 
         $this->audit($request, 'report_cards.published_all', ReportCard::class, null, null, ['term_id' => $termId]);
 
-        return redirect()->route('admin.report-cards')->with('status', "{$updated} report card(s) published successfully.");
+        return redirect()->route('admin.report-cards.index')->with('status', "{$updated} report card(s) published successfully.");
     }
 }
