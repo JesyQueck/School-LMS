@@ -302,8 +302,8 @@ class TeacherPortalController extends Controller
 
     public function announcements()
     {
-        $announcements = Announcement::where('target_audience', 'all')
-            ->orWhere('target_audience', 'teacher')
+        $announcements = Announcement::where('target_role', 'all')
+            ->orWhere('target_role', 'teacher')
             ->latest()
             ->get();
 

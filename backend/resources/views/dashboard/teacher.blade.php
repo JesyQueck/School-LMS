@@ -43,8 +43,8 @@
 
         $todayAttendanceRate = $totalStudents > 0 ? round(($totalStudents / max($totalStudents, 1)) * 100) : 0;
 
-        $recentAnnouncements = \App\Models\Announcement::where('target_audience', 'all')
-            ->orWhere('target_audience', 'teacher')
+        $recentAnnouncements = \App\Models\Announcement::where('target_role', 'all')
+            ->orWhere('target_role', 'teacher')
             ->latest()
             ->limit(3)
             ->get();
