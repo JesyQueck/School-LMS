@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
+use App\Models\ClassAssignment;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -43,6 +44,12 @@ class TeacherPortalTest extends TestCase
         ]);
 
         $class = SchoolClass::create(['name' => 'JSS 1']);
+        ClassAssignment::create([
+            'teacher_id' => $teacher->id,
+            'class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]);
         $subject = Subject::create(['name' => 'English']);
         $classSubject = ClassSubject::create([
             'class_id' => $class->id,

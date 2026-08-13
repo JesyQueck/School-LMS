@@ -1,4 +1,4 @@
-<x-layouts.app title="Teacher Dashboard">
+﻿<x-layouts.app title="Teacher Dashboard">
     @php
         $user = auth()->user();
         $teacher = $user->teacher;
@@ -49,8 +49,7 @@
             ->limit(3)
             ->get();
     @endphp
-
-    {{-- Header --}}
+{{-- Header --}}
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ $fullName }} 👋</h1>
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Welcome back to Greenfield Academy.</p>
@@ -147,7 +146,7 @@
                 <div class="p-6 space-y-3">
                     @forelse($recentAnnouncements as $announcement)
                         <div>
-                            <p class="text-sm font-medium text-neutral-900 dark:text-white">📢 {{ $announcement->title }}</p>
+                            <p class="text-sm font-medium text-neutral-900 dark:text-white">ðŸ“¢ {{ $announcement->title }}</p>
                             <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2">{{ $announcement->body }}</p>
                         </div>
                     @empty
@@ -197,7 +196,7 @@
                         </div>
                     </div>
                     <div class="flex gap-3">
-                        <a href="{{ route('teacher.class.students', $formClass) }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">View Students</a>
+                        <a href="{{ route('teacher.classes.show', $formClass) }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">View Students</a>
                         <a href="{{ route('teacher.class.attendance') }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Attendance</a>
                         <a href="{{ route('teacher.class-performance') }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Class Performance</a>
                     </div>
@@ -206,3 +205,10 @@
         </div>
     @endif
 </x-layouts.app>
+
+
+
+
+
+
+
