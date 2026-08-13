@@ -36,7 +36,6 @@
                         <x-layout.sidebar-item href="/admin/classes" icon="school" label="Classes" />
                         <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic Structure" />
                         <x-layout.sidebar-item href="/admin/assignments" icon="book-open" label="Teacher Assignments" />
-                        <x-layout.sidebar-item href="/admin/results" icon="clipboard-list" label="Results" />
                         <x-layout.sidebar-item href="/admin/report-cards" icon="file-text" label="Report Cards" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
@@ -61,7 +60,7 @@
                         <x-layout.sidebar-item href="/parent/dashboard" icon="layout-dashboard" label="Dashboard" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">My Children</div>
-                        <x-layout.sidebar-item href="/parent/dashboard" icon="users" label="All Children" />
+                        <x-layout.sidebar-item href="/parent/dashboard" icon="user" label="All Children" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
                         <x-layout.sidebar-item href="/parent/timetable" icon="calendar-check" label="Timetable" />

@@ -147,11 +147,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/finance/student-fees/{studentFee}', [FinanceController::class, 'showStudentFee'])->name('finance.student-fees.show');
         Route::get('/finance/payments/{payment}/receipt', [FinanceController::class, 'paymentReceipt'])->name('finance.payments.receipt');
 
-        Route::get('/results', [ResultsController::class, 'index'])->name('results');
-        Route::get('/results/export', [ResultsController::class, 'exportResults'])->name('results.export');
-        Route::post('/results', [ResultsController::class, 'store'])->name('results.store');
-        Route::post('/results/{result}/lock', [ResultsController::class, 'lock'])->name('results.lock');
-
         Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements');
         Route::get('/announcements/create', [AnnouncementsController::class, 'create'])->name('announcements.create');
         Route::post('/announcements', [AnnouncementsController::class, 'store'])->name('announcements.store');

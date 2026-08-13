@@ -16,10 +16,10 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Children" :value="$stats['children']" icon="users" />
+        <x-ui.stat-card label="Children" :value="$stats['children']" icon="school" />
         <x-ui.stat-card label="Attendance" :value="$stats['attendance'] . '%'" icon="calendar-check" />
         <x-ui.stat-card label="Avg. Result" :value="$stats['avg_result'] . '%'" icon="clipboard-list" />
-        <x-ui.stat-card label="Fees Due" :value="'₦' . number_format($stats['fees_due'], 2)" icon="wallet" />
+        <x-ui.stat-card label="Fees Due" :value="'₦' . number_format($stats['fees_due'], 2)" icon="book-open" />
     </div>
 
     <div class="space-y-8">
