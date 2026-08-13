@@ -9,8 +9,8 @@
 
     if ($hasClassAssignment()) {
         $classTeacherFeatures = [
-            ['href' => route('teacher.class.attendance'), 'icon' => 'school', 'label' => 'My Class'],
-            ['href' => route('teacher.attendance'), 'icon' => 'calendar-check', 'label' => 'Attendance'],
+            ['href' => route('teacher.classes.index'), 'icon' => 'school', 'label' => 'My Classes'],
+            ['href' => route('teacher.class.attendance'), 'icon' => 'calendar-check', 'label' => 'Attendance'],
             ['href' => route('teacher.report-cards.index'), 'icon' => 'file-text', 'label' => 'Report Cards'],
             ['href' => route('teacher.class-performance'), 'icon' => 'bar-chart-3', 'label' => 'Class Performance'],
         ];
@@ -34,6 +34,9 @@
         $features[] = ['isDivider' => true, 'label' => 'Subject Teacher'];
         $features = array_merge($features, $subjectTeacherFeatures);
     }
+
+    $features[] = ['href' => route('teacher.timetable'), 'icon' => 'calendar', 'label' => 'Timetable'];
+    $features[] = ['href' => route('teacher.announcements'), 'icon' => 'megaphone', 'label' => 'Announcements'];
     $features[] = ['label' => 'Logout', 'isLogout' => true];
 @endphp
 

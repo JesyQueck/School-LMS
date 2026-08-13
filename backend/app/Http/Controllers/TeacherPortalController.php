@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attendance;
 use App\Models\ClassAssignment;
 use App\Models\Teacher;
 use App\Models\TeacherClassSubject;
-use App\Models\Student;
+use App\Models\Timetable;
+use App\Models\Announcement;
+use App\Models\Term;
 use App\Services\TeacherDashboardService;
 use Illuminate\Http\Request;
 
@@ -24,20 +25,34 @@ class TeacherPortalController extends Controller
         $user = $request->user();
         $teacher = Teacher::where('user_id', $user->id)->first();
 
-        $assignments = collect();
+        $subjectAssignments = collect();
         if ($teacher) {
-            $assignments = TeacherClassSubject::with(['classSubject.class', 'classSubject.subject'])
+            $subjectAssignments = TeacherClassSubject::with(['classSubject.class', 'classSubject.subject'])
                 ->where('teacher_id', $teacher->id)
                 ->where('is_active', true)
                 ->get();
         }
 
-        $classAssignment = $this->dashboardService->getClassAssignment($user);
+        $isClassTeacher = $teacher ? ClassAssignment::where('teacher_id', $teacher->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->exists() : false;
+
+        $classAssignment = $isClassTeacher
+            ? ClassAssignment::with(['class', 'term', 'academicSession'])
+                ->where('teacher_id', $teacher->id)
+                ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+                ->first()
+            : null;
+
+        $currentTerm = Term::where('is_current', true)->with('academicSession')->first();
 
         return view('dashboard.teacher', [
-            'assignments' => $assignments,
+            'teacher' => $teacher,
+            'subjectAssignments' => $subjectAssignments,
             'classAssignment' => $classAssignment,
-            'canAccessClassFeatures' => $this->dashboardService->canAccessClassFeatures($user),
+            'isClassTeacher' => $isClassTeacher,
+            'isSubjectTeacher' => $subjectAssignments->isNotEmpty(),
+            'currentTerm' => $currentTerm,
         ]);
     }
 
@@ -63,7 +78,7 @@ class TeacherPortalController extends Controller
                     continue;
                 }
 
-                Attendance::updateOrCreate(
+                \App\Models\Attendance::updateOrCreate(
                     [
                         'student_id' => $student_id,
                         'date' => $date,
@@ -81,7 +96,7 @@ class TeacherPortalController extends Controller
             $status = $statusData;
 
             if ($student_id && $status) {
-                Attendance::updateOrCreate(
+                \App\Models\Attendance::updateOrCreate(
                     [
                         'student_id' => $student_id,
                         'date' => $date,
@@ -128,7 +143,7 @@ class TeacherPortalController extends Controller
                 ->get();
         }
 
-        return view('teacher.my-class.index', [
+        return view('teacher.attendance.class-attendance', [
             'classAssignment' => $activeClassAssignment,
             'students' => $students,
         ]);
@@ -148,7 +163,7 @@ class TeacherPortalController extends Controller
 
         $students = collect();
         if ($activeClassAssignment) {
-            $students = Student::where('class_id', $activeClassAssignment->class_id)
+            $students = \App\Models\Student::where('class_id', $activeClassAssignment->class_id)
                 ->with(['user', 'fees'])
                 ->get();
         }
@@ -185,6 +200,115 @@ class TeacherPortalController extends Controller
 
         return view('teacher.assignments.index', [
             'assignments' => $assignments,
+        ]);
+    }
+
+    public function classes()
+    {
+        $teacher = Teacher::where('user_id', auth()->id())->first();
+
+        $assignments = TeacherClassSubject::with(['classSubject.class', 'classSubject.subject'])
+            ->where('teacher_id', $teacher?->id)
+            ->where('is_active', true)
+            ->get();
+
+        return view('teacher.classes.index', [
+            'assignments' => $assignments,
+        ]);
+    }
+
+    public function classStudents(\App\Models\SchoolClass $class)
+    {
+        $teacher = Teacher::where('user_id', auth()->id())->first();
+        if (!$teacher) {
+            abort(403);
+        }
+
+        $hasAccess = TeacherClassSubject::where('teacher_id', $teacher->id)
+            ->whereHas('classSubject', fn ($q) => $q->where('class_id', $class->id))
+            ->exists();
+
+        if (!$hasAccess) {
+            abort(403);
+        }
+
+        $students = \App\Models\Student::where('class_id', $class->id)
+            ->with(['user'])
+            ->get();
+
+        return view('teacher.students.index', [
+            'class' => $class,
+            'students' => $students,
+        ]);
+    }
+
+    public function timetable()
+    {
+        $teacher = Teacher::where('user_id', auth()->id())->first();
+        if (!$teacher) {
+            abort(403);
+        }
+
+        $subjectAssignments = TeacherClassSubject::where('teacher_id', $teacher->id)
+            ->where('is_active', true)
+            ->pluck('class_subject_id');
+
+        $timetable = Timetable::with(['classSubject.subject', 'classSubject.class'])
+            ->whereIn('class_subject_id', $subjectAssignments)
+            ->orderBy('day_of_week')
+            ->orderBy('start_time')
+            ->get();
+
+        return view('teacher.timetable.index', [
+            'subjectAssignmentIds' => $subjectAssignments,
+            'timetable' => $timetable,
+        ]);
+    }
+
+    public function profile()
+    {
+        $teacher = Teacher::where('user_id', auth()->id())->first();
+        if (!$teacher) {
+            abort(403);
+        }
+
+        $subjectAssignments = TeacherClassSubject::with(['classSubject.subject', 'classSubject.class'])
+            ->where('teacher_id', $teacher->id)
+            ->where('is_active', true)
+            ->get();
+
+        return view('teacher.profile.index', [
+            'teacher' => $teacher,
+            'subjectAssignments' => $subjectAssignments,
+        ]);
+    }
+
+    public function results()
+    {
+        $teacher = Teacher::where('user_id', auth()->id())->first();
+
+        $assignments = collect();
+        if ($teacher) {
+            $assignments = TeacherClassSubject::with(['classSubject.class', 'classSubject.subject'])
+                ->where('teacher_id', $teacher->id)
+                ->where('is_active', true)
+                ->get();
+        }
+
+        return view('teacher.results.index', [
+            'assignments' => $assignments,
+        ]);
+    }
+
+    public function announcements()
+    {
+        $announcements = Announcement::where('target_audience', 'all')
+            ->orWhere('target_audience', 'teacher')
+            ->latest()
+            ->get();
+
+        return view('teacher.announcements.index', [
+            'announcements' => $announcements,
         ]);
     }
 }

@@ -66,23 +66,27 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:teacher')->prefix('teacher')->name('teacher.')->group(function () {
         Route::get('/dashboard', [TeacherPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/classes', [TeacherPortalController::class, 'classes'])->name('classes.index');
+        Route::get('/classes/{class}', [TeacherPortalController::class, 'classStudents'])->name('classes.show');
         Route::get('/class/attendance', [TeacherPortalController::class, 'classAttendance'])->name('class.attendance');
         Route::get('/attendance', [TeacherPortalController::class, 'attendance'])->name('attendance');
         Route::post('/attendance', [TeacherPortalController::class, 'storeAttendance'])->name('attendance.store');
         Route::post('/attendance/start', [TeacherPortalController::class, 'startAttendance'])->name('attendance.start');
         Route::get('/assignments', [TeacherPortalController::class, 'mySubjects'])->name('assignments');
-        Route::get('/results', [ResultsController::class, 'teacherResults'])->name('results');
+        Route::get('/results', [TeacherPortalController::class, 'results'])->name('results');
         Route::get('/class-attendance', [TeacherPortalController::class, 'classAttendance'])->name('class-attendance');
-        Route::get('/report-cards', [TeacherReportCardController::class, 'index'])->name('report-cards.index');
-        Route::post('/report-cards', [TeacherReportCardController::class, 'store'])->name('report-cards.store');
-        Route::get('/report-cards/student/{student}', [TeacherReportCardController::class, 'getStudentResults'])->name('report-cards.student.results');
-        Route::get('/report-cards/progress', [TeacherReportCardController::class, 'getSubmissionProgress'])->name('report-cards.progress');
-        Route::post('/report-cards/{reportCard}/submit', [TeacherReportCardController::class, 'submitForReview'])->name('report-cards.submit');
-        Route::get('/report-cards/{reportCard}/download', [TeacherReportCardController::class, 'download'])->name('report-cards.download');
-        Route::get('/class-performance', [TeacherReportCardController::class, 'classPerformance'])->name('class-performance');
+        Route::get('/report-cards', [Teacher\ReportCardController::class, 'index'])->name('report-cards.index');
+        Route::post('/report-cards', [Teacher\ReportCardController::class, 'store'])->name('report-cards.store');
+        Route::get('/report-cards/student/{student}', [Teacher\ReportCardController::class, 'getStudentResults'])->name('report-cards.student.results');
+        Route::get('/report-cards/progress', [Teacher\ReportCardController::class, 'getSubmissionProgress'])->name('report-cards.progress');
+        Route::post('/report-cards/{reportCard}/submit', [Teacher\ReportCardController::class, 'submitForReview'])->name('report-cards.submit');
+        Route::get('/report-cards/{reportCard}/download', [Teacher\ReportCardController::class, 'download'])->name('report-cards.download');
+        Route::get('/class-performance', [Teacher\ReportCardController::class, 'classPerformance'])->name('class-performance');
+        Route::get('/timetable', [TeacherPortalController::class, 'timetable'])->name('timetable');
+        Route::get('/profile', [TeacherPortalController::class, 'profile'])->name('profile');
+        Route::get('/announcements', [TeacherPortalController::class, 'announcements'])->name('announcements');
         Route::get('/parents', [AccountController::class, 'parentCommunication'])->name('parents');
         Route::get('/assessments', [AccountController::class, 'assessments'])->name('assessments');
-        Route::get('/profile', [AccountController::class, 'teacherProfile'])->name('profile');
         Route::get('/scores', [\App\Http\Controllers\Teacher\SubjectResultsController::class, 'scores'])->name('scores');
         Route::post('/scores', [\App\Http\Controllers\Teacher\SubjectResultsController::class, 'store'])->name('scores.store');
     });

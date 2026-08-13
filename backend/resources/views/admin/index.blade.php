@@ -16,10 +16,10 @@
 
     {{-- School Statistics --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="users" />
+        <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="user" />
         <x-ui.stat-card label="Teachers" :value="number_format($totalTeachers)" icon="graduation-cap" />
         <x-ui.stat-card label="Classes" :value="number_format($totalClasses)" icon="school" />
-        <x-ui.stat-card label="Parents" :value="number_format($totalParents)" icon="users-2" />
+        <x-ui.stat-card label="Parents" :value="number_format($totalParents)" icon="user" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
