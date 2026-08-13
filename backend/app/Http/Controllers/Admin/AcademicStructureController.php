@@ -28,9 +28,29 @@ class AcademicStructureController extends Controller
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
         ]);
 
-        AcademicSession::create($data);
+        $session = AcademicSession::create($data);
 
-        return redirect()->route('admin.academic')->with('status', 'Academic session created.');
+        $this->createDefaultTerms($session);
+
+        return redirect()->route('admin.academic')->with('status', 'Academic session and its 3 terms created.');
+    }
+
+    /**
+     * Automatically create the standard 3 terms (First, Second, Third) for a session.
+     *
+     * Term dates are left blank so the admin can set the real dates later —
+     * term dates vary each year and are edited on the academic structure page.
+     */
+    protected function createDefaultTerms(AcademicSession $session): void
+    {
+        foreach (['First Term', 'Second Term', 'Third Term'] as $name) {
+            Term::create([
+                'academic_session_id' => $session->id,
+                'name' => $name,
+                'start_date' => null,
+                'end_date' => null,
+            ]);
+        }
     }
 
     public function createTerm(Request $request)
@@ -69,5 +89,42 @@ class AcademicStructureController extends Controller
         ClassSubject::create($data);
 
         return redirect()->route('admin.academic')->with('status', 'Class subject created.');
+    }
+
+    /**
+     * Mark a session as the current academic session (only one at a time).
+     */
+    public function makeSessionCurrent(AcademicSession $session)
+    {
+        AcademicSession::where('is_current', true)->update(['is_current' => false]);
+        $session->update(['is_current' => true]);
+
+        return redirect()->route('admin.academic')->with('status', "{$session->name} is now the current session.");
+    }
+
+    /**
+     * Mark a term as the current term (only one at a time).
+     */
+    public function makeTermCurrent(Term $term)
+    {
+        Term::where('is_current', true)->update(['is_current' => false]);
+        $term->update(['is_current' => true]);
+
+        return redirect()->route('admin.academic')->with('status', "{$term->name} is now the current term.");
+    }
+
+    /**
+     * Update a term's start/end dates (set by the admin as the real dates become known).
+     */
+    public function updateTerm(Request $request, Term $term)
+    {
+        $data = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $term->update($data);
+
+        return redirect()->route('admin.academic')->with('status', "{$term->name} dates updated.");
     }
 }
