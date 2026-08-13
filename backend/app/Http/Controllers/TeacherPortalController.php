@@ -255,7 +255,7 @@ class TeacherPortalController extends Controller
 
         $timetable = Timetable::with(['classSubject.subject', 'classSubject.class'])
             ->whereIn('class_subject_id', $subjectAssignments)
-            ->orderBy('day_of_week')
+            ->orderBy('day')
             ->orderBy('start_time')
             ->get();
 

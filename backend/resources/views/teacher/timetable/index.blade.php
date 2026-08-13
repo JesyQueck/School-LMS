@@ -12,11 +12,13 @@
     @php
         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
         $timetable = \App\Models\Timetable::with(['classSubject.subject', 'classSubject.class'])
-            ->whereHas('classSubject', fn ($q) => $q->whereIn('id', $subjectAssignmentIds))
-            ->orderBy('day_of_week')
-            ->orderBy('start_time')
+            ->join('class_subjects', 'timetable.class_subject_id', '=', 'class_subjects.id')
+            ->whereIn('class_subjects.id', $subjectAssignmentIds)
+            ->orderBy('timetable.day')
+            ->orderBy('timetable.start_time')
+            ->select('timetable.*')
             ->get()
-            ->groupBy('day_of_week');
+            ->groupBy('day');
     @endphp
 
     <div class="space-y-6">

@@ -34,9 +34,11 @@
         $totalStudents = \App\Models\Student::whereIn('class_id', $myClassIds)->count();
 
         $todayClasses = \App\Models\Timetable::with(['classSubject.subject', 'classSubject.class'])
-            ->whereHas('classSubject', fn ($q) => $q->whereIn('id', $subjectAssignments->pluck('class_subject_id')))
-            ->where('day_of_week', now()->format('l'))
-            ->orderBy('start_time')
+            ->join('class_subjects', 'timetable.class_subject_id', '=', 'class_subjects.id')
+            ->whereIn('class_subjects.id', $subjectAssignments->pluck('class_subject_id'))
+            ->where('timetable.day', now()->format('l'))
+            ->orderBy('timetable.start_time')
+            ->select('timetable.*')
             ->get();
 
         $todayAttendanceRate = $totalStudents > 0 ? round(($totalStudents / max($totalStudents, 1)) * 100) : 0;
