@@ -39,8 +39,8 @@ class ResultsController extends Controller
             'student_id' => ['required', 'exists:students,id'],
             'class_subject_id' => ['required', 'exists:class_subjects,id'],
             'term_id' => ['required', 'exists:terms,id'],
-            'ca_score' => ['nullable', 'numeric'],
-            'exam_score' => ['nullable', 'numeric'],
+            'ca_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'exam_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'remark' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -65,9 +65,9 @@ class ResultsController extends Controller
         return $this->csvExportService->exportResults($request);
     }
 
-    public function classAttendance()
+    public function classAttendance(Request $request)
     {
-        $class = auth()->user()->teacher?->currentClassAssignment?->class;
+        $class = $request->user()->teacher?->currentClassAssignment?->class;
 
         return view('teacher.class-attendance', [
             'class' => $class,
@@ -79,9 +79,9 @@ class ResultsController extends Controller
         return view('teacher.results');
     }
 
-    public function generateForClass()
+    public function generateForClass(Request $request)
     {
-        $classAssignment = auth()->user()->teacher?->currentClassAssignment?->load(['class', 'students']);
+        $classAssignment = $request->user()->teacher?->currentClassAssignment?->load(['class', 'students']);
 
         return view('teacher.report-cards.generate', [
             'class' => $classAssignment?->class,

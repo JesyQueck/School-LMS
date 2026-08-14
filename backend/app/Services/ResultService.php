@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Result;
 use App\Models\User;
+use InvalidArgumentException;
 use RuntimeException;
 
 class ResultService
@@ -29,6 +30,8 @@ class ResultService
 
     public function createResult(array $data, User $submittedBy): Result
     {
+        $this->validateScores($data['ca_score'] ?? null, $data['exam_score'] ?? null);
+
         $total = $this->calculateTotal($data['ca_score'] ?? null, $data['exam_score'] ?? null);
         $grading = $this->calculateGrade($total);
 
@@ -56,6 +59,8 @@ class ResultService
         if ($existing && $existing->isLocked()) {
             throw new RuntimeException('This result has been locked and cannot be modified.');
         }
+
+        $this->validateScores($data['ca_score'] ?? null, $data['exam_score'] ?? null);
 
         $total = $this->calculateTotal($data['ca_score'] ?? null, $data['exam_score'] ?? null);
         $grading = $this->calculateGrade($total);
@@ -90,5 +95,34 @@ class ResultService
         }
 
         return ($caScore ?? 0) + ($examScore ?? 0);
+    }
+
+    protected function validateScores(?float $caScore, ?float $examScore): void
+    {
+        $errors = [];
+
+        if ($caScore !== null) {
+            if ($caScore < 0) {
+                $errors[] = 'CA score cannot be negative.';
+            }
+
+            if ($caScore > 100) {
+                $errors[] = 'CA score cannot exceed 100.';
+            }
+        }
+
+        if ($examScore !== null) {
+            if ($examScore < 0) {
+                $errors[] = 'Exam score cannot be negative.';
+            }
+
+            if ($examScore > 100) {
+                $errors[] = 'Exam score cannot exceed 100.';
+            }
+        }
+
+        if ($errors) {
+            throw new InvalidArgumentException(implode(' ', $errors));
+        }
     }
 }

@@ -80,6 +80,12 @@
                                 <a href="{{ route('admin.report-cards.download', $reportCard->id) }}" class="text-xs px-2 py-1 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-dark-border rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
                                     Download
                                 </a>
+                                <form method="POST" action="{{ route('admin.report-cards.unpublish', $reportCard->id) }}" onsubmit="return confirm('Unpublish this report card for {{ $reportCard->student->full_name ?? $reportCard->student->admission_no }}? This will allow corrections.');" style="display: inline;">
+                                    @csrf
+                                    <button type="submit" class="text-xs px-2 py-1 text-white bg-red-600 hover:bg-red-700 rounded">
+                                        Unpublish
+                                    </button>
+                                </form>
                             @else
                                 <span class="text-xs font-semibold text-green-600 dark:text-green-400">Approved</span>
                                 <form method="POST" action="{{ route('admin.report-cards.publish', $reportCard->id) }}" onsubmit="return confirm('Publish this report card for {{ $reportCard->student->full_name ?? $reportCard->student->admission_no }}?');" style="display: inline;">

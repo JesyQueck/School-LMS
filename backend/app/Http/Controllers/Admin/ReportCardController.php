@@ -51,13 +51,19 @@ class ReportCardController extends Controller
             'results.*.affective_domain' => ['nullable', 'string'],
             'results.*.psychomotor_assessment' => ['nullable', 'string'],
             'results.*.health_remarks' => ['nullable', 'string'],
-            'results.*.position_in_class' => ['nullable', 'integer'],
-            'results.*.total_students_in_class' => ['nullable', 'integer'],
+            'results.*.position_in_class' => ['nullable', 'integer', 'min:1'],
+            'results.*.total_students_in_class' => ['nullable', 'integer', 'min:1'],
         ]);
 
         $studentId = $validated['student_id'];
         $termId = $validated['term_id'];
         $studentData = $validated['results'][$studentId] ?? [];
+
+        if (! empty($studentData['position_in_class']) && ! empty($studentData['total_students_in_class'])) {
+            if ($studentData['position_in_class'] > $studentData['total_students_in_class']) {
+                return back()->withErrors(['position_in_class' => 'Position cannot exceed total students in class.'])->withInput();
+            }
+        }
 
         $existing = ReportCard::where('student_id', $studentId)
             ->where('term_id', $termId)
@@ -102,10 +108,16 @@ class ReportCardController extends Controller
         $validated = $request->validate([
             'principal_remark' => ['nullable', 'string'],
             'promotion_decision' => ['nullable', 'string', 'in:promoted,repeated,transferred'],
-            'position_in_class' => ['nullable', 'integer'],
-            'total_students_in_class' => ['nullable', 'integer'],
+            'position_in_class' => ['nullable', 'integer', 'min:1'],
+            'total_students_in_class' => ['nullable', 'integer', 'min:1'],
             'next_term_begins' => ['nullable', 'date'],
         ]);
+
+        if (! empty($validated['position_in_class']) && ! empty($validated['total_students_in_class'])) {
+            if ($validated['position_in_class'] > $validated['total_students_in_class']) {
+                return back()->withErrors(['position_in_class' => 'Position cannot exceed total students in class.'])->withInput();
+            }
+        }
 
         $reportCard->update([
             'principal_remark' => $validated['principal_remark'] ?? $reportCard->principal_remark,
@@ -149,6 +161,25 @@ class ReportCardController extends Controller
         $reportCard->load('student.user');
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card published.');
+    }
+
+    public function unpublish(Request $request, ReportCard $reportCard)
+    {
+        $oldStatus = $reportCard->status;
+        $oldPublished = $reportCard->is_published;
+
+        $this->reportCardService->unpublish($reportCard);
+
+        $this->audit(
+            $request,
+            'report_card.unpublished',
+            ReportCard::class,
+            $reportCard->id,
+            ['status' => $oldStatus, 'is_published' => $oldPublished],
+            ['status' => $reportCard->fresh()->status, 'is_published' => false]
+        );
+
+        return redirect()->route('admin.report-cards.index')->with('status', 'Report card unpublished for corrections.');
     }
 
     public function download(Request $request, ReportCard $reportCard)

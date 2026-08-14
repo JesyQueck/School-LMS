@@ -18,9 +18,9 @@ class SubjectResultsController extends Controller
         protected ResultService $resultService,
     ) {}
 
-    public function scores()
+    public function scores(Request $request)
     {
-        $teacher = auth()->user()?->teacher;
+        $teacher = $request->user()->teacher;
         if (! $teacher) {
             abort(403, 'You do not have a teacher profile.');
         }
@@ -52,7 +52,7 @@ class SubjectResultsController extends Controller
 
     public function store(Request $request)
     {
-        $teacher = auth()->user()?->teacher;
+        $teacher = $request->user()->teacher;
         if (! $teacher) {
             abort(403, 'You do not have a teacher profile.');
         }
@@ -70,7 +70,23 @@ class SubjectResultsController extends Controller
             'term_id' => ['required', 'exists:terms,id'],
             'class_id' => ['required', 'exists:classes,id'],
             'results' => ['required', 'array'],
+            'results.*.ca_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'results.*.exam_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'results.*.remark' => ['nullable', 'string', 'max:255'],
         ]);
+
+        if ($validated['term_id'] != $classAssignment->term_id) {
+            return redirect()->route('teacher.scores')->with('error', 'Invalid term for your assignment.');
+        }
+
+        if ($validated['class_id'] != $classAssignment->class_id) {
+            return redirect()->route('teacher.scores')->with('error', 'Invalid class for your assignment.');
+        }
+
+        $teacherSubjectIds = TeacherClassSubject::where('teacher_id', $teacher->id)
+            ->where('is_active', true)
+            ->pluck('class_subject_id')
+            ->toArray();
 
         $subjectIdsProcessed = [];
 
@@ -79,11 +95,19 @@ class SubjectResultsController extends Controller
                 continue;
             }
 
+            if (! in_array((int) $classSubjectId, $teacherSubjectIds, true)) {
+                abort(403, 'You are not authorized to enter results for this subject.');
+            }
+
             $subjectIdsProcessed[] = $classSubjectId;
 
             foreach ($studentScores as $studentId => $scores) {
                 $student = Student::find($studentId);
                 if (! $student) {
+                    continue;
+                }
+
+                if ($student->class_id !== $classAssignment->class_id) {
                     continue;
                 }
 
@@ -98,7 +122,7 @@ class SubjectResultsController extends Controller
                         'ca_score' => $caScore,
                         'exam_score' => $examScore,
                         'remark' => $scores['remark'] ?? null,
-                    ], $teacher);
+                    ], $teacher->user);
                 }
             }
         }
@@ -112,10 +136,5 @@ class SubjectResultsController extends Controller
         ]);
 
         return redirect()->route('teacher.scores')->with('status', 'Scores saved successfully.');
-    }
-
-    protected function logScoreChange(Request $request, string $action, array $details = []): void
-    {
-        $this->audit($request, $action, 'score_entry', null, null, $details);
     }
 }

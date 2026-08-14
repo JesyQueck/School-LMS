@@ -15,14 +15,11 @@ class ReportCard extends Model
 
     public const STATUS_PUBLISHED = 'published';
 
-    public const STATUS_LOCKED = 'locked';
-
     public const STATUSES = [
         self::STATUS_DRAFT,
         self::STATUS_RETURNED,
         self::STATUS_APPROVED,
         self::STATUS_PUBLISHED,
-        self::STATUS_LOCKED,
     ];
 
     public const ALLOWED_TRANSITIONS = [
@@ -30,7 +27,6 @@ class ReportCard extends Model
         self::STATUS_RETURNED => [self::STATUS_DRAFT, self::STATUS_APPROVED],
         self::STATUS_APPROVED => [self::STATUS_PUBLISHED, self::STATUS_RETURNED],
         self::STATUS_PUBLISHED => [],
-        self::STATUS_LOCKED => [],
     ];
 
     protected $guarded = [];
@@ -63,11 +59,6 @@ class ReportCard extends Model
         return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 
-    public function subject(): BelongsTo
-    {
-        return $this->belongsTo(Subject::class);
-    }
-
     public function publishedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'published_by');
@@ -98,14 +89,9 @@ class ReportCard extends Model
         return $this->is_published || $this->status === self::STATUS_PUBLISHED;
     }
 
-    public function isLocked(): bool
-    {
-        return $this->status === self::STATUS_LOCKED;
-    }
-
     public function canEdit(): bool
     {
-        return ! $this->isPublished() && ! $this->isLocked();
+        return ! $this->isPublished();
     }
 
     public function canPublish(): bool

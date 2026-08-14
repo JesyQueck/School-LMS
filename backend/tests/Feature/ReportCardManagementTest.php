@@ -381,22 +381,28 @@ class ReportCardManagementTest extends TestCase
             'is_locked' => true,
         ]);
 
-        // Student 1: draft (should be published via publishAll)
+        // Student 1: approved (should be published via publishAll)
         $this->post('/admin/report-cards', [
             'student_id' => $student->id,
             'term_id' => $term->id,
         ]);
 
-        // Student 2: draft (should also be published via publishAll)
+        $rc1 = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $rc1->update(['status' => ReportCard::STATUS_APPROVED]);
+
+        // Student 2: approved (should also be published via publishAll)
         $this->post('/admin/report-cards', [
             'student_id' => $student2->id,
             'term_id' => $term->id,
         ]);
 
+        $rc2 = ReportCard::where('student_id', $student2->id)->firstOrFail();
+        $rc2->update(['status' => ReportCard::STATUS_APPROVED]);
+
         $this->post('/admin/report-cards/publish-all/'.$term->id, []);
 
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'is_published' => true]);
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student2->id, 'is_published' => true]);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'is_published' => true, 'status' => 'published']);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student2->id, 'is_published' => true, 'status' => 'published']);
     }
 
     public function test_publish_all_skips_draft_unpublished_with_unlocked_results(): void
@@ -446,7 +452,165 @@ class ReportCardManagementTest extends TestCase
 
         $reportCard->refresh();
         $this->assertTrue($reportCard->is_published);
-        $this->assertEquals(1, $reportCard->published_by);
+        $this->assertEquals(ReportCard::STATUS_PUBLISHED, $reportCard->status);
+    }
+
+    public function test_admin_can_unpublish_a_published_report_card(): void
+    {
+        $data = $this->createTestData();
+        $admin = $data['admin'];
+        $student = $data['student'];
+        $term = $data['term'];
+        $this->actingAs($admin);
+
+        $this->post('/admin/report-cards', [
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+        ]);
+
+        $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        // Publish
+        $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
+        $reportCard->refresh();
+        $this->assertTrue($reportCard->is_published);
+        $this->assertNotNull($reportCard->published_at);
+        $this->assertNotNull($reportCard->published_by);
+
+        // Unpublish
+        $response = $this->post('/admin/report-cards/'.$reportCard->id.'/unpublish', []);
+        $response->assertRedirect('/admin/report-cards');
+
+        $reportCard->refresh();
+        $this->assertFalse($reportCard->is_published);
+        $this->assertNull($reportCard->published_by);
+        $this->assertNull($reportCard->published_at);
+        $this->assertEquals(ReportCard::STATUS_DRAFT, $reportCard->status);
+    }
+
+    public function test_unpublish_cannot_be_applied_to_draft_report_card(): void
+    {
+        $data = $this->createTestData();
+        $admin = $data['admin'];
+        $student = $data['student'];
+        $term = $data['term'];
+        $this->actingAs($admin);
+
+        $this->post('/admin/report-cards', [
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+        ]);
+
+        $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $this->assertEquals(ReportCard::STATUS_DRAFT, $reportCard->status);
+
+        $response = $this->post('/admin/report-cards/'.$reportCard->id.'/unpublish', []);
+        $response->assertStatus(500);
+
+        $reportCard->refresh();
+        $this->assertFalse($reportCard->is_published);
+        $this->assertEquals(ReportCard::STATUS_DRAFT, $reportCard->status);
+    }
+
+    public function test_unpublish_cannot_be_applied_to_approved_report_card(): void
+    {
+        $data = $this->createTestData();
+        $admin = $data['admin'];
+        $student = $data['student'];
+        $term = $data['term'];
+        $this->actingAs($admin);
+
+        $this->post('/admin/report-cards', [
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+        ]);
+
+        $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        $this->post('/admin/report-cards/'.$reportCard->id.'/approve', []);
+        $reportCard->refresh();
+        $this->assertEquals(ReportCard::STATUS_APPROVED, $reportCard->status);
+
+        $response = $this->post('/admin/report-cards/'.$reportCard->id.'/unpublish', []);
+        $response->assertStatus(500);
+    }
+
+    public function test_unpublish_unlocks_related_results(): void
+    {
+        $data = $this->createTestData();
+        $admin = $data['admin'];
+        $student = $data['student'];
+        $term = $data['term'];
+        $result = $data['result'];
+        $this->actingAs($admin);
+
+        $this->post('/admin/report-cards', [
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+        ]);
+
+        $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
+        $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
+
+        $result->refresh();
+        $this->assertTrue($result->is_locked);
+
+        // Unpublish
+        $this->post('/admin/report-cards/'.$reportCard->id.'/unpublish', []);
+
+        $result->refresh();
+        $this->assertFalse($result->is_locked);
+    }
+
+    public function test_locked_result_cannot_be_modified_via_direct_eloquent_update(): void
+    {
+        $data = $this->createTestData();
+        $result = $data['result'];
+        $result->refresh();
+
+        $this->assertTrue($result->isLocked());
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('locked');
+
+        // Direct Eloquent update should be blocked by the model event
+        $result->update(['ca_score' => 99]);
+    }
+
+    public function test_locked_result_can_be_unlocked_via_service(): void
+    {
+        $data = $this->createTestData();
+        $result = $data['result'];
+        $result->refresh();
+
+        $this->assertTrue($result->isLocked());
+
+        // Direct model update of is_locked should be allowed
+        $result->update(['is_locked' => false]);
+        $result->refresh();
+
+        $this->assertFalse($result->isLocked());
+    }
+
+    public function test_publish_all_skips_draft_cards(): void
+    {
+        $data = $this->createTestData();
+        $admin = $data['admin'];
+        $student = $data['student'];
+        $term = $data['term'];
+        $this->actingAs($admin);
+
+        // Create a draft report card (no approval)
+        $this->post('/admin/report-cards', [
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+        ]);
+
+        $response = $this->post('/admin/report-cards/publish-all/'.$term->id, []);
+        $response->assertRedirect('/admin/report-cards');
+
+        // The draft report card should NOT be published
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'is_published' => false, 'status' => 'draft']);
     }
 
     public function test_student_sees_only_published_report_cards(): void

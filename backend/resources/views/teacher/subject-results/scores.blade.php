@@ -59,18 +59,14 @@
                                                class="w-16 px-2 py-1 border border-neutral-300 dark:border-dark-border rounded-lg text-sm text-center bg-neutral-50 dark:bg-neutral-800"
                                                value="{{ $result?->exam_score ?? '' }}">
                                     </td>
-                                    <td class="px-4 py-3 text-center">
-                                        @php 
+                                    @php 
                                         $ca = $result?->ca_score ?? 0;
                                         $exam = $result?->exam_score ?? 0;
                                         $total = ($ca ?: 0) + ($exam ?: 0);
-                                        if ($total >= 80) echo '<span class="text-green-600 dark:text-green-400 font-bold">A</span>';
-                                        elseif ($total >= 70) echo '<span class="text-blue-600 dark:text-blue-400 font-bold">B</span>';
-                                        elseif ($total >= 60) echo '<span class="text-indigo-600 dark:text-indigo-400 font-bold">C</span>';
-                                        elseif ($total >= 50) echo '<span class="text-yellow-600 dark:text-yellow-400 font-bold">D</span>';
-                                        else echo '<span class="text-red-600 dark:text-red-400 font-bold">F</span>';
-                                        @endphp
-                                    </td>
+                                        $grading = app(\App\Services\ResultService::class)->calculateGrade($total > 0 ? $total : null);
+                                        $grade = $grading['grade'];
+                                    @endphp
+                                    <td class="font-bold text-center" style="color: {{ in_array($grade, ['F9', 'D7', 'E8']) ? '#A3312B' : '#16324F' }};">{{ $grade ?? 'N/A' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

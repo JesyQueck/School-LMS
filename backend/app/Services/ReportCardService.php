@@ -111,19 +111,18 @@ class ReportCardService
         });
     }
 
+    public function submitForApproval(ReportCard $reportCard, User $submittedBy): ReportCard
+    {
+        return $this->approve($reportCard);
+    }
+
     public function publish(ReportCard $reportCard, User $publishedBy): ReportCard
     {
         if ($reportCard->is_published) {
             throw new RuntimeException('Report card is already published.');
         }
 
-        $term = $reportCard->term;
-
-        if (! $this->termResultsAreLocked($term)) {
-            throw new RuntimeException(
-                'Report cards cannot be published until the term results are locked.'
-            );
-        }
+        $this->validatePublication($reportCard);
 
         return DB::transaction(function () use ($reportCard, $publishedBy) {
             $reportCard->update([
@@ -152,8 +151,8 @@ class ReportCardService
         }
 
         $candidateCards = ReportCard::where('term_id', $termId)
+            ->where('status', ReportCard::STATUS_APPROVED)
             ->where('is_published', false)
-            ->whereIn('status', [ReportCard::STATUS_DRAFT, ReportCard::STATUS_RETURNED, ReportCard::STATUS_APPROVED])
             ->get();
 
         $published = 0;
@@ -191,7 +190,7 @@ class ReportCardService
         return DB::transaction(function () use ($reportCard) {
             $reportCard->update([
                 'is_published' => false,
-                'status' => ReportCard::STATUS_RETURNED,
+                'status' => ReportCard::STATUS_DRAFT,
                 'published_by' => null,
                 'published_at' => null,
             ]);
@@ -215,12 +214,45 @@ class ReportCardService
 
     public function hasRequiredResults(ReportCard $reportCard): bool
     {
+        if (! $reportCard->student) {
+            return false;
+        }
+
         return $reportCard->student
             ->results()
             ->where('term_id', $reportCard->term_id)
             ->whereNotNull('ca_score')
             ->whereNotNull('exam_score')
             ->exists();
+    }
+
+    public function validatePublication(ReportCard $reportCard): void
+    {
+        if (! $reportCard->student) {
+            throw new RuntimeException('Report card must belong to a valid student.');
+        }
+
+        if (! $reportCard->term) {
+            throw new RuntimeException('Report card must belong to a valid term.');
+        }
+
+        if (! $reportCard->class_id) {
+            throw new RuntimeException('Report card must have a valid class.');
+        }
+
+        $term = $reportCard->term;
+
+        if (! $this->termResultsAreLocked($term)) {
+            throw new RuntimeException(
+                'Report cards cannot be published until the term results are locked.'
+            );
+        }
+
+        if (! $this->hasRequiredResults($reportCard)) {
+            throw new RuntimeException(
+                'Report card cannot be published: no complete result records found for this student.'
+            );
+        }
     }
 
     protected function lockRelatedResults(ReportCard $reportCard): void

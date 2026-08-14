@@ -107,9 +107,27 @@ class AuditLogTest extends TestCase
             'admission_no' => 'ADM704',
         ]);
 
+        $subject = Subject::create(['name' => 'Mathematics']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+
+        Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 30,
+            'exam_score' => 50,
+            'total' => 80,
+            'grade' => 'A1',
+            'is_locked' => true,
+        ]);
+
         $reportCard = ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
+            'class_id' => $class->id,
             'is_published' => false,
         ]);
 

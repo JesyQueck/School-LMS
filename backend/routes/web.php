@@ -161,6 +161,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
         Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
+        Route::post('/report-cards/{reportCard}/unpublish', [ReportCardController::class, 'unpublish'])->name('report-cards.unpublish');
         Route::post('/report-cards/{reportCard}/approve', [ReportCardController::class, 'approve'])->name('report-cards.approve');
         Route::post('/report-cards/{reportCard}/return', [ReportCardController::class, 'returnForCorrection'])->name('report-cards.return');
         Route::post('/report-cards/publish-all/{term}', [ReportCardController::class, 'publishAll'])->name('report-cards.publish-all');
