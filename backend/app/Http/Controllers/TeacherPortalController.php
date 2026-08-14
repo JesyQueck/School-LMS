@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StartAttendanceRequest;
+use App\Http\Requests\StoreAttendanceRequest;
 use App\Models\Announcement;
 use App\Models\Attendance;
 use App\Models\ClassAssignment;
@@ -95,18 +97,12 @@ class TeacherPortalController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function storeAttendance(Request $request)
+    public function storeAttendance(StoreAttendanceRequest $request)
     {
         $teacher = $this->getTeacherOrFail($request);
         $teacherId = $teacher->getKey();
 
-        $validated = $request->validate([
-            'class_id' => ['required', 'exists:classes,id'],
-            'term_id' => ['required', 'exists:terms,id'],
-            'date' => ['required', 'date'],
-            'status' => ['nullable'],
-            'student_id' => ['nullable', 'integer', 'exists:students,id'],
-        ]);
+        $validated = $request->validated();
 
         $classId = $validated['class_id'];
         $termId = $validated['term_id'];
@@ -274,12 +270,9 @@ class TeacherPortalController extends Controller
         ]);
     }
 
-    public function startAttendance(Request $request)
+    public function startAttendance(StartAttendanceRequest $request)
     {
-        $data = $request->validate([
-            'class_id' => ['required', 'exists:classes,id'],
-            'term_id' => ['required', 'exists:terms,id'],
-        ]);
+        $validated = $request->validated();
 
         $request->session()->put(
             'attendance_started_today_'.now()->toDateString(),

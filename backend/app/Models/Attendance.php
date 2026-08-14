@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Attendance extends Model
 {
-    protected $table = 'attendance';
+    protected $table = 'attendances';
 
     protected $guarded = [];
 

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreFeeTypeRequest;
+use App\Http\Requests\StorePaymentRequest;
+use App\Http\Requests\StoreStudentFeeRequest;
 use App\Models\FeeType;
 use App\Models\Payment;
 use App\Models\SchoolClass;
@@ -11,6 +14,7 @@ use App\Models\StudentFee;
 use App\Models\Term;
 use App\Services\FeeService;
 use App\Traits\AuditsActions;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class FinanceController extends Controller
@@ -34,7 +38,8 @@ class FinanceController extends Controller
                     ->orWhere('admission_no', 'like', "%{$search}%"));
             })
             ->latest()
-            ->get();
+            ->paginate(20)
+            ->appends($request->only(['class_id', 'term_id', 'status', 'search']));
 
         if ($request->filled('status')) {
             $status = $request->status;
@@ -45,7 +50,8 @@ class FinanceController extends Controller
 
         $payments = Payment::with(['studentFee.student', 'studentFee.feeType', 'recordedBy'])
             ->latest('payment_date')
-            ->get();
+            ->paginate(20)
+            ->appends($request->only(['class_id', 'term_id', 'status', 'search']));
 
         return view('admin.finance.index', [
             'finance' => $this->feeService->financeSummary(),
@@ -71,14 +77,9 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function createFeeType(Request $request)
+    public function createFeeType(StoreFeeTypeRequest $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'amount' => ['required', 'numeric'],
-            'term_id' => ['required', 'exists:terms,id'],
-            'class_id' => ['nullable', 'exists:classes,id'],
-        ]);
+        $data = $request->validated();
 
         $feeType = FeeType::create($data);
 
@@ -87,14 +88,9 @@ class FinanceController extends Controller
         return redirect()->route('admin.finance')->with('status', 'Fee type created.');
     }
 
-    public function createStudentFee(Request $request)
+    public function createStudentFee(StoreStudentFeeRequest $request)
     {
-        $data = $request->validate([
-            'student_id' => ['required', 'exists:students,id'],
-            'fee_type_id' => ['required', 'exists:fee_types,id'],
-            'term_id' => ['required', 'exists:terms,id'],
-            'amount_expected' => ['required', 'numeric'],
-        ]);
+        $data = $request->validated();
 
         $studentFee = StudentFee::create($data);
         $studentFee->update(['status' => $this->feeService->recomputeStatus($studentFee)]);
@@ -104,17 +100,9 @@ class FinanceController extends Controller
         return redirect()->route('admin.finance')->with('status', 'Student fee created.');
     }
 
-    public function createPayment(Request $request)
+    public function createPayment(StorePaymentRequest $request)
     {
-        $data = $request->validate([
-            'student_fee_id' => ['required', 'exists:student_fees,id'],
-            'receipt_number' => ['nullable', 'string', 'max:255'],
-            'amount_paid' => ['required', 'numeric', 'gt:0'],
-            'payment_method' => ['nullable', 'string', 'max:255'],
-            'payment_date' => ['required', 'date'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'notes' => ['nullable', 'string'],
-        ]);
+        $data = $request->validated();
 
         $studentFee = StudentFee::findOrFail($data['student_fee_id']);
 
@@ -134,7 +122,8 @@ class FinanceController extends Controller
         $payment->load(['studentFee.student.class', 'studentFee.feeType', 'studentFee.term', 'recordedBy']);
 
         if ($request->has('download')) {
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.finance.receipt-pdf', compact('payment'));
+            $pdf = Pdf::loadView('admin.finance.receipt-pdf', compact('payment'));
+
             return $pdf->download("receipt-{$payment->receipt_number}.pdf");
         }
 

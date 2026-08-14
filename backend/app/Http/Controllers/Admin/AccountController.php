@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreAccountRequest;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -12,7 +13,6 @@ use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 
 class AccountController extends Controller
 {
@@ -35,15 +35,9 @@ class AccountController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreAccountRequest $request)
     {
-        $data = $request->validate([
-            'type' => ['required', 'in:teacher,student,parent'],
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
-        ]);
+        $data = $request->validated();
 
         $temporaryPassword = $data['password'] ?? Str::random(12);
 

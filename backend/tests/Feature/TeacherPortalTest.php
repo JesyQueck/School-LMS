@@ -85,7 +85,7 @@ class TeacherPortalTest extends TestCase
         ]);
 
         $attendanceResponse->assertRedirect('/teacher/dashboard');
-        $this->assertDatabaseHas('attendance', ['student_id' => $student->id, 'status' => 'present']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $student->id, 'status' => 'present']);
     }
 
     public function test_teacher_cannot_view_students_of_unassigned_class(): void
@@ -198,14 +198,14 @@ class TeacherPortalTest extends TestCase
             'marked_by' => 1,
         ]);
 
-        $this->assertDatabaseHas('attendance', [
+        $this->assertDatabaseHas('attendances', [
             'student_id' => $student->id,
             'term_id' => $term1->id,
             'date' => '2026-10-01 00:00:00',
             'status' => 'present',
         ]);
 
-        $this->assertDatabaseHas('attendance', [
+        $this->assertDatabaseHas('attendances', [
             'student_id' => $student->id,
             'term_id' => $term2->id,
             'date' => '2026-10-01 00:00:00',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreSubjectResultsRequest;
 use App\Models\ClassAssignment;
 use App\Models\Student;
 use App\Models\TeacherClassSubject;
@@ -50,7 +51,7 @@ class SubjectResultsController extends Controller
         return view('teacher.subject-results.scores', compact('students', 'assignments', 'classAssignment'));
     }
 
-    public function store(Request $request)
+    public function store(StoreSubjectResultsRequest $request)
     {
         $teacher = $request->user()->teacher;
         if (! $teacher) {
@@ -66,14 +67,7 @@ class SubjectResultsController extends Controller
             return redirect()->route('teacher.scores')->with('error', 'No active class assignment found.');
         }
 
-        $validated = $request->validate([
-            'term_id' => ['required', 'exists:terms,id'],
-            'class_id' => ['required', 'exists:classes,id'],
-            'results' => ['required', 'array'],
-            'results.*.ca_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'results.*.exam_score' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'results.*.remark' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         if ($validated['term_id'] != $classAssignment->term_id) {
             return redirect()->route('teacher.scores')->with('error', 'Invalid term for your assignment.');

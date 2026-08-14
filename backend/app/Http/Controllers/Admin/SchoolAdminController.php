@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreStudentRequest;
+use App\Http\Requests\StoreTeacherRequest;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -13,7 +15,6 @@ use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\Password;
 
 class SchoolAdminController extends Controller
 {
@@ -76,15 +77,9 @@ class SchoolAdminController extends Controller
         return redirect()->route('admin.classes')->with('status', 'Class created.');
     }
 
-    public function createTeacher(Request $request)
+    public function createTeacher(StoreTeacherRequest $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'qualification' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
-        ]);
+        $data = $request->validated();
 
         $temporaryPassword = $data['password'] ?? Str::random(12);
 
@@ -113,22 +108,9 @@ class SchoolAdminController extends Controller
         return redirect()->route('admin.teachers')->with('status', "Teacher created. Temporary password: {$temporaryPassword}");
     }
 
-    public function createStudent(Request $request)
+    public function createStudent(StoreStudentRequest $request)
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'first_name' => ['nullable', 'string', 'max:100'],
-            'last_name' => ['nullable', 'string', 'max:100'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'class_id' => ['nullable', 'exists:classes,id'],
-            'date_of_birth' => ['nullable', 'date'],
-            'gender' => ['nullable', 'string', 'max:20'],
-            'parent_email' => ['nullable', 'email'],
-            'parent_name' => ['nullable', 'string', 'max:255'],
-            'parent_phone' => ['nullable', 'string', 'max:20'],
-            'parent_occupation' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
-        ]);
+        $data = $request->validated();
 
         $temporaryPassword = $data['password'] ?? Str::random(12);
         $admissionNumber = 'ADM-'.Str::upper(Str::random(6));

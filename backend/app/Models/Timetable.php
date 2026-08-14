@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Timetable extends Model
 {
-    protected $table = 'timetable';
+    protected $table = 'timetables';
 
     protected $guarded = [];
 

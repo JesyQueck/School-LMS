@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('attendance', function (Blueprint $table) {
+        Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained()->cascadeOnDelete();
             $table->foreignId('class_id')->constrained('classes')->cascadeOnDelete();
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unique(['student_id', 'date', 'term_id']);
         });
 
-        Schema::create('timetable', function (Blueprint $table) {
+        Schema::create('timetables', function (Blueprint $table) {
             $table->id();
             $table->foreignId('class_subject_id')->constrained()->cascadeOnDelete();
             $table->foreignId('teacher_id')->nullable()->constrained()->nullOnDelete();
@@ -72,7 +72,7 @@ return new class extends Migration
         Schema::dropIfExists('audit_logs');
         Schema::dropIfExists('report_cards');
         Schema::dropIfExists('announcements');
-        Schema::dropIfExists('timetable');
-        Schema::dropIfExists('attendance');
+        Schema::dropIfExists('attendances');
+        Schema::dropIfExists('timetables');
     }
 };

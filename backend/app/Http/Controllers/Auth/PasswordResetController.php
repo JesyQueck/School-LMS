@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ResetPasswordRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password as PasswordBroker;
-use Illuminate\Validation\Rules\Password;
 
 class PasswordResetController extends Controller
 {
@@ -31,13 +31,9 @@ class PasswordResetController extends Controller
         return view('auth.reset-password', ['token' => $token]);
     }
 
-    public function reset(Request $request)
+    public function reset(ResetPasswordRequest $request)
     {
-        $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()],
-        ]);
+        $data = $request->validated();
 
         $status = PasswordBroker::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),

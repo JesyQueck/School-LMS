@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Payment;
 use App\Models\StudentFee;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -30,22 +31,45 @@ class FeeService
             );
         }
 
-        return DB::transaction(function () use ($studentFee, $data, $recordedBy, $amountPaid) {
-            $payment = Payment::create([
-                'student_fee_id' => $studentFee->id,
-                'receipt_number' => $data['receipt_number'] ?? $this->generateReceiptNumber(),
-                'amount_paid' => $amountPaid,
-                'payment_method' => $data['payment_method'] ?? 'cash',
-                'payment_date' => $data['payment_date'],
-                'recorded_by' => $recordedBy->id,
-            ]);
+        $receiptNumber = $data['receipt_number'] ?? null;
+        $maxAttempts = 3;
 
-            $studentFee->update([
-                'status' => $this->recomputeStatus($studentFee),
-            ]);
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                return DB::transaction(function () use ($studentFee, $receiptNumber, $amountPaid, $recordedBy, $data) {
+                    $payment = Payment::create([
+                        'student_fee_id' => $studentFee->id,
+                        'receipt_number' => $receiptNumber ?? $this->generateReceiptNumber(),
+                        'amount_paid' => $amountPaid,
+                        'payment_method' => $data['payment_method'] ?? 'cash',
+                        'payment_date' => $data['payment_date'],
+                        'recorded_by' => $recordedBy->id,
+                    ]);
 
-            return $payment;
-        });
+                    $studentFee->update([
+                        'status' => $this->recomputeStatus($studentFee),
+                    ]);
+
+                    return $payment;
+                });
+            } catch (QueryException $e) {
+                if ($attempt < $maxAttempts && $this->isDuplicateReceiptError($e)) {
+                    $receiptNumber = $this->generateReceiptNumber();
+
+                    continue;
+                }
+
+                throw $e;
+            }
+        }
+
+        throw new \RuntimeException('Unable to generate a unique receipt number after maximum attempts.');
+    }
+
+    private function isDuplicateReceiptError(QueryException $e): bool
+    {
+        return str_contains($e->getMessage(), 'receipt_number')
+            && str_contains($e->getMessage(), 'Duplicate');
     }
 
     /**
@@ -93,26 +117,13 @@ class FeeService
      */
     public function financeSummary(): array
     {
-        $studentFees = StudentFee::with('payments')->get();
+        $expected = (float) StudentFee::sum('amount_expected');
+        $collected = (float) Payment::sum('amount_paid');
 
-        $expected = (float) $studentFees->sum(fn ($f) => $f->amount_expected ?? 0);
-        $collected = (float) $studentFees->sum(fn ($f) => $f->payments->sum('amount_paid'));
-
-        $paid = 0;
-        $partial = 0;
-        $unpaid = 0;
-
-        foreach ($studentFees as $fee) {
-            $totalPaid = (float) $fee->payments->sum('amount_paid');
-            $exp = (float) $fee->amount_expected;
-            if ($totalPaid >= $exp && $exp > 0) {
-                $paid++;
-            } elseif ($totalPaid > 0) {
-                $partial++;
-            } else {
-                $unpaid++;
-            }
-        }
+        $paid = StudentFee::whereRaw('amount_expected <= (SELECT COALESCE(SUM(amount_paid), 0) FROM payments WHERE payments.student_fee_id = student_fees.id)')->count();
+        $unpaid = StudentFee::whereDoesntHave('payments')->count();
+        $total = StudentFee::count();
+        $partial = max(0, $total - $paid - $unpaid);
 
         return [
             'expected' => $expected,
