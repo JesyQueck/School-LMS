@@ -314,4 +314,169 @@ class ParentPortalTest extends TestCase
         $response->assertSee('Tuition');
         $response->assertSee('50,000.00');
     }
+
+    public function test_parent_can_view_report_cards_for_linked_child(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM601',
+        ]);
+
+        $parent->students()->attach($student->id);
+
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get('/parent/children/'.$student->id.'/report-cards');
+        $response->assertOk();
+        $response->assertSee('First Term');
+    }
+
+    public function test_parent_cannot_view_report_cards_for_unlinked_child(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+
+        $otherParentUser = User::factory()->create(['role' => 'parent']);
+        $otherParent = ParentProfile::create(['user_id' => $otherParentUser->id]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM602',
+        ]);
+
+        $otherParent->students()->attach($student->id);
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get('/parent/children/'.$student->id.'/report-cards');
+        $response->assertForbidden();
+    }
+
+    public function test_parent_can_download_published_report_card_for_linked_child(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM603',
+        ]);
+
+        $parent->students()->attach($student->id);
+
+        $reportCard = ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'is_published' => true,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get('/parent/children/'.$student->id.'/report-cards/'.$reportCard->id.'/download');
+        $response->assertOk();
+    }
+
+    public function test_parent_cannot_download_unpublished_report_card(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM604',
+        ]);
+
+        $parent->students()->attach($student->id);
+
+        $reportCard = ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'is_published' => false,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get('/parent/children/'.$student->id.'/report-cards/'.$reportCard->id.'/download');
+        $response->assertForbidden();
+    }
 }

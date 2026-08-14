@@ -14,6 +14,8 @@ class ParentReportCardController extends Controller
     {
         $student = Student::with(['user', 'class'])->findOrFail($studentId);
 
+        $this->authorize('view', $student);
+
         $terms = Term::orderBy('id')->with(['reportCards' => function ($query) use ($studentId) {
             $query->where('student_id', $studentId);
         }])->get();
@@ -24,8 +26,10 @@ class ParentReportCardController extends Controller
     public function download($studentId, ReportCard $reportCard)
     {
         $student = Student::with(['user', 'class'])->findOrFail($studentId);
-        
-        if ($reportCard->student_id !== $student->id || !$reportCard->is_published) {
+
+        $this->authorize('view', $student);
+
+        if ($reportCard->student_id !== $student->id || ! $reportCard->is_published) {
             abort(403, 'Report card not available.');
         }
 
