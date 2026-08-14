@@ -269,8 +269,8 @@ class ReportCardController extends Controller
         }
 
         $subjectAssignments = TeacherClassSubject::with(['classSubject.subject', 'classSubject.class'])
-            ->where('classSubject.class_id', $classAssignment->class_id)
             ->where('is_active', true)
+            ->whereHas('classSubject', fn ($q) => $q->where('class_id', $classAssignment->class_id))
             ->get();
 
         $students = Student::where('class_id', $classAssignment->class_id)->get();
