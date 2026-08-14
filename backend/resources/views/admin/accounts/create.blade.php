@@ -48,14 +48,20 @@
                         <input id="qualification" name="qualification" type="text" placeholder="e.g. B.Ed Mathematics" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
                     </div>
 
-                    <div id="student-fields" class="hidden">
-                        <label for="class_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class</label>
-                        <select id="class_id" name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
-                            <option value="">Assign to class</option>
-                            @foreach($classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->name }}</option>
-                            @endforeach
-                        </select>
+                        <div id="student-fields" class="hidden">
+                            <label for="class_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class</label>
+                            <select id="class_id" name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
+                                <option value="">Assign to class</option>
+                                @foreach($classes as $class)
+                                    <option value="{{ $class->id }}">{{ $class->name }}</option>
+                                @endforeach
+                            </select>
+
+                            <label for="first_name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mt-2 mb-1">First Name</label>
+                            <input id="first_name" name="first_name" type="text" placeholder="e.g. John" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+
+                            <label for="last_name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mt-2 mb-1">Last Name</label>
+                            <input id="last_name" name="last_name" type="text" placeholder="e.g. Doe" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
 
                         <label for="date_of_birth" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mt-2 mb-1">Date of Birth</label>
                         <input id="date_of_birth" name="date_of_birth" type="date" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">

@@ -116,11 +116,16 @@ class SchoolAdminController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['nullable', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'class_id' => ['nullable', 'exists:classes,id'],
             'date_of_birth' => ['nullable', 'date'],
             'gender' => ['nullable', 'string', 'max:20'],
             'parent_email' => ['nullable', 'email'],
+            'parent_name' => ['nullable', 'string', 'max:255'],
+            'parent_phone' => ['nullable', 'string', 'max:20'],
+            'parent_occupation' => ['nullable', 'string', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
 
@@ -128,6 +133,8 @@ class SchoolAdminController extends Controller
         $admissionNumber = 'ADM-'.Str::upper(Str::random(6));
 
         $studentData = [
+            'first_name' => $data['first_name'] ?? null,
+            'last_name' => $data['last_name'] ?? null,
             'date_of_birth' => $data['date_of_birth'] ?? null,
             'gender' => $data['gender'] ?? null,
             'admission_no' => $admissionNumber,
@@ -149,13 +156,9 @@ class SchoolAdminController extends Controller
             'needs_password_change' => true,
         ]);
 
-        if (empty($data['class_id'])) {
-            $data['class_id'] = SchoolClass::query()->value('id') ?? SchoolClass::create(['name' => 'Default Class'])->id;
-        }
-
         $student = Student::create(array_merge($studentData, [
             'user_id' => $user->id,
-            'class_id' => $data['class_id'],
+            'class_id' => $data['class_id'] ?? null,
         ]));
 
         if ($parent) {

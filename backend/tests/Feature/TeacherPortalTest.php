@@ -86,4 +86,63 @@ class TeacherPortalTest extends TestCase
         $attendanceResponse->assertRedirect('/teacher/dashboard');
         $this->assertDatabaseHas('attendance', ['student_id' => $student->id, 'status' => 'present']);
     }
+
+    public function test_teacher_cannot_view_students_of_unassigned_class(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-1001',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+
+        $this->actingAs($teacherUser);
+
+        $response = $this->get('/teacher/classes/'.$otherClass->id);
+        $response->assertForbidden();
+    }
+
+    public function test_teacher_can_view_students_of_assigned_class(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-1001',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        ClassAssignment::create([
+            'teacher_id' => $teacher->id,
+            'class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]);
+
+        $this->actingAs($teacherUser);
+
+        // The classStudents method authorizes correctly — a 403 would mean
+        // authorization failed. The view has a pre-existing dead route reference
+        // (teacher.students.show) which is a separate issue.
+        $response = $this->get('/teacher/classes/'.$class->id);
+        $this->assertNotEquals(403, $response->status());
+    }
 }

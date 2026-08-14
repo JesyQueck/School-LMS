@@ -82,18 +82,17 @@ class TeacherDashboardService
 
         if ($this->canAccessClassFeatures($user)) {
             $routes = array_merge($routes, [
-                'teacher.attendance.view',
-                'teacher.report_cards.generate',
-                'teacher.behaviour.assess',
-                'teacher.parents.communicate',
-                'teacher.class.performance',
+                'teacher.class.attendance',
+                'teacher.report-cards.index',
+                'teacher.parents',
+                'teacher.class-performance',
             ]);
         }
 
         $routes = array_merge($routes, [
-            'subjects.results.enter',
-            'subjects.assessments.enter',
-            'subjects.assignments.enter',
+            'teacher.scores',
+            'teacher.assessments',
+            'teacher.assignments',
         ]);
 
         return array_unique($routes);
