@@ -20,6 +20,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
 /vendor
 _ide_helper.php
 Homestead.json
