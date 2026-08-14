@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\AcademicSession;
+use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -223,5 +226,173 @@ class AdminManagementTest extends TestCase
         $this->assertSame('John', $student->first_name);
         $this->assertSame('Doe', $student->last_name);
         $this->assertSame('John Doe', $student->full_name);
+    }
+
+    public function test_admin_can_unpublish_report_card(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM005',
+        ]);
+        $term = Term::create([
+            'academic_session_id' => AcademicSession::create([
+                'name' => '2026/2027',
+                'start_date' => '2026-09-01',
+                'end_date' => '2027-07-31',
+                'is_current' => true,
+            ])->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'status' => 'published',
+            'is_published' => true,
+        ]);
+
+        $reportCard = ReportCard::where('student_id', $student->id)->first();
+
+        $response = $this->post("/admin/report-cards/{$reportCard->id}/unpublish");
+
+        $response->assertRedirect('/admin/report-cards');
+        $this->assertDatabaseHas('report_cards', [
+            'id' => $reportCard->id,
+            'is_published' => false,
+        ]);
+    }
+
+    public function test_admin_can_view_report_cards_index(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/admin/report-cards');
+        $response->assertOk();
+    }
+
+    public function test_admin_accounts_index_displays_users(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        User::factory()->create(['role' => 'teacher', 'name' => 'Test Teacher']);
+
+        $response = $this->get('/admin/accounts');
+        $response->assertOk();
+        $response->assertSee('Test Teacher');
+    }
+
+    public function test_admin_can_create_account_via_account_controller(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Via Account Controller',
+            'email' => 'account.test@example.com',
+            'phone' => '08011111111',
+            'qualification' => 'B.Ed',
+            'password' => 'Password123',
+        ]);
+
+        $response->assertRedirect('/admin/accounts/create');
+        $this->assertDatabaseHas('users', [
+            'email' => 'account.test@example.com',
+            'role' => 'teacher',
+        ]);
+        $this->assertDatabaseHas('teachers', [
+            'qualification' => 'B.Ed',
+        ]);
+    }
+
+    public function test_admin_can_create_parent_account(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'parent',
+            'name' => 'Parent User',
+            'email' => 'parent.user@example.com',
+            'phone' => '08022222222',
+            'occupation' => 'Doctor',
+        ]);
+
+        $response->assertRedirect('/admin/accounts/create');
+        $this->assertDatabaseHas('users', [
+            'email' => 'parent.user@example.com',
+            'role' => 'parent',
+        ]);
+        $this->assertDatabaseHas('parents', [
+            'occupation' => 'Doctor',
+        ]);
+    }
+
+    public function test_admin_account_store_rejects_invalid_type(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'invalid',
+            'name' => 'Invalid Type',
+            'email' => 'invalid@example.com',
+        ]);
+
+        $response->assertSessionHasErrors(['type']);
+    }
+
+    public function test_admin_can_create_fee_type(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $term = Term::create([
+            'academic_session_id' => AcademicSession::create([
+                'name' => '2026/2027',
+                'start_date' => '2026-09-01',
+                'end_date' => '2027-07-31',
+                'is_current' => true,
+            ])->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $response = $this->post('/admin/finance/fee-types', [
+            'name' => 'Exam Fee',
+            'amount' => '500.00',
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $response->assertRedirect('/admin/finance');
+        $this->assertDatabaseHas('fee_types', [
+            'name' => 'Exam Fee',
+            'amount' => 500.00,
+        ]);
+    }
+
+    public function test_admin_finance_index_displays(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/admin/finance');
+        $response->assertOk();
     }
 }
