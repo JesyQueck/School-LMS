@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('status');
             $table->foreignId('marked_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
-            $table->unique(['student_id', 'date']);
+            $table->unique(['student_id', 'date', 'term_id']);
         });
 
         Schema::create('timetable', function (Blueprint $table) {

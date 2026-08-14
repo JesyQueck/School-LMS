@@ -147,10 +147,10 @@ class TeacherPortalController extends Controller
                     [
                         'student_id' => $studentId,
                         'date' => $date,
+                        'term_id' => $termId,
                     ],
                     [
                         'class_id' => $classId,
-                        'term_id' => $termId,
                         'status' => $status,
                         'marked_by' => $teacherId,
                     ]
@@ -171,10 +171,10 @@ class TeacherPortalController extends Controller
                     [
                         'student_id' => $studentId,
                         'date' => $date,
+                        'term_id' => $termId,
                     ],
                     [
                         'class_id' => $classId,
-                        'term_id' => $termId,
                         'status' => $status,
                         'marked_by' => $teacherId,
                     ]

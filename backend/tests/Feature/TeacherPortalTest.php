@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
+use App\Models\Attendance;
 use App\Models\ClassAssignment;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
@@ -144,5 +145,71 @@ class TeacherPortalTest extends TestCase
         // (teacher.students.show) which is a separate issue.
         $response = $this->get('/teacher/classes/'.$class->id);
         $this->assertNotEquals(403, $response->status());
+    }
+
+    public function test_attendance_allows_same_student_same_date_different_terms(): void
+    {
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term1 = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $term2 = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Second Term',
+            'start_date' => '2027-01-05',
+            'end_date' => '2027-04-30',
+            'is_current' => false,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM401',
+        ]);
+
+        Attendance::create([
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $term1->id,
+            'date' => '2026-10-01',
+            'status' => 'present',
+            'marked_by' => 1,
+        ]);
+
+        Attendance::create([
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $term2->id,
+            'date' => '2026-10-01',
+            'status' => 'absent',
+            'marked_by' => 1,
+        ]);
+
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => $student->id,
+            'term_id' => $term1->id,
+            'date' => '2026-10-01 00:00:00',
+            'status' => 'present',
+        ]);
+
+        $this->assertDatabaseHas('attendance', [
+            'student_id' => $student->id,
+            'term_id' => $term2->id,
+            'date' => '2026-10-01 00:00:00',
+            'status' => 'absent',
+        ]);
     }
 }
