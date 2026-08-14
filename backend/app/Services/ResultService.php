@@ -4,14 +4,10 @@ namespace App\Services;
 
 use App\Models\Result;
 use App\Models\User;
+use RuntimeException;
 
 class ResultService
 {
-    /**
-     * The Nigerian secondary-school grading scale (PRD §6).
-     *
-     * @return array{0: string|null, 1: string|null, grade: string|null, remark: string|null}
-     */
     public function calculateGrade(?float $total): array
     {
         if ($total === null) {
@@ -31,12 +27,6 @@ class ResultService
         };
     }
 
-    /**
-     * Create a result, computing total/grade/remark and enforcing the
-     * term-lock business rule (results cannot be added to a locked term).
-     *
-     * @param  array  $data  student_id, class_subject_id, term_id, ca_score, exam_score, remark
-     */
     public function createResult(array $data, User $submittedBy): Result
     {
         $total = $this->calculateTotal($data['ca_score'] ?? null, $data['exam_score'] ?? null);
@@ -56,9 +46,36 @@ class ResultService
         ]);
     }
 
-    /**
-     * Lock a result so it can no longer be edited by teachers.
-     */
+    public function updateOrCreateResult(array $data, User $submittedBy): Result
+    {
+        $existing = Result::where('student_id', $data['student_id'])
+            ->where('class_subject_id', $data['class_subject_id'])
+            ->where('term_id', $data['term_id'])
+            ->first();
+
+        if ($existing && $existing->isLocked()) {
+            throw new RuntimeException('This result has been locked and cannot be modified.');
+        }
+
+        $total = $this->calculateTotal($data['ca_score'] ?? null, $data['exam_score'] ?? null);
+        $grading = $this->calculateGrade($total);
+
+        if ($existing) {
+            $existing->update([
+                'ca_score' => $data['ca_score'] ?? $existing->ca_score,
+                'exam_score' => $data['exam_score'] ?? $existing->exam_score,
+                'total' => $total,
+                'grade' => $grading['grade'],
+                'remark' => $data['remark'] ?? $existing->remark,
+                'submitted_by' => $submittedBy->id,
+            ]);
+
+            return $existing->fresh();
+        }
+
+        return $this->createResult($data, $submittedBy);
+    }
+
     public function lockResult(Result $result): Result
     {
         $result->update(['is_locked' => true]);
@@ -66,9 +83,6 @@ class ResultService
         return $result->refresh();
     }
 
-    /**
-     * Compute the total score from CA and exam scores.
-     */
     public function calculateTotal(?float $caScore, ?float $examScore): ?float
     {
         if ($caScore === null && $examScore === null) {

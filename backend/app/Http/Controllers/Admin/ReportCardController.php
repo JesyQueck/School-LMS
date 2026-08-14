@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ClassSubject;
 use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -25,7 +24,7 @@ class ReportCardController extends Controller
     public function index()
     {
         $currentTerm = Term::where('is_current', true)->first();
-        
+
         return view('admin.report-cards.index', [
             'classes' => SchoolClass::with(['students.user'])->get(),
             'students' => Student::with('class.user', 'user')->get(),
@@ -60,37 +59,45 @@ class ReportCardController extends Controller
         $termId = $validated['term_id'];
         $studentData = $validated['results'][$studentId] ?? [];
 
-        $reportCard = ReportCard::updateOrCreate(
-            ['student_id' => $studentId, 'term_id' => $termId],
-            [
-                'class_teacher_remark' => $studentData['class_teacher_remark'] ?? null,
-                'principal_remark' => $studentData['principal_remark'] ?? null,
-                'affective_domain' => $studentData['affective_domain'] ?? null,
-                'psychomotor_assessment' => $studentData['psychomotor_assessment'] ?? null,
-                'health_remarks' => $studentData['health_remarks'] ?? null,
-                'position_in_class' => $studentData['position_in_class'] ?? null,
-                'total_students_in_class' => $studentData['total_students_in_class'] ?? null,
-            ]
-        );
+        $existing = ReportCard::where('student_id', $studentId)
+            ->where('term_id', $termId)
+            ->first();
 
-        $this->audit($request, 'report_card.updated', ReportCard::class, $reportCard->id, null, $studentData);
+        $reportCard = $this->reportCardService->saveReportCard(array_merge([
+            'student_id' => $studentId,
+            'term_id' => $termId,
+        ], $studentData), $existing);
+
+        $this->audit(
+            $request,
+            'report_card.updated',
+            ReportCard::class,
+            $reportCard->id,
+            null,
+            $studentData
+        );
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card saved.');
     }
 
-    public function returnForCorrection(ReportCard $reportCard, Request $request)
+    public function returnForCorrection(Request $request, ReportCard $reportCard)
     {
         $oldStatus = $reportCard->status;
-        $reportCard->update(['status' => 'returned']);
+        $reportCard = $this->reportCardService->returnForCorrection($reportCard);
 
-        $this->audit($request, 'report_card.returned', ReportCard::class, $reportCard->id, 
-            ['status' => $oldStatus], 
-            ['status' => 'returned']);
+        $this->audit(
+            $request,
+            'report_card.returned',
+            ReportCard::class,
+            $reportCard->id,
+            ['status' => $oldStatus],
+            ['status' => $reportCard->status]
+        );
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card returned for correction.');
     }
 
-    public function approve(ReportCard $reportCard, Request $request)
+    public function approve(Request $request, ReportCard $reportCard)
     {
         $validated = $request->validate([
             'principal_remark' => ['nullable', 'string'],
@@ -100,59 +107,86 @@ class ReportCardController extends Controller
             'next_term_begins' => ['nullable', 'date'],
         ]);
 
-        $oldStatus = $reportCard->status;
         $reportCard->update([
-            'principal_remark' => $validated['principal_remark'] ?? null,
-            'promotion_decision' => $validated['promotion_decision'] ?? null,
+            'principal_remark' => $validated['principal_remark'] ?? $reportCard->principal_remark,
+            'promotion_decision' => $validated['promotion_decision'] ?? $reportCard->promotion_decision,
             'position_in_class' => $validated['position_in_class'] ?? $reportCard->position_in_class,
             'total_students_in_class' => $validated['total_students_in_class'] ?? $reportCard->total_students_in_class,
             'next_term_begins' => $validated['next_term_begins'] ?? $reportCard->next_term_begins,
-            'status' => 'approved',
         ]);
 
-        $this->audit($request, 'report_card.approved', ReportCard::class, $reportCard->id, 
-            ['status' => $oldStatus, 'principal_remark' => null], 
-            ['status' => 'approved', 'principal_remark' => $validated['principal_remark']]);
+        $oldStatus = $reportCard->status;
+        $this->reportCardService->approve($reportCard);
+
+        $this->audit(
+            $request,
+            'report_card.approved',
+            ReportCard::class,
+            $reportCard->id,
+            ['status' => $oldStatus],
+            ['status' => $reportCard->fresh()->status]
+        );
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card approved.');
     }
 
-    public function publish(ReportCard $reportCard, Request $request)
+    public function publish(Request $request, ReportCard $reportCard)
     {
         $oldStatus = $reportCard->status;
         $oldPublished = $reportCard->is_published;
 
         $this->reportCardService->publish($reportCard, $request->user());
 
-        $this->audit($request, 'report_card.published', ReportCard::class, $reportCard->id, 
-            ['status' => $oldStatus, 'is_published' => $oldPublished], 
-            ['status' => 'published', 'is_published' => true]);
+        $this->audit(
+            $request,
+            'report_card.published',
+            ReportCard::class,
+            $reportCard->id,
+            ['status' => $oldStatus, 'is_published' => $oldPublished],
+            ['status' => $reportCard->fresh()->status, 'is_published' => true]
+        );
 
         $reportCard->load('student.user');
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card published.');
     }
 
-    public function download(ReportCard $reportCard)
+    public function download(Request $request, ReportCard $reportCard)
     {
-        $reportCard->load(['student.results.classSubject.subject', 'student.user', 'student.class', 'student.attendance', 'term']);
-        $term = $reportCard->term;
+        if (! $reportCard->is_published) {
+            abort(403, 'Only published report cards can be downloaded.');
+        }
 
-        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard', 'term'));
+        $reportCard->load([
+            'student.results.classSubject.subject',
+            'student.user',
+            'student.class',
+            'student.attendance',
+            'term',
+        ]);
+
+        $pdf = Pdf::loadView('pdf.report-card', [
+            'reportCard' => $reportCard,
+            'term' => $reportCard->term,
+        ]);
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }
 
-    public function publishAll(Request $request)
+    public function publishAll(Request $request, Term $term)
     {
-        $termId = $request->route('term_id') ?? $request->input('term_id');
-        
-        $updated = ReportCard::where('term_id', $termId)
-            ->where('status', 'approved')
-            ->update(['is_published' => true, 'status' => 'published']);
+        $result = $this->reportCardService->publishAll($term->id, $request->user());
 
-        $this->audit($request, 'report_cards.published_all', ReportCard::class, null, null, ['term_id' => $termId]);
+        $this->audit(
+            $request,
+            'report_cards.published_all',
+            ReportCard::class,
+            null,
+            null,
+            ['term_id' => $term->id, 'published' => $result['published'], 'skipped' => $result['skipped']]
+        );
 
-        return redirect()->route('admin.report-cards.index')->with('status', "{$updated} report card(s) published successfully.");
+        return redirect()->route('admin.report-cards.index')
+            ->with('status', "{$result['published']} report card(s) published. {$result['skipped']} skipped.");
     }
 }

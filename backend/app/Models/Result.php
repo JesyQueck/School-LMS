@@ -35,4 +35,14 @@ class Result extends Model
     {
         return $this->belongsTo(User::class, 'submitted_by');
     }
+
+    public function isLocked(): bool
+    {
+        return (bool) $this->is_locked;
+    }
+
+    public function canEdit(): bool
+    {
+        return ! $this->isLocked();
+    }
 }

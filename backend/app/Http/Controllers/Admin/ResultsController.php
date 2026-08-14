@@ -44,9 +44,8 @@ class ResultsController extends Controller
             'remark' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $this->resultService->createResult($data, $request->user());
+        $result = $this->resultService->updateOrCreateResult($data, $request->user());
 
-        $result = Result::query()->latest('id')->first();
         $this->audit($request, 'result.created', Result::class, $result?->id, null, $data);
 
         return redirect()->route('admin.results')->with('status', 'Result submitted.');

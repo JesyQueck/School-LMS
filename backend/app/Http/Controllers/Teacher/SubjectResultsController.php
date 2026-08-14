@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassAssignment;
-use App\Models\Result;
 use App\Models\Student;
 use App\Models\TeacherClassSubject;
+use App\Services\ResultService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 
@@ -14,10 +14,14 @@ class SubjectResultsController extends Controller
 {
     use AuditsActions;
 
+    public function __construct(
+        protected ResultService $resultService,
+    ) {}
+
     public function scores()
     {
         $teacher = auth()->user()?->teacher;
-        if (!$teacher) {
+        if (! $teacher) {
             abort(403, 'You do not have a teacher profile.');
         }
 
@@ -26,7 +30,7 @@ class SubjectResultsController extends Controller
             ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
             ->first();
 
-        if (!$classAssignment) {
+        if (! $classAssignment) {
             return view('teacher.subject-results.scores', [
                 'students' => collect(),
                 'assignments' => collect(),
@@ -49,7 +53,7 @@ class SubjectResultsController extends Controller
     public function store(Request $request)
     {
         $teacher = auth()->user()?->teacher;
-        if (!$teacher) {
+        if (! $teacher) {
             abort(403, 'You do not have a teacher profile.');
         }
 
@@ -58,7 +62,7 @@ class SubjectResultsController extends Controller
             ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
             ->first();
 
-        if (!$classAssignment) {
+        if (! $classAssignment) {
             return redirect()->route('teacher.scores')->with('error', 'No active class assignment found.');
         }
 
@@ -71,7 +75,7 @@ class SubjectResultsController extends Controller
         $subjectIdsProcessed = [];
 
         foreach ($request->input('results', []) as $classSubjectId => $studentScores) {
-            if (!is_numeric($classSubjectId)) {
+            if (! is_numeric($classSubjectId)) {
                 continue;
             }
 
@@ -79,7 +83,7 @@ class SubjectResultsController extends Controller
 
             foreach ($studentScores as $studentId => $scores) {
                 $student = Student::find($studentId);
-                if (!$student) {
+                if (! $student) {
                     continue;
                 }
 
@@ -87,17 +91,14 @@ class SubjectResultsController extends Controller
                 $examScore = $scores['exam_score'] ?? null;
 
                 if ($caScore !== null || $examScore !== null) {
-                    Result::updateOrCreate(
-                        [
-                            'student_id' => $studentId,
-                            'term_id' => $validated['term_id'],
-                            'class_subject_id' => $classSubjectId,
-                        ],
-                        [
-                            'ca_score' => $caScore !== null ? (float) $caScore : 0,
-                            'exam_score' => $examScore !== null ? (float) $examScore : 0,
-                        ]
-                    );
+                    $this->resultService->updateOrCreateResult([
+                        'student_id' => $studentId,
+                        'class_subject_id' => $classSubjectId,
+                        'term_id' => $validated['term_id'],
+                        'ca_score' => $caScore,
+                        'exam_score' => $examScore,
+                        'remark' => $scores['remark'] ?? null,
+                    ], $teacher);
                 }
             }
         }

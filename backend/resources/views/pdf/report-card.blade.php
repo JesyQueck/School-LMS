@@ -135,30 +135,20 @@
                 @php
                     $total = ($result->ca_score ?? 0) + ($result->exam_score ?? 0);
                     $grade = $result->grade ?? null;
-                    if (!$grade && $total !== null) {
-                        if ($total >= 75) $grade = 'A1';
-                        elseif ($total >= 70) $grade = 'B2';
-                        elseif ($total >= 65) $grade = 'B3';
-                        elseif ($total >= 50) $grade = 'C4';
-                        elseif ($total >= 45) $grade = 'D7';
-                        elseif ($total >= 40) $grade = 'E8';
-                        else $grade = 'F9';
+                    $remark = $result->remark ?? null;
+
+                    if (!$grade) {
+                        $grading = (new \App\Services\ResultService())->calculateGrade($total > 0 ? $total : null);
+                        $grade = $grading['grade'];
+                        $remark = $grading['remark'];
                     }
-                    $remarkMap = [
-                        'A1' => 'Excellent', 'B2' => 'Very Good', 'B3' => 'Good',
-                        'C4' => 'Credit', 'C5' => 'Credit', 'C6' => 'Credit',
-                        'D7' => 'Pass', 'E8' => 'Pass', 'F9' => 'Fail'
-                    ];
-                    $displayGrade = $result->grade ?? $grade ?? 'N/A';
-                    $isFail = in_array($displayGrade, ['F9', 'D7', 'E8']);
-                    $remark = $result->remark ?? ($remarkMap[$result->grade ?? $grade ?? 'F9'] ?? 'N/A');
                 @endphp
                 <tr>
                     <td class="text-left" style="padding: 8px 10px;">{{ $result->classSubject->subject->name ?? '—' }}</td>
                     <td>{{ $result->ca_score ?? 0 }}</td>
                     <td>{{ $result->exam_score ?? 0 }}</td>
                     <td class="font-semibold">{{ number_format($total, 0) }}</td>
-                    <td class="font-bold" style="color: {{ $isFail ? '#A3312B' : '#16324F' }};">{{ $displayGrade }}</td>
+                    <td class="font-bold" style="color: {{ in_array($grade, ['F9', 'D7', 'E8']) ? '#A3312B' : '#16324F' }};">{{ $grade ?? 'N/A' }}</td>
                     <td class="text-left">{{ $remark }}</td>
                 </tr>
             @empty
