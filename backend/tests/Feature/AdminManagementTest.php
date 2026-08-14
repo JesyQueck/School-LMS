@@ -47,7 +47,7 @@ class AdminManagementTest extends TestCase
             'email' => 'john.teacher@example.com',
             'phone' => '08012345678',
             'qualification' => 'B.Sc. Mathematics',
-            'password' => 'Password123',
+            'password' => 'Password123!',
         ]);
 
         $response->assertRedirect('/admin/teachers');
@@ -89,7 +89,7 @@ class AdminManagementTest extends TestCase
             'class_id' => $class->id,
             'date_of_birth' => '2012-05-10',
             'gender' => 'female',
-            'password' => 'Password123',
+            'password' => 'Password123!',
         ]);
 
         $response->assertRedirect('/admin/students');
@@ -135,7 +135,7 @@ class AdminManagementTest extends TestCase
             'parent_name' => 'Mr. Student',
             'parent_phone' => '08012345678',
             'parent_occupation' => 'Engineer',
-            'password' => 'Password123',
+            'password' => 'Password123!',
         ]);
 
         $response->assertRedirect('/admin/students');
@@ -304,7 +304,7 @@ class AdminManagementTest extends TestCase
             'email' => 'account.test@example.com',
             'phone' => '08011111111',
             'qualification' => 'B.Ed',
-            'password' => 'Password123',
+            'password' => 'Password123!',
         ]);
 
         $response->assertRedirect('/admin/accounts/create');
@@ -394,5 +394,62 @@ class AdminManagementTest extends TestCase
 
         $response = $this->get('/admin/finance');
         $response->assertOk();
+    }
+
+    public function test_create_teacher_rejects_weak_password(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/teachers', [
+            'name' => 'Weak Pass',
+            'email' => 'weak.pass@example.com',
+            'phone' => '08012345678',
+            'qualification' => 'B.Sc',
+            'password' => 'weak',
+        ]);
+
+        $response->assertSessionHasErrors(['password']);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'weak.pass@example.com',
+        ]);
+    }
+
+    public function test_create_teacher_rejects_password_missing_symbol(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/teachers', [
+            'name' => 'No Symbol',
+            'email' => 'nosymbol@example.com',
+            'phone' => '08012345678',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123',
+        ]);
+
+        $response->assertSessionHasErrors(['password']);
+        $this->assertDatabaseMissing('users', [
+            'email' => 'nosymbol@example.com',
+        ]);
+    }
+
+    public function test_create_teacher_accepts_strong_password(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/teachers', [
+            'name' => 'Strong Pass',
+            'email' => 'strong.pass@example.com',
+            'phone' => '08012345678',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertRedirect('/admin/teachers');
+        $this->assertDatabaseHas('users', [
+            'email' => 'strong.pass@example.com',
+        ]);
     }
 }

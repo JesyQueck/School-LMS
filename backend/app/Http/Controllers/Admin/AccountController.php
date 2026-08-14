@@ -12,6 +12,7 @@ use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class AccountController extends Controller
 {
@@ -41,7 +42,7 @@ class AccountController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
         ]);
 
         $temporaryPassword = $data['password'] ?? Str::random(12);

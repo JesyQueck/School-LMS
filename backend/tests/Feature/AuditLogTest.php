@@ -57,7 +57,7 @@ class AuditLogTest extends TestCase
             'class_id' => $class->id,
             'date_of_birth' => '2012-05-10',
             'gender' => 'female',
-            'password' => 'Password123',
+            'password' => 'Password123!',
         ]);
 
         $response->assertRedirect('/admin/students');

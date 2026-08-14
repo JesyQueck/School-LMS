@@ -13,6 +13,7 @@ use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class SchoolAdminController extends Controller
 {
@@ -82,7 +83,7 @@ class SchoolAdminController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:20'],
             'qualification' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
         ]);
 
         $temporaryPassword = $data['password'] ?? Str::random(12);
@@ -126,7 +127,7 @@ class SchoolAdminController extends Controller
             'parent_name' => ['nullable', 'string', 'max:255'],
             'parent_phone' => ['nullable', 'string', 'max:20'],
             'parent_occupation' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8'],
+            'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
         ]);
 
         $temporaryPassword = $data['password'] ?? Str::random(12);

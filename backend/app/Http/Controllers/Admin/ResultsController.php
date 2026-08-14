@@ -3,11 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ClassSubject;
 use App\Models\Result;
-use App\Models\SchoolClass;
-use App\Models\Student;
-use App\Models\Term;
 use App\Services\CsvExportService;
 use App\Services\ResultService;
 use App\Traits\AuditsActions;
@@ -26,10 +22,6 @@ class ResultsController extends Controller
     {
         return view('admin.results.index', [
             'results' => Result::with(['student', 'classSubject', 'term'])->get(),
-            'students' => Student::with('class')->get(),
-            'classSubjects' => ClassSubject::with(['class', 'subject'])->get(),
-            'terms' => Term::all(),
-            'classes' => SchoolClass::all(),
         ]);
     }
 
@@ -63,34 +55,5 @@ class ResultsController extends Controller
     public function exportResults(Request $request)
     {
         return $this->csvExportService->exportResults($request);
-    }
-
-    public function classAttendance(Request $request)
-    {
-        $class = $request->user()->teacher?->currentClassAssignment?->class;
-
-        return view('teacher.class-attendance', [
-            'class' => $class,
-        ]);
-    }
-
-    public function teacherResults()
-    {
-        return view('teacher.results');
-    }
-
-    public function generateForClass(Request $request)
-    {
-        $classAssignment = $request->user()->teacher?->currentClassAssignment?->load(['class', 'students']);
-
-        return view('teacher.report-cards.generate', [
-            'class' => $classAssignment?->class,
-            'students' => $classAssignment?->students ?? collect(),
-        ]);
-    }
-
-    public function classPerformance()
-    {
-        return view('teacher.class-performance');
     }
 }
