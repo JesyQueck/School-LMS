@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'employee_id',
+        'qualification',
+        'phone',
+    ];
 
     public function user(): BelongsTo
     {

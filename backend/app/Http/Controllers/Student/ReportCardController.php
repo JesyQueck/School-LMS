@@ -14,8 +14,8 @@ class ReportCardController extends Controller
         $student = $request->user()->student;
 
         $reportCards = $student->reportCards()
-            ->where('is_published', true)
-            ->with(['term.academicSession', 'student.class'])
+            ->where('status', ReportCard::STATUS_PUBLISHED)
+            ->with(['term.academicSession', 'student.schoolClass'])
             ->latest()
             ->get()
             ->groupBy(fn ($rc) => $rc->term->academicSession->name ?? 'Unknown Session');
@@ -23,19 +23,64 @@ class ReportCardController extends Controller
         return view('student.report-cards', compact('student', 'reportCards'));
     }
 
+    public function preview(Request $request, ReportCard $reportCard)
+    {
+        $this->ensurePublishedForStudent($request, $reportCard);
+
+        return view('student.report-cards.preview', [
+            'reportCard' => $reportCard,
+        ]);
+    }
+
+    public function render(Request $request, ReportCard $reportCard)
+    {
+        $this->ensurePublishedForStudent($request, $reportCard);
+
+        return view('pdf.report-card', $this->prepareReportCardData($reportCard));
+    }
+
     public function download(Request $request, ReportCard $reportCard)
+    {
+        $this->ensurePublishedForStudent($request, $reportCard);
+
+        $student = $request->user()->student;
+
+        $pdf = Pdf::loadView('pdf.report-card', $this->prepareReportCardData($reportCard));
+
+        return $pdf->download("report-card-{$student->admission_no}-{$reportCard->term->name}.pdf");
+    }
+
+    /**
+     * Abort with 403 unless the authenticated student owns and may view
+     * (i.e. the card is published) the given report card.
+     */
+    protected function ensurePublishedForStudent(Request $request, ReportCard $reportCard): void
     {
         $student = $request->user()->student;
 
-        if ($reportCard->student_id !== $student->id || ! $reportCard->is_published) {
+        if ($reportCard->student_id !== $student->id || ! $reportCard->isPublished()) {
             abort(403);
         }
+    }
 
-        $reportCard->load(['student.results.classSubject.subject', 'student.user', 'student.class', 'student.attendance', 'term']);
-        $term = $reportCard->term;
+    /**
+     * Load the relations and assemble the shared view-data array used by
+     * both render() (HTML preview) and download() (Dompdf). Keeping a single
+     * source of truth guarantees the preview is always identical to the PDF.
+     */
+    protected function prepareReportCardData(ReportCard $reportCard): array
+    {
+        $reportCard->load([
+            'student.results.classSubject.subject',
+            'student.schoolClass',
+            'student.user',
+            'student.attendance',
+            'term',
+        ]);
 
-        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard', 'term'));
+        $term  = $reportCard->term;
+        $school = $reportCard->student->school ?? null;
 
-        return $pdf->download("report-card-{$student->admission_no}-{$reportCard->term->name}.pdf");
+        return compact('reportCard', 'school', 'term');
     }
 }

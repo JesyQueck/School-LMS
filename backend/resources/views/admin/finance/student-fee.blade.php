@@ -6,7 +6,7 @@
             <x-ui.breadcrumb-item active>Fee Details</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">{{ $studentFee->student->full_name }}</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $studentFee->student->admission_no }} &middot; {{ $studentFee->student->class->name ?? 'N/A' }}</p>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $studentFee->student->admission_no }} &middot; {{ $studentFee->student->schoolClass->name ?? 'N/A' }}</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
+use App\Models\AuditLog;
 use App\Models\ClassSubject;
 use App\Models\ReportCard;
 use App\Models\Result;
@@ -11,7 +12,9 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
+use App\Traits\AuditsActions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Tests\TestCase;
 
 class AuditLogTest extends TestCase
@@ -128,7 +131,7 @@ class AuditLogTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $class->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         $this->actingAs($adminUser);
@@ -144,6 +147,121 @@ class AuditLogTest extends TestCase
             'action' => 'report_card.published',
             'target_model' => ReportCard::class,
             'target_id' => $reportCard->id,
+        ]);
+    }
+
+    public function test_audit_log_stores_user_agent_from_http_request(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($adminUser);
+
+        $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+        $response = $this->withHeaders([
+            'User-Agent' => $userAgent,
+        ])->post('/admin/classes', [
+            'name' => 'JSS 3',
+        ]);
+
+        $response->assertRedirect('/admin/classes');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'class.created',
+            'user_agent' => $userAgent,
+        ]);
+    }
+
+    public function test_audit_log_user_agent_matches_the_request_that_generated_it(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($adminUser);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $userAgent1 = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
+        $userAgent2 = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)';
+
+        $this->withHeaders(['User-Agent' => $userAgent1])->post('/admin/students', [
+            'name' => 'Student One',
+            'email' => 'one@example.com',
+            'class_id' => $class->id,
+            'date_of_birth' => '2012-01-01',
+            'gender' => 'male',
+            'password' => 'Password123!',
+        ]);
+
+        $this->withHeaders(['User-Agent' => $userAgent2])->post('/admin/students', [
+            'name' => 'Student Two',
+            'email' => 'two@example.com',
+            'class_id' => $class->id,
+            'date_of_birth' => '2012-02-02',
+            'gender' => 'female',
+            'password' => 'Password123!',
+        ]);
+
+        $log1 = AuditLog::where('action', 'student.created')
+            ->where('user_agent', $userAgent1)
+            ->exists();
+        $log2 = AuditLog::where('action', 'student.created')
+            ->where('user_agent', $userAgent2)
+            ->exists();
+
+        $this->assertTrue($log1, 'Audit log should contain user agent from first request');
+        $this->assertTrue($log2, 'Audit log should contain user agent from second request');
+        $this->assertNotEquals($userAgent1, $userAgent2);
+    }
+
+    public function test_audit_log_still_records_ip_address(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($adminUser);
+
+        $response = $this->withHeaders([
+            'REMOTE_ADDR' => '192.168.1.100',
+            'User-Agent' => 'TestAgent/1.0',
+        ])->post('/admin/classes', [
+            'name' => 'JSS 4',
+        ]);
+
+        $response->assertRedirect('/admin/classes');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'class.created',
+            'ip_address' => '192.168.1.100',
+            'user_agent' => 'TestAgent/1.0',
+        ]);
+    }
+
+    public function test_audit_logging_does_not_fail_without_http_request(): void
+    {
+        $adminUser = User::factory()->create(['role' => 'admin']);
+
+        $request = Request::create('/', 'GET');
+        $request->headers->remove('User-Agent');
+        $request->headers->remove('X-Forwarded-For');
+        $request->headers->remove('Client-Ip');
+        $request->server->remove('REMOTE_ADDR');
+
+        $auditor = new class
+        {
+            use AuditsActions;
+
+            public function invokeAudit(Request $request, string $action, ?string $targetModel = null, ?int $targetId = null, ?array $oldValue = null, ?array $newValue = null): void
+            {
+                $this->audit($request, $action, $targetModel, $targetId, $oldValue, $newValue);
+            }
+        };
+
+        $auditor->invokeAudit($request, 'test.action', User::class, $adminUser->id, null, null);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'test.action',
+            'target_model' => User::class,
+            'target_id' => $adminUser->id,
+            'user_agent' => null,
         ]);
     }
 }

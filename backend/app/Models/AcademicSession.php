@@ -9,7 +9,12 @@ class AcademicSession extends Model
 {
     protected $table = 'academic_sessions';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'start_date',
+        'end_date',
+        'is_current',
+    ];
 
     protected $casts = [
         'is_current' => 'boolean',

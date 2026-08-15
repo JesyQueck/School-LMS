@@ -64,7 +64,7 @@
                         </span>
 
                         <span class="text-neutral-900 dark:text-white">
-                            {{ $student->class->name ?? 'N/A' }}
+                            {{ $student->schoolClass->name ?? 'N/A' }}
                         </span>
                     </p>
 

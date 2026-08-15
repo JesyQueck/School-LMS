@@ -6,7 +6,7 @@
             <x-ui.breadcrumb-item active>Report Cards</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">{{ $student->full_name ?? 'Student' }} - Report Cards</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->class->name ?? 'N/A' }} &middot; {{ $student->admission_no ?? 'N/A' }}</p>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->schoolClass->name ?? 'N/A' }} &middot; {{ $student->admission_no ?? 'N/A' }}</p>
     </div>
 
     <x-ui.card>
@@ -24,7 +24,7 @@
                         </div>
                         <div>
                             <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $term->name ?? 'Term' }}</p>
-                            @if($reportCard && $reportCard->is_published)
+                            @if($reportCard && $reportCard->isPublished())
                                 <p class="text-xs text-neutral-500 dark:text-neutral-400">
                                     Position: {{ $reportCard->position_in_class ?? 'N/A' }} of {{ $reportCard->total_students_in_class ?? 'N/A' }}
                                 </p>
@@ -38,7 +38,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        @if($reportCard && $reportCard->is_published)
+                        @if($reportCard && $reportCard->isPublished())
                             <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
                                 Published
                             </span>

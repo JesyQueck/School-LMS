@@ -175,7 +175,7 @@
                             <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">
                                 <a href="{{ route('admin.finance.student-fees.show', $fee) }}" class="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">{{ $fee->student->full_name ?? 'N/A' }}</a>
                             </td>
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $fee->student->class->name ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $fee->student->schoolClass->name ?? 'N/A' }}</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $fee->feeType->name ?? 'N/A' }}</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">₦{{ number_format($fee->amount_expected, 2) }}</td>
                             <td class="px-6 py-4 text-sm text-success-600 dark:text-success-400">₦{{ number_format($paid, 2) }}</td>

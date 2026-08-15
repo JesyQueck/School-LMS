@@ -4,33 +4,23 @@ namespace App\Services;
 
 use App\Models\Result;
 use App\Models\User;
-use InvalidArgumentException;
 use RuntimeException;
 
 class ResultService
 {
     public function calculateGrade(?float $total): array
     {
-        if ($total === null) {
-            return ['grade' => null, 'remark' => null];
-        }
+        return ResultGradeCalculator::calculateGrade($total);
+    }
 
-        return match (true) {
-            $total >= 75 => ['grade' => 'A1', 'remark' => 'Excellent'],
-            $total >= 70 => ['grade' => 'B2', 'remark' => 'Very Good'],
-            $total >= 65 => ['grade' => 'B3', 'remark' => 'Good'],
-            $total >= 60 => ['grade' => 'C4', 'remark' => 'Credit'],
-            $total >= 55 => ['grade' => 'C5', 'remark' => 'Credit'],
-            $total >= 50 => ['grade' => 'C6', 'remark' => 'Credit'],
-            $total >= 45 => ['grade' => 'D7', 'remark' => 'Pass'],
-            $total >= 40 => ['grade' => 'E8', 'remark' => 'Pass'],
-            default => ['grade' => 'F9', 'remark' => 'Fail'],
-        };
+    public function calculateTotal(?float $caScore, ?float $examScore): ?float
+    {
+        return ResultGradeCalculator::calculateTotal($caScore, $examScore);
     }
 
     public function createResult(array $data, User $submittedBy): Result
     {
-        $this->validateScores($data['ca_score'] ?? null, $data['exam_score'] ?? null);
+        ResultGradeCalculator::validateScores($data['ca_score'] ?? null, $data['exam_score'] ?? null);
 
         $total = $this->calculateTotal($data['ca_score'] ?? null, $data['exam_score'] ?? null);
         $grading = $this->calculateGrade($total);
@@ -60,7 +50,7 @@ class ResultService
             throw new RuntimeException('This result has been locked and cannot be modified.');
         }
 
-        $this->validateScores($data['ca_score'] ?? null, $data['exam_score'] ?? null);
+        ResultGradeCalculator::validateScores($data['ca_score'] ?? null, $data['exam_score'] ?? null);
 
         $total = $this->calculateTotal($data['ca_score'] ?? null, $data['exam_score'] ?? null);
         $grading = $this->calculateGrade($total);
@@ -86,43 +76,5 @@ class ResultService
         $result->update(['is_locked' => true]);
 
         return $result->refresh();
-    }
-
-    public function calculateTotal(?float $caScore, ?float $examScore): ?float
-    {
-        if ($caScore === null && $examScore === null) {
-            return null;
-        }
-
-        return ($caScore ?? 0) + ($examScore ?? 0);
-    }
-
-    protected function validateScores(?float $caScore, ?float $examScore): void
-    {
-        $errors = [];
-
-        if ($caScore !== null) {
-            if ($caScore < 0) {
-                $errors[] = 'CA score cannot be negative.';
-            }
-
-            if ($caScore > 100) {
-                $errors[] = 'CA score cannot exceed 100.';
-            }
-        }
-
-        if ($examScore !== null) {
-            if ($examScore < 0) {
-                $errors[] = 'Exam score cannot be negative.';
-            }
-
-            if ($examScore > 100) {
-                $errors[] = 'Exam score cannot exceed 100.';
-            }
-        }
-
-        if ($errors) {
-            throw new InvalidArgumentException(implode(' ', $errors));
-        }
     }
 }

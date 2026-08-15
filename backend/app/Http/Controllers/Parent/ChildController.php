@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
+use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Term;
 use Illuminate\Http\Request;
@@ -14,17 +15,17 @@ class ChildController extends Controller
         $this->authorize('view', $student);
 
         $student->load([
-            'class',
+            'schoolClass',
             'results.classSubject.subject',
             'attendance',
             'fees.payments',
             'reportCards' => function ($query) {
-                $query->where('is_published', true)->with('term');
+                $query->where('status', ReportCard::STATUS_PUBLISHED)->with('term');
             },
         ]);
 
         $publishedTermIds = $student->reportCards()
-            ->where('is_published', true)
+            ->where('status', ReportCard::STATUS_PUBLISHED)
             ->pluck('term_id');
 
         $results = $student->results->whereIn('term_id', $publishedTermIds);
@@ -41,6 +42,7 @@ class ChildController extends Controller
 
         $outstanding = $student->fees->sum(function ($fee) {
             $paid = $fee->payments->sum('amount_paid');
+
             return max(0, ($fee->amount_expected ?? 0) - $paid);
         });
 

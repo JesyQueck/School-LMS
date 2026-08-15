@@ -9,7 +9,14 @@ class Attendance extends Model
 {
     protected $table = 'attendances';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'student_id',
+        'class_id',
+        'term_id',
+        'date',
+        'status',
+        'marked_by',
+    ];
 
     protected $casts = [
         'date' => 'date',

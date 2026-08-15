@@ -166,7 +166,7 @@ class DemoSeeder extends Seeder
 
         $reportCard1 = ReportCard::updateOrCreate(
             ['student_id' => $student1->id, 'term_id' => $term1->id],
-            ['is_published' => true, 'generated_at' => now()]
+            ['status' => ReportCard::STATUS_PUBLISHED, 'generated_at' => now()]
         );
 
         Result::updateOrCreate(

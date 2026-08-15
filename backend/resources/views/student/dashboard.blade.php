@@ -14,12 +14,12 @@
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $greeting }}, {{ $firstName }} 👋</h1>
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Welcome back to Greenfield Academy.</p>
         <p class="text-sm font-medium text-primary-600 dark:text-primary-400 mt-2">
-            {{ $student->class->name ?? 'N/A' }} &middot; {{ $session }} &middot; {{ $termName }}
+            {{ $student->schoolClass->name ?? 'N/A' }} &middot; {{ $session }} &middot; {{ $termName }}
         </p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Class" :value="$student->class->name ?? 'N/A'" icon="school" />
+        <x-ui.stat-card label="Class" :value="$student->schoolClass->name ?? 'N/A'" icon="school" />
         <x-ui.stat-card label="Average Score" :value="$averageScore . '%'" icon="clipboard-list" />
         <x-ui.stat-card label="Attendance" :value="$attendanceRate . '%'" icon="calendar-check" />
         <x-ui.stat-card label="Subjects" :value="$subjectCount" icon="book-open" />
@@ -189,7 +189,7 @@
                 <div class="p-6 space-y-1 text-sm">
                     <p class="text-neutral-700 dark:text-neutral-300">{{ $student->full_name ?? '---' }}</p>
                     <p class="text-neutral-500 dark:text-neutral-400">Admission No: {{ $student->admission_no ?? 'N/A' }}</p>
-                    <p class="text-neutral-500 dark:text-neutral-400">Class: {{ $student->class->name ?? 'N/A' }}</p>
+                    <p class="text-neutral-500 dark:text-neutral-400">Class: {{ $student->schoolClass->name ?? 'N/A' }}</p>
                     <p class="text-neutral-500 dark:text-neutral-400">Gender: {{ ucfirst($student->gender ?? 'N/A') }}</p>
                     <p class="text-neutral-500 dark:text-neutral-400">Date of Birth: {{ $student->date_of_birth ? $student->date_of_birth->format('j F Y') : 'N/A' }}</p>
                 </div>

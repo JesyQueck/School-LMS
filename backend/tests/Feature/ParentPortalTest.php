@@ -116,13 +116,13 @@ class ParentPortalTest extends TestCase
         ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $publishedTerm->id,
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $unpublishedTerm->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         Result::create([
@@ -348,7 +348,7 @@ class ParentPortalTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $class->id,
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         $this->actingAs($parentUser);
@@ -429,7 +429,7 @@ class ParentPortalTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $class->id,
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         $this->actingAs($parentUser);
@@ -471,7 +471,7 @@ class ParentPortalTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $class->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         $this->actingAs($parentUser);

@@ -10,7 +10,21 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Student extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'admission_no',
+        'class_id',
+        'first_name',
+        'last_name',
+        'house',
+        'gender',
+        'state_of_origin',
+        'date_of_birth',
+        'blood_group',
+        'emergency_contact',
+        'emergency_phone',
+        'status',
+    ];
 
     protected $casts = [
         'date_of_birth' => 'date',
@@ -26,7 +40,7 @@ class Student extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function class(): BelongsTo
+    public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');
     }

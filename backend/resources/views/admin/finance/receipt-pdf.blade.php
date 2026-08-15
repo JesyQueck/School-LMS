@@ -25,7 +25,7 @@
     <div class="line"></div>
     <div class="row"><span class="label">Student:</span><span>{{ $payment->studentFee->student->full_name ?? 'N/A' }}</span></div>
     <div class="row"><span class="label">Admission No:</span><span>{{ $payment->studentFee->student->admission_no ?? 'N/A' }}</span></div>
-    <div class="row"><span class="label">Class:</span><span>{{ $payment->studentFee->student->class->name ?? 'N/A' }}</span></div>
+    <div class="row"><span class="label">Class:</span><span>{{ $payment->studentFee->student->schoolClass->name ?? 'N/A' }}</span></div>
     <div class="row"><span class="label">Fee:</span><span>{{ $payment->studentFee->feeType->name ?? 'N/A' }}</span></div>
     <div class="row"><span class="label">Term:</span><span>{{ $payment->studentFee->term->name ?? 'N/A' }}</span></div>
     <div class="line"></div>

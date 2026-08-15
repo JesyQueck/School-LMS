@@ -35,7 +35,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-semibold text-neutral-900 dark:text-white truncate">{{ $child->full_name ?? 'Unknown' }}</p>
-                                <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $child->class->name ?? 'Unassigned' }}</p>
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $child->schoolClass->name ?? 'Unassigned' }}</p>
                                 <p class="text-xs text-neutral-400 dark:text-neutral-500">Admission No: {{ $child->admission_no ?? 'N/A' }}</p>
                             </div>
                         </div>
@@ -79,11 +79,11 @@
                 </div>
                 <x-ui.card>
                     <div class="px-6 py-4 border-b border-neutral-100 dark:border-dark-border flex items-center justify-between">
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $first->full_name }} &middot; {{ $first->class->name ?? '' }}</p>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $first->full_name }} &middot; {{ $first->schoolClass->name ?? '' }}</p>
                     </div>
                     <div class="p-6 space-y-2">
                         @php
-                            $publishedTermIds = $first->reportCards()->where('is_published', true)->pluck('term_id');
+                            $publishedTermIds = $first->reportCards()->where('status', \App\Models\ReportCard::STATUS_PUBLISHED)->pluck('term_id');
                             $recentResults = $first->results->whereIn('term_id', $publishedTermIds)->take(5);
                         @endphp
                         @forelse($recentResults as $result)
@@ -172,7 +172,7 @@
                 <h2 class="text-lg font-semibold text-neutral-900 dark:text-white mb-3">Recent Report Cards</h2>
                 <div class="grid grid-cols-1 gap-3">
                     @foreach($children as $child)
-                        @php $published = $child->reportCards->where('is_published', true)->first(); @endphp
+                        @php $published = $child->reportCards->where('status', 'published')->first(); @endphp
                         @if($published)
                             <x-ui.card>
                                 <div class="py-1 flex items-center justify-between">

@@ -26,7 +26,7 @@ class ReportCardPolicy
         }
 
         if ($user->role === 'teacher') {
-            return $reportCard->is_published;
+            return $reportCard->isPublished();
         }
 
         return false;

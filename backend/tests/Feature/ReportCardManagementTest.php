@@ -94,12 +94,12 @@ class ReportCardManagementTest extends TestCase
         ]);
 
         $response->assertRedirect('/admin/report-cards');
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'term_id' => $term->id, 'is_published' => false]);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'term_id' => $term->id, 'status' => ReportCard::STATUS_DRAFT]);
 
         $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
         $publishResponse = $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $publishResponse->assertRedirect('/admin/report-cards');
-        $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'is_published' => true]);
+        $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'status' => ReportCard::STATUS_PUBLISHED]);
         $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'published_by' => $admin->id]);
         $this->assertNotNull($reportCard->refresh()->published_at);
     }
@@ -125,7 +125,7 @@ class ReportCardManagementTest extends TestCase
         $publishResponse = $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
 
         $publishResponse->assertStatus(500);
-        $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'is_published' => false]);
+        $this->assertDatabaseHas('report_cards', ['id' => $reportCard->id, 'status' => ReportCard::STATUS_DRAFT]);
     }
 
     public function test_report_card_starts_as_draft(): void
@@ -143,7 +143,7 @@ class ReportCardManagementTest extends TestCase
 
         $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
         $this->assertEquals(ReportCard::STATUS_DRAFT, $reportCard->status);
-        $this->assertFalse($reportCard->is_published);
+        $this->assertFalse($reportCard->isPublished());
     }
 
     public function test_admin_can_return_a_report_card(): void
@@ -206,7 +206,7 @@ class ReportCardManagementTest extends TestCase
         // Publish (term results are locked)
         $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
         $this->assertEquals(ReportCard::STATUS_PUBLISHED, $reportCard->status);
     }
 
@@ -228,7 +228,7 @@ class ReportCardManagementTest extends TestCase
         // First publish — should succeed
         $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
 
         // Second publish attempt — should fail
         $response = $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
@@ -324,7 +324,7 @@ class ReportCardManagementTest extends TestCase
         // Now publish — should succeed because all results are locked
         $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
     }
 
     public function test_locked_result_cannot_be_modified_via_service(): void
@@ -401,8 +401,8 @@ class ReportCardManagementTest extends TestCase
 
         $this->post('/admin/report-cards/publish-all/'.$term->id, []);
 
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'is_published' => true, 'status' => 'published']);
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student2->id, 'is_published' => true, 'status' => 'published']);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'status' => ReportCard::STATUS_PUBLISHED]);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student2->id, 'status' => ReportCard::STATUS_PUBLISHED]);
     }
 
     public function test_publish_all_skips_draft_unpublished_with_unlocked_results(): void
@@ -426,7 +426,7 @@ class ReportCardManagementTest extends TestCase
         $response = $this->post('/admin/report-cards/publish-all/'.$term->id, []);
         $response->assertStatus(500);
 
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'is_published' => false]);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'status' => ReportCard::STATUS_DRAFT]);
     }
 
     public function test_publish_all_does_not_publish_already_published_cards(): void
@@ -451,7 +451,7 @@ class ReportCardManagementTest extends TestCase
         $response->assertRedirect('/admin/report-cards');
 
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
         $this->assertEquals(ReportCard::STATUS_PUBLISHED, $reportCard->status);
     }
 
@@ -473,7 +473,7 @@ class ReportCardManagementTest extends TestCase
         // Publish
         $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
         $this->assertNotNull($reportCard->published_at);
         $this->assertNotNull($reportCard->published_by);
 
@@ -482,7 +482,7 @@ class ReportCardManagementTest extends TestCase
         $response->assertRedirect('/admin/report-cards');
 
         $reportCard->refresh();
-        $this->assertFalse($reportCard->is_published);
+        $this->assertFalse($reportCard->isPublished());
         $this->assertNull($reportCard->published_by);
         $this->assertNull($reportCard->published_at);
         $this->assertEquals(ReportCard::STATUS_DRAFT, $reportCard->status);
@@ -508,7 +508,7 @@ class ReportCardManagementTest extends TestCase
         $response->assertStatus(500);
 
         $reportCard->refresh();
-        $this->assertFalse($reportCard->is_published);
+        $this->assertFalse($reportCard->isPublished());
         $this->assertEquals(ReportCard::STATUS_DRAFT, $reportCard->status);
     }
 
@@ -610,7 +610,7 @@ class ReportCardManagementTest extends TestCase
         $response->assertRedirect('/admin/report-cards');
 
         // The draft report card should NOT be published
-        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'is_published' => false, 'status' => 'draft']);
+        $this->assertDatabaseHas('report_cards', ['student_id' => $student->id, 'status' => ReportCard::STATUS_DRAFT]);
     }
 
     public function test_student_sees_only_published_report_cards(): void
@@ -627,8 +627,7 @@ class ReportCardManagementTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $data['class']->id,
-            'is_published' => true,
-            'status' => 'published',
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         // Create a second term and a draft report card for it
@@ -644,8 +643,7 @@ class ReportCardManagementTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term2->id,
             'class_id' => $data['class']->id,
-            'is_published' => false,
-            'status' => 'draft',
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         $response = $this->get('/student/report-cards');
@@ -669,7 +667,6 @@ class ReportCardManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'term_id' => $data['term']->id,
             'class_id' => $data['class']->id,
-            'is_published' => true,
             'status' => 'published',
         ]);
 
@@ -687,7 +684,6 @@ class ReportCardManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'term_id' => $data['term']->id,
             'class_id' => $data['class']->id,
-            'is_published' => false,
             'status' => 'draft',
         ]);
 
@@ -707,7 +703,6 @@ class ReportCardManagementTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $data['class']->id,
-            'is_published' => true,
             'status' => 'published',
             'class_teacher_remark' => 'Well done',
             'position_in_class' => 1,
@@ -758,14 +753,108 @@ class ReportCardManagementTest extends TestCase
         // Publish
         $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
 
         // Attempt to return — should fail
         $response = $this->post('/admin/report-cards/'.$reportCard->id.'/return', []);
         $response->assertStatus(500);
 
         $reportCard->refresh();
-        $this->assertTrue($reportCard->is_published);
+        $this->assertTrue($reportCard->isPublished());
         $this->assertEquals(ReportCard::STATUS_PUBLISHED, $reportCard->status);
+    }
+
+    public function test_draft_report_card_is_not_published(): void
+    {
+        $data = $this->createTestData();
+
+        $card = ReportCard::create([
+            'student_id' => $data['student']->id,
+            'term_id' => $data['term']->id,
+            'class_id' => $data['class']->id,
+            'status' => ReportCard::STATUS_DRAFT,
+        ]);
+
+        $this->assertFalse($card->isPublished());
+        $this->assertEquals(ReportCard::STATUS_DRAFT, $card->status);
+    }
+
+    public function test_approved_report_card_is_not_published(): void
+    {
+        $data = $this->createTestData();
+
+        $card = ReportCard::create([
+            'student_id' => $data['student']->id,
+            'term_id' => $data['term']->id,
+            'class_id' => $data['class']->id,
+            'status' => ReportCard::STATUS_APPROVED,
+        ]);
+
+        $this->assertFalse($card->isPublished());
+        $this->assertEquals(ReportCard::STATUS_APPROVED, $card->status);
+    }
+
+    public function test_published_report_card_is_recognized_as_published(): void
+    {
+        $data = $this->createTestData();
+
+        $card = ReportCard::create([
+            'student_id' => $data['student']->id,
+            'term_id' => $data['term']->id,
+            'class_id' => $data['class']->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+        ]);
+
+        $this->assertTrue($card->isPublished());
+        $this->assertEquals(ReportCard::STATUS_PUBLISHED, $card->status);
+    }
+
+    public function test_publish_method_changes_state_to_published(): void
+    {
+        $data = $this->createTestData();
+        $admin = $data['admin'];
+        $student = $data['student'];
+        $term = $data['term'];
+        $this->actingAs($admin);
+
+        $this->post('/admin/report-cards', [
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+        ]);
+
+        $reportCard = ReportCard::where('student_id', $student->id)->firstOrFail();
+
+        $this->post('/admin/report-cards/'.$reportCard->id.'/approve', []);
+        $reportCard->refresh();
+        $this->assertEquals(ReportCard::STATUS_APPROVED, $reportCard->status);
+
+        $this->post('/admin/report-cards/'.$reportCard->id.'/publish', []);
+        $reportCard->refresh();
+
+        $this->assertTrue($reportCard->isPublished());
+        $this->assertEquals(ReportCard::STATUS_PUBLISHED, $reportCard->status);
+    }
+
+    public function test_unpublish_method_changes_state_back_to_draft(): void
+    {
+        $data = $this->createTestData();
+        $service = $this->reportCardService();
+
+        $card = ReportCard::create([
+            'student_id' => $data['student']->id,
+            'term_id' => $data['term']->id,
+            'class_id' => $data['class']->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+            'published_by' => $data['admin']->id,
+            'published_at' => now(),
+        ]);
+
+        $card = $service->unpublish($card);
+        $card->refresh();
+
+        $this->assertFalse($card->isPublished());
+        $this->assertEquals(ReportCard::STATUS_DRAFT, $card->status);
+        $this->assertNull($card->published_by);
+        $this->assertNull($card->published_at);
     }
 }

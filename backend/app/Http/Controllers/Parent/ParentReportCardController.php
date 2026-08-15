@@ -12,7 +12,7 @@ class ParentReportCardController extends Controller
 {
     public function index($studentId)
     {
-        $student = Student::with(['user', 'class'])->findOrFail($studentId);
+        $student = Student::with(['user', 'schoolClass'])->findOrFail($studentId);
 
         $this->authorize('view', $student);
 
@@ -25,15 +25,15 @@ class ParentReportCardController extends Controller
 
     public function download($studentId, ReportCard $reportCard)
     {
-        $student = Student::with(['user', 'class'])->findOrFail($studentId);
+        $student = Student::with(['user', 'schoolClass'])->findOrFail($studentId);
 
         $this->authorize('view', $student);
 
-        if ($reportCard->student_id !== $student->id || ! $reportCard->is_published) {
+        if ($reportCard->student_id !== $student->id || ! $reportCard->isPublished()) {
             abort(403, 'Report card not available.');
         }
 
-        $reportCard->load(['student.results.classSubject.subject', 'student.user', 'student.class', 'term']);
+        $reportCard->load(['student.results.classSubject.subject', 'student.schoolClass', 'student.user', 'term']);
         $pdf = Pdf::loadView('pdf.report-card', compact('reportCard'));
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");

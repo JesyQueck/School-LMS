@@ -18,12 +18,11 @@
             $pendingReportCards = \App\Models\ReportCard::whereIn('student_id', $class->students->pluck('id'))
                 ->where('term_id', $currentTerm->id ?? null)
                 ->where('status', 'approved')
-                ->where('is_published', false)
                 ->with('student.user')
                 ->get();
             $publishedReportCards = \App\Models\ReportCard::whereIn('student_id', $class->students->pluck('id'))
                 ->where('term_id', $currentTerm->id ?? null)
-                ->where('is_published', true)
+                ->where('status', \App\Models\ReportCard::STATUS_PUBLISHED)
                 ->with('student.user')
                 ->get();
         @endphp
@@ -73,7 +72,7 @@
                             <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $reportCard->student->admission_no ?? '' }}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                             @if($reportCard->is_published)
+                             @if($reportCard->isPublished())
                                 <span class="text-xs font-semibold text-purple-600 dark:text-purple-400">
                                     Published
                                 </span>

@@ -27,7 +27,7 @@ class ReportCardController extends Controller
 
         return view('admin.report-cards.index', [
             'classes' => SchoolClass::with(['students.user'])->get(),
-            'students' => Student::with('class.user', 'user')->get(),
+            'students' => Student::with('schoolClass.user', 'user')->get(),
             'subjects' => Subject::all(),
             'terms' => Term::all(),
             'currentTerm' => $currentTerm,
@@ -145,7 +145,7 @@ class ReportCardController extends Controller
     public function publish(Request $request, ReportCard $reportCard)
     {
         $oldStatus = $reportCard->status;
-        $oldPublished = $reportCard->is_published;
+        $oldPublished = $reportCard->isPublished();
 
         $this->reportCardService->publish($reportCard, $request->user());
 
@@ -154,8 +154,8 @@ class ReportCardController extends Controller
             'report_card.published',
             ReportCard::class,
             $reportCard->id,
-            ['status' => $oldStatus, 'is_published' => $oldPublished],
-            ['status' => $reportCard->fresh()->status, 'is_published' => true]
+            ['status' => $oldStatus, 'was_published' => $oldPublished],
+            ['status' => $reportCard->fresh()->status, 'published' => true]
         );
 
         $reportCard->load('student.user');
@@ -166,7 +166,7 @@ class ReportCardController extends Controller
     public function unpublish(Request $request, ReportCard $reportCard)
     {
         $oldStatus = $reportCard->status;
-        $oldPublished = $reportCard->is_published;
+        $oldPublished = $reportCard->isPublished();
 
         $this->reportCardService->unpublish($reportCard);
 
@@ -175,8 +175,8 @@ class ReportCardController extends Controller
             'report_card.unpublished',
             ReportCard::class,
             $reportCard->id,
-            ['status' => $oldStatus, 'is_published' => $oldPublished],
-            ['status' => $reportCard->fresh()->status, 'is_published' => false]
+            ['status' => $oldStatus, 'was_published' => $oldPublished],
+            ['status' => $reportCard->fresh()->status, 'published' => false]
         );
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card unpublished for corrections.');
@@ -184,14 +184,14 @@ class ReportCardController extends Controller
 
     public function download(Request $request, ReportCard $reportCard)
     {
-        if (! $reportCard->is_published) {
+        if (! $reportCard->isPublished()) {
             abort(403, 'Only published report cards can be downloaded.');
         }
 
         $reportCard->load([
             'student.results.classSubject.subject',
             'student.user',
-            'student.class',
+            'student.schoolClass',
             'student.attendance',
             'term',
         ]);

@@ -27,7 +27,7 @@
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    @if($reportCard && $reportCard->is_published)
+                    @if($reportCard && $reportCard->isPublished())
                         <span class="text-xs px-2 py-1 rounded border bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800">Published</span>
                     @elseif($reportCard && $reportCard->status === 'approved')
                         <span class="text-xs px-2 py-1 rounded border bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-800">Submitted</span>
@@ -42,7 +42,7 @@
                     <button type="button" onclick="loadPreviewData({{ $student->id }})" class="px-3 py-1 text-xs text-secondary-600 dark:text-secondary-400 border border-secondary-600 dark:border-secondary-400 rounded hover:bg-secondary-50 dark:hover:bg-secondary-900/30">
                         Preview
                     </button>
-                    @if($reportCard && $reportCard->status !== 'approved' && ! $reportCard->is_published)
+                    @if($reportCard && $reportCard->status !== 'approved' && ! $reportCard->isPublished())
                         <form method="POST" action="{{ route('teacher.report-cards.submit', $reportCard->id) }}" id="submit-form-{{ $student->id }}" style="display: inline;">
                             @csrf
                             <button type="submit" onclick="return confirm('Submit report card for {{ $student->full_name }}?')" class="px-3 py-1 text-xs text-white bg-green-600 hover:bg-green-700 rounded">

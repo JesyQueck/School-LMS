@@ -29,7 +29,7 @@ class AccountController extends Controller
     {
         return view('admin.accounts.create', [
             'teachers' => Teacher::with('user')->get(),
-            'students' => Student::with(['user', 'class'])->get(),
+            'students' => Student::with(['user', 'schoolClass'])->get(),
             'parents' => ParentProfile::with('user')->get(),
             'classes' => SchoolClass::with('formTeacher')->get(),
         ]);

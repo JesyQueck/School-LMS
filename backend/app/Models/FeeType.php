@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FeeType extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'amount',
+        'term_id',
+        'class_id',
+    ];
 
     protected $casts = [
         'amount' => 'decimal:2',

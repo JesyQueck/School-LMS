@@ -154,7 +154,7 @@ class FoundationModelsTest extends TestCase
             'position_in_class' => 2,
             'total_students_in_class' => 20,
             'next_term_begins' => '2025-01-06',
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
             'generated_at' => now(),
         ]);
 
@@ -168,5 +168,176 @@ class FoundationModelsTest extends TestCase
         $this->assertTrue($term->results()->exists());
         $this->assertNotNull($payment->receipt_number);
         $this->assertSame('A', $result->grade);
+    }
+
+    public function test_mass_assignment_rejects_non_fillable_fields(): void
+    {
+        $user = User::factory()->create();
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $session = AcademicSession::create([
+            'name' => '2024/2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2024-09-01',
+            'end_date' => '2024-12-20',
+            'is_current' => true,
+        ]);
+
+        $student = Student::create([
+            'user_id' => $user->id,
+            'admission_no' => 'ADM-SEC',
+            'class_id' => $class->id,
+            'first_name' => 'Test',
+            'last_name' => 'Student',
+            'status' => 'active',
+        ]);
+
+        $student->fill([
+            'remember_token' => 'hijacked-token',
+        ]);
+
+        $this->assertNull($student->getOriginal('remember_token'));
+    }
+
+    public function test_result_auto_calculates_grade_and_remark_on_direct_creation(): void
+    {
+        $user = User::factory()->create();
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $subject = Subject::create(['name' => 'Math']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+        $session = AcademicSession::create([
+            'name' => '2024/2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2024-09-01',
+            'end_date' => '2024-12-20',
+            'is_current' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'admission_no' => 'ADM-003',
+            'class_id' => $class->id,
+            'first_name' => 'Test',
+            'last_name' => 'Student',
+        ]);
+
+        $result = Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 40,
+            'exam_score' => 35,
+        ]);
+
+        $this->assertSame(75.0, (float) $result->total);
+        $this->assertSame('A1', $result->grade);
+        $this->assertSame('Excellent', $result->remark);
+    }
+
+    public function test_result_remark_can_be_overridden_on_direct_creation(): void
+    {
+        $user = User::factory()->create();
+        $class = SchoolClass::create(['name' => 'JSS 2']);
+        $subject = Subject::create(['name' => 'Science']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+        $session = AcademicSession::create([
+            'name' => '2024/2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2024-09-01',
+            'end_date' => '2024-12-20',
+            'is_current' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'admission_no' => 'ADM-004',
+            'class_id' => $class->id,
+            'first_name' => 'Custom',
+            'last_name' => 'Remark',
+        ]);
+
+        $result = Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 40,
+            'exam_score' => 35,
+            'remark' => 'Outstanding performance — top of class',
+        ]);
+
+        $this->assertSame('A1', $result->grade);
+        $this->assertSame('Outstanding performance — top of class', $result->remark);
+    }
+
+    public function test_result_score_update_recalculates_grade_and_remark(): void
+    {
+        $user = User::factory()->create();
+        $class = SchoolClass::create(['name' => 'JSS 3']);
+        $subject = Subject::create(['name' => 'English']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+        $session = AcademicSession::create([
+            'name' => '2024/2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2024-09-01',
+            'end_date' => '2024-12-20',
+            'is_current' => true,
+        ]);
+        $student = Student::create([
+            'user_id' => $user->id,
+            'admission_no' => 'ADM-005',
+            'class_id' => $class->id,
+            'first_name' => 'Update',
+            'last_name' => 'Test',
+        ]);
+
+        $result = Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 78,
+            'exam_score' => 90,
+        ]);
+
+        $this->assertSame('A1', $result->grade);
+        $this->assertSame('Excellent', $result->remark);
+
+        $result->update([
+            'ca_score' => 20,
+            'exam_score' => 30,
+        ]);
+
+        $this->assertSame(50.0, (float) $result->total);
+        $this->assertSame('C6', $result->grade);
+        $this->assertSame('Credit', $result->remark);
     }
 }

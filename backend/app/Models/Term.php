@@ -8,7 +8,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Term extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'academic_session_id',
+        'name',
+        'start_date',
+        'end_date',
+        'is_current',
+    ];
 
     protected $casts = [
         'is_current' => 'boolean',

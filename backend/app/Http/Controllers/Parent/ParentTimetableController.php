@@ -13,7 +13,7 @@ class ParentTimetableController extends Controller
     {
         $parent = $request->user()->parentProfile;
         $children = $parent
-            ? $parent->students()->with(['class', 'user'])->get()
+            ? $parent->students()->with(['schoolClass', 'user'])->get()
             : collect();
 
         $selectedId = $request->query('student');
@@ -29,7 +29,7 @@ class ParentTimetableController extends Controller
     protected function buildPeriods(Student $student)
     {
         $classId = $student->class_id;
-        if (!$classId) {
+        if (! $classId) {
             return collect();
         }
 

@@ -21,14 +21,14 @@ class CsvExportService
             $file = fopen('php://output', 'w');
             fputcsv($file, ['Admission No', 'Full Name', 'Class', 'Gender', 'Status', 'Created At']);
 
-            Student::with(['user', 'class'])
+            Student::with(['user', 'schoolClass'])
                 ->orderBy('id')
                 ->chunkById(1000, function ($students) use ($file) {
                     foreach ($students as $student) {
                         fputcsv($file, [
                             $student->admission_no,
                             $student->full_name,
-                            $student->class->name ?? 'N/A',
+                            $student->schoolClass->name ?? 'N/A',
                             $student->gender ?? 'N/A',
                             $student->status ?? 'active',
                             $student->created_at?->format('Y-m-d'),
@@ -60,7 +60,7 @@ class CsvExportService
                         fputcsv($file, [
                             $result->student->admission_no ?? 'N/A',
                             $result->student->full_name ?? 'N/A',
-                            $result->student->class->name ?? 'N/A',
+                            $result->student->schoolClass->name ?? 'N/A',
                             $result->classSubject->subject->name ?? 'N/A',
                             $result->term->name ?? 'N/A',
                             $result->ca_score ?? 'N/A',

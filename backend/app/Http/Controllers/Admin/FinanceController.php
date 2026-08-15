@@ -58,7 +58,7 @@ class FinanceController extends Controller
             'feeTypes' => FeeType::with(['term', 'class'])->get(),
             'studentFees' => $studentFees,
             'payments' => $payments,
-            'students' => Student::with('class')->get(),
+            'students' => Student::with('schoolClass')->get(),
             'terms' => Term::all(),
             'classes' => SchoolClass::all(),
             'filters' => $request->only(['class_id', 'term_id', 'status', 'search']),
@@ -67,7 +67,7 @@ class FinanceController extends Controller
 
     public function showStudentFee(StudentFee $studentFee)
     {
-        $studentFee->load(['student.class', 'feeType', 'term', 'payments.recordedBy']);
+        $studentFee->load(['student.schoolClass', 'feeType', 'term', 'payments.recordedBy']);
 
         return view('admin.finance.student-fee', [
             'studentFee' => $studentFee,
@@ -119,7 +119,7 @@ class FinanceController extends Controller
 
     public function paymentReceipt(Request $request, Payment $payment)
     {
-        $payment->load(['studentFee.student.class', 'studentFee.feeType', 'studentFee.term', 'recordedBy']);
+        $payment->load(['studentFee.student.schoolClass', 'studentFee.feeType', 'studentFee.term', 'recordedBy']);
 
         if ($request->has('download')) {
             $pdf = Pdf::loadView('admin.finance.receipt-pdf', compact('payment'));

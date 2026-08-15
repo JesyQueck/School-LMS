@@ -29,7 +29,6 @@ class ReportCardService
             'total_students_in_class' => $data['total_students_in_class'] ?? null,
             'promotion_decision' => $data['promotion_decision'] ?? null,
             'next_term_begins' => $data['next_term_begins'] ?? null,
-            'is_published' => false,
             'status' => ReportCard::STATUS_DRAFT,
             'generated_at' => now(),
         ]);
@@ -64,7 +63,6 @@ class ReportCardService
         }
 
         return ReportCard::create(array_merge($payload, [
-            'is_published' => false,
             'status' => ReportCard::STATUS_DRAFT,
             'generated_at' => now(),
         ]));
@@ -72,7 +70,7 @@ class ReportCardService
 
     public function returnForCorrection(ReportCard $reportCard): ReportCard
     {
-        if ($reportCard->is_published) {
+        if ($reportCard->isPublished()) {
             throw new RuntimeException('Published report cards cannot be returned for correction.');
         }
 
@@ -85,7 +83,6 @@ class ReportCardService
         return DB::transaction(function () use ($reportCard) {
             $reportCard->update([
                 'status' => ReportCard::STATUS_RETURNED,
-                'is_published' => false,
             ]);
 
             return $reportCard->fresh();
@@ -94,7 +91,7 @@ class ReportCardService
 
     public function approve(ReportCard $reportCard): ReportCard
     {
-        if ($reportCard->is_published) {
+        if ($reportCard->isPublished()) {
             throw new RuntimeException('Published report cards cannot be approved.');
         }
 
@@ -118,7 +115,7 @@ class ReportCardService
 
     public function publish(ReportCard $reportCard, User $publishedBy): ReportCard
     {
-        if ($reportCard->is_published) {
+        if ($reportCard->isPublished()) {
             throw new RuntimeException('Report card is already published.');
         }
 
@@ -126,7 +123,6 @@ class ReportCardService
 
         return DB::transaction(function () use ($reportCard, $publishedBy) {
             $reportCard->update([
-                'is_published' => true,
                 'status' => ReportCard::STATUS_PUBLISHED,
                 'published_by' => $publishedBy->id,
                 'published_at' => now(),
@@ -152,7 +148,6 @@ class ReportCardService
 
         $candidateCards = ReportCard::where('term_id', $termId)
             ->where('status', ReportCard::STATUS_APPROVED)
-            ->where('is_published', false)
             ->get();
 
         $published = 0;
@@ -183,13 +178,12 @@ class ReportCardService
 
     public function unpublish(ReportCard $reportCard): ReportCard
     {
-        if (! $reportCard->is_published) {
+        if (! $reportCard->isPublished()) {
             throw new RuntimeException('Report card is not published.');
         }
 
         return DB::transaction(function () use ($reportCard) {
             $reportCard->update([
-                'is_published' => false,
                 'status' => ReportCard::STATUS_DRAFT,
                 'published_by' => null,
                 'published_at' => null,

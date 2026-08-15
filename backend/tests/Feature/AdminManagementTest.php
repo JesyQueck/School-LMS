@@ -257,8 +257,7 @@ class AdminManagementTest extends TestCase
             'student_id' => $student->id,
             'term_id' => $term->id,
             'class_id' => $class->id,
-            'status' => 'published',
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         $reportCard = ReportCard::where('student_id', $student->id)->first();
@@ -268,7 +267,7 @@ class AdminManagementTest extends TestCase
         $response->assertRedirect('/admin/report-cards');
         $this->assertDatabaseHas('report_cards', [
             'id' => $reportCard->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
     }
 

@@ -18,7 +18,7 @@ class StorePaymentRequest extends FormRequest
             'receipt_number' => ['nullable', 'string', 'max:255'],
             'amount_paid' => ['required', 'numeric', 'gt:0'],
             'payment_method' => ['nullable', 'string', 'max:255'],
-            'payment_date' => ['required', 'date'],
+            'payment_date' => ['required', 'date', 'before_or_equal:today'],
             'reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ];

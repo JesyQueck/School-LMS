@@ -45,7 +45,7 @@ class ReportCardController extends Controller
 
             $reportCards = ReportCard::with(['student.user', 'term'])
                 ->whereIn('student_id', $students->pluck('id'))
-                ->where('term_id', [$term->id])
+                ->where('term_id', $term->id)
                 ->get();
 
             $subjectAssignments = TeacherClassSubject::with(['classSubject.subject', 'classSubject.class'])
@@ -74,6 +74,15 @@ class ReportCardController extends Controller
         $studentId = $validated['student_id'];
 
         $student = Student::findOrFail($studentId);
+
+        $classAssignment = ClassAssignment::where('teacher_id', $teacher->id)
+            ->where('term_id', $term->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->first();
+
+        if (! $classAssignment || $classAssignment->class_id !== $student->class_id) {
+            abort(403, 'You are not authorized to submit report card comments for this student.');
+        }
 
         $hasScores = $student->results()->where('term_id', $term->id)->exists();
 
@@ -149,7 +158,7 @@ class ReportCardController extends Controller
 
         $student = Student::where('id', $studentId)
             ->where('class_id', $classAssignment->class_id)
-            ->with('class', 'user')
+            ->with('schoolClass', 'user')
             ->first();
 
         if (! $student) {
@@ -200,7 +209,7 @@ class ReportCardController extends Controller
             'full_name' => $student->full_name ?? ($student->user->name ?? ''),
             'admission_no' => $student->admission_no ?? '',
             'date_of_birth' => $student->date_of_birth ? $student->date_of_birth->format('Y-m-d') : null,
-            'class' => $student->class,
+            'class' => $student->schoolClass,
         ];
 
         return response()->json([
@@ -214,19 +223,30 @@ class ReportCardController extends Controller
 
     public function download(Request $request, ReportCard $reportCard)
     {
-        if (! $reportCard->is_published) {
-            abort(403, 'Only published report cards can be downloaded.');
-        }
+        $teacher = $request->user()->teacher;
 
         $reportCard->load([
             'student.results.classSubject.subject',
             'student.user',
-            'student.class',
+            'student.schoolClass',
             'student.attendance',
             'term',
         ]);
 
         $term = $reportCard->term;
+
+        $classAssignment = ClassAssignment::where('teacher_id', $teacher->id)
+            ->where('term_id', $term->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->first();
+
+        if (! $classAssignment || $classAssignment->class_id !== $reportCard->student->class_id) {
+            abort(403, 'You are not authorized to download this report card.');
+        }
+
+        if (! $reportCard->isPublished()) {
+            abort(403, 'Only published report cards can be downloaded.');
+        }
 
         $pdf = Pdf::loadView('pdf.report-card', [
             'reportCard' => $reportCard,

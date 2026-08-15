@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClassAssignment extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'teacher_id',
+        'class_id',
+        'academic_session_id',
+        'term_id',
+    ];
 
     protected $casts = [
         'created_at' => 'datetime',

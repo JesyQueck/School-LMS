@@ -53,7 +53,7 @@ class SchoolAdminController extends Controller
     public function students()
     {
         return view('admin.students.index', [
-            'students' => Student::with(['user', 'class'])->get(),
+            'students' => Student::with(['user', 'schoolClass'])->get(),
             'classes' => SchoolClass::all(),
             'users' => User::where('role', 'student')->where('needs_password_change', true)->get(),
         ]);

@@ -6,7 +6,7 @@
             <x-ui.breadcrumb-item active>Results</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Results</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->full_name ?? 'Student' }} &middot; {{ $student->class->name ?? 'N/A' }}</p>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->full_name ?? 'Student' }} &middot; {{ $student->schoolClass->name ?? 'N/A' }}</p>
     </div>
 
     <div class="grid grid-cols-1 gap-6">

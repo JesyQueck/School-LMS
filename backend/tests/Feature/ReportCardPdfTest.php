@@ -47,7 +47,7 @@ class ReportCardPdfTest extends TestCase
         $reportCard = ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         $subject = Subject::create(['name' => 'Mathematics']);
@@ -99,7 +99,7 @@ class ReportCardPdfTest extends TestCase
         $reportCard = ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         $this->actingAs($studentUser);

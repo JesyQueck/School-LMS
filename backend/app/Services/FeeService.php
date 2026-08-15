@@ -43,6 +43,8 @@ class FeeService
                         'amount_paid' => $amountPaid,
                         'payment_method' => $data['payment_method'] ?? 'cash',
                         'payment_date' => $data['payment_date'],
+                        'reference' => $data['reference'] ?? null,
+                        'notes' => $data['notes'] ?? null,
                         'recorded_by' => $recordedBy->id,
                     ]);
 

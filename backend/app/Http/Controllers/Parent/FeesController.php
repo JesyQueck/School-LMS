@@ -15,7 +15,7 @@ class FeesController extends Controller
     {
         $this->authorize('view', $student);
 
-        $student->load(['class']);
+        $student->load(['schoolClass']);
 
         $fees = $student->fees()
             ->with(['feeType', 'term', 'payments'])

@@ -22,7 +22,7 @@
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Published</span>
-                                        <span class="text-xs text-neutral-400 dark:text-neutral-500">Class: {{ $reportCard->student->class->name ?? 'N/A' }}</span>
+                                        <span class="text-xs text-neutral-400 dark:text-neutral-500">Class: {{ $reportCard->student->schoolClass->name ?? 'N/A' }}</span>
                                         <span class="text-xs text-neutral-400 dark:text-neutral-500">Position: {{ $reportCard->position_in_class ?? 'N/A' }} of {{ $reportCard->total_students_in_class ?? 'N/A' }}</span>
                                     </div>
                                     <h4 class="text-sm font-medium text-neutral-900 dark:text-white">{{ $reportCard->term->name ?? 'Report Card' }}</h4>
@@ -31,6 +31,10 @@
                                     @endif
                                 </div>
                                 <div class="flex gap-2">
+                                    <a href="{{ route('student.report-cards.preview', $reportCard) }}" class="inline-flex items-center gap-2 border border-neutral-300 dark:border-dark-border hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        Preview
+                                    </a>
                                     <a href="{{ route('student.report-cards.download', $reportCard) }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                         Download PDF

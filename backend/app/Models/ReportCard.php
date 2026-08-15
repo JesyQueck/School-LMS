@@ -29,15 +29,30 @@ class ReportCard extends Model
         self::STATUS_PUBLISHED => [],
     ];
 
-    protected $guarded = [];
+    protected $fillable = [
+        'student_id',
+        'term_id',
+        'class_id',
+        'class_teacher_remark',
+        'principal_remark',
+        'affective_domain',
+        'psychomotor_assessment',
+        'health_remarks',
+        'position_in_class',
+        'total_students_in_class',
+        'next_term_begins',
+        'promotion_decision',
+        'status',
+        'published_by',
+        'published_at',
+        'generated_at',
+    ];
 
     protected $attributes = [
         'status' => self::STATUS_DRAFT,
-        'is_published' => false,
     ];
 
     protected $casts = [
-        'is_published' => 'boolean',
         'generated_at' => 'datetime',
         'next_term_begins' => 'date',
         'published_at' => 'datetime',
@@ -86,7 +101,7 @@ class ReportCard extends Model
 
     public function isPublished(): bool
     {
-        return $this->is_published || $this->status === self::STATUS_PUBLISHED;
+        return $this->status === self::STATUS_PUBLISHED;
     }
 
     public function canEdit(): bool
@@ -96,6 +111,6 @@ class ReportCard extends Model
 
     public function canPublish(): bool
     {
-        return $this->status === self::STATUS_APPROVED && ! $this->is_published;
+        return $this->status === self::STATUS_APPROVED && ! $this->isPublished();
     }
 }

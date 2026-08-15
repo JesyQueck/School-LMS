@@ -28,7 +28,7 @@ class AnnouncementsController extends Controller
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
+            'body' => ['required', 'string', 'max:10000'],
             'target_role' => ['required', 'in:all,student,teacher,parent'],
         ]);
 

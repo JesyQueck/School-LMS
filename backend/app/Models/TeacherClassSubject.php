@@ -9,7 +9,12 @@ class TeacherClassSubject extends Model
 {
     protected $table = 'teacher_class_subjects';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'teacher_id',
+        'class_subject_id',
+        'is_active',
+        'assigned_at',
+    ];
 
     protected $casts = [
         'is_active' => 'boolean',

@@ -5,7 +5,7 @@
             <x-ui.breadcrumb-item active>{{ $student->full_name ?? 'Child' }}</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">{{ $student->full_name ?? 'Student' }}</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->class->name ?? 'N/A' }} &middot; {{ $student->admission_no ?? 'N/A' }}</p>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $student->schoolClass->name ?? 'N/A' }} &middot; {{ $student->admission_no ?? 'N/A' }}</p>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -33,7 +33,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-neutral-500 dark:text-neutral-400">Class</p>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $student->class->name ?? 'N/A' }}</p>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $student->schoolClass->name ?? 'N/A' }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-neutral-500 dark:text-neutral-400">Admission No</p>
@@ -62,12 +62,12 @@
                         <div class="flex items-center justify-between py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0">
                             <div>
                                 <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $term->name ?? 'Term' }}</p>
-                                @if($rc && $rc->is_published)
+                                @if($rc && $rc->isPublished())
                                     <p class="text-xs text-neutral-500 dark:text-neutral-400">Position: {{ $rc->position_in_class ?? 'N/A' }} of {{ $rc->total_students_in_class ?? 'N/A' }}</p>
                                 @endif
                             </div>
                             <div class="flex items-center gap-3">
-                                @if($rc && $rc->is_published)
+                                @if($rc && $rc->isPublished())
                                     <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Published</span>
                                     <a href="{{ route('parent.children.report-cards.download', [$student->id, $rc->id]) }}" class="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200" aria-label="Download PDF">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 19V5m0 0L7 10m5-5l5 5"/></svg>

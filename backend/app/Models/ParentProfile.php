@@ -10,7 +10,11 @@ class ParentProfile extends Model
 {
     protected $table = 'parents';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'occupation',
+        'phone',
+    ];
 
     public function user(): BelongsTo
     {

@@ -5,12 +5,16 @@ namespace Tests\Feature;
 use App\Models\AcademicSession;
 use App\Models\Announcement;
 use App\Models\Attendance;
+use App\Models\ClassSubject;
 use App\Models\FeeType;
 use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
+use App\Models\Subject;
+use App\Models\Teacher;
 use App\Models\Term;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -236,7 +240,7 @@ class StudentPortalTest extends TestCase
         ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
             'class_teacher_remark' => 'Good student',
             'position_in_class' => 3,
             'total_students_in_class' => 40,
@@ -281,7 +285,7 @@ class StudentPortalTest extends TestCase
         ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         $this->actingAs($studentUser);
@@ -319,7 +323,7 @@ class StudentPortalTest extends TestCase
         $reportCard = ReportCard::create([
             'student_id' => $student->id,
             'term_id' => $term->id,
-            'is_published' => false,
+            'status' => ReportCard::STATUS_DRAFT,
         ]);
 
         $this->actingAs($studentUser);
@@ -363,12 +367,175 @@ class StudentPortalTest extends TestCase
         $reportCard = ReportCard::create([
             'student_id' => $otherStudent->id,
             'term_id' => $term->id,
-            'is_published' => true,
+            'status' => ReportCard::STATUS_PUBLISHED,
         ]);
 
         $this->actingAs($studentUser);
 
         $response = $this->get("/student/report-cards/{$reportCard->id}/download");
         $response->assertForbidden();
+    }
+
+    public function test_student_sees_timetable_entries_belonging_to_their_class(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-TT-1',
+            'first_name' => 'Tim',
+            'last_name' => 'Table',
+        ]);
+
+        $subject = Subject::create(['name' => 'Mathematics']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+
+        Timetable::create([
+            'class_subject_id' => $classSubject->id,
+            'day' => 'Monday',
+            'start_time' => '08:00:00',
+            'end_time' => '08:45:00',
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/timetable');
+        $response->assertOk();
+        $response->assertSee('Mathematics');
+    }
+
+    public function test_student_does_not_see_timetable_entries_belonging_to_another_class(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-TT-2',
+            'first_name' => 'Tim',
+            'last_name' => 'Table',
+        ]);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+        $subject = Subject::create(['name' => 'Biology']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $subject->id,
+        ]);
+
+        Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'day' => 'Monday',
+            'start_time' => '08:00:00',
+            'end_time' => '08:45:00',
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/timetable');
+        $response->assertOk();
+        $response->assertDontSee('Biology');
+    }
+
+    public function test_today_classes_returns_real_database_timetable_for_current_day(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-TT-3',
+            'first_name' => 'Tim',
+            'last_name' => 'Table',
+        ]);
+
+        $subject = Subject::create(['name' => 'Chemistry']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-CHEM',
+            'qualification' => 'M.Sc',
+        ]);
+
+        $today = now()->format('l');
+
+        Timetable::create([
+            'class_subject_id' => $classSubject->id,
+            'teacher_id' => $teacher->id,
+            'day' => $today,
+            'start_time' => '09:00:00',
+            'end_time' => '09:45:00',
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/dashboard');
+        $response->assertOk();
+        $response->assertSee('Chemistry');
+        $response->assertSee($teacherUser->name);
+    }
+
+    public function test_today_classes_does_not_return_entries_from_another_class(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-TT-4',
+            'first_name' => 'Tim',
+            'last_name' => 'Table',
+        ]);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+        $subject = Subject::create(['name' => 'Physics']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $subject->id,
+        ]);
+
+        $today = now()->format('l');
+
+        Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'day' => $today,
+            'start_time' => '09:00:00',
+            'end_time' => '09:45:00',
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/dashboard');
+        $response->assertOk();
+        $response->assertDontSee('Physics');
+    }
+
+    public function test_student_school_class_relationship_returns_correct_class(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM111',
+            'first_name' => 'Test',
+            'last_name' => 'Student',
+        ]);
+
+        $this->actingAs($studentUser);
+
+        $student = $student->fresh();
+        $this->assertInstanceOf(SchoolClass::class, $student->schoolClass);
+        $this->assertEquals('JSS 1', $student->schoolClass->name);
+        $this->assertEquals($class->id, $student->schoolClass->id);
     }
 }

@@ -10,7 +10,10 @@ class SchoolClass extends Model
 {
     protected $table = 'classes';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'form_teacher_id',
+    ];
 
     public function formTeacher(): BelongsTo
     {

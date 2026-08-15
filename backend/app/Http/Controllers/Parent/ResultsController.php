@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
+use App\Models\ReportCard;
 use App\Models\Student;
 use Illuminate\Http\Request;
 
@@ -18,10 +19,10 @@ class ResultsController extends Controller
     {
         $this->authorize('view', $student);
 
-        $student->load(['class']);
+        $student->load(['schoolClass']);
 
         $publishedTerms = $student->reportCards()
-            ->where('is_published', true)
+            ->where('status', ReportCard::STATUS_PUBLISHED)
             ->pluck('term_id');
 
         $results = $student->results()

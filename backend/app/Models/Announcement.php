@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Announcement extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'title',
+        'body',
+        'created_by',
+        'target_role',
+    ];
 
     public function createdBy(): BelongsTo
     {

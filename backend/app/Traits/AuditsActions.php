@@ -17,6 +17,7 @@ trait AuditsActions
             'old_value' => $oldValue,
             'new_value' => $newValue,
             'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent() ?? null,
         ]);
     }
 }

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
-use App\Models\Result;
+use App\Models\ReportCard;
 use App\Models\Term;
+use App\Models\Timetable;
 use App\Services\ResultService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -14,12 +16,12 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $student = $request->user()->student;
-        $student->load(['class', 'results.classSubject.subject', 'attendance', 'fees.payments', 'reportCards' => function ($query) {
-            $query->where('is_published', true)->with('term.academicSession');
+        $student->load(['schoolClass', 'results.classSubject.subject', 'attendance', 'fees.payments', 'reportCards' => function ($query) {
+            $query->where('status', ReportCard::STATUS_PUBLISHED)->with('term.academicSession');
         }]);
 
         $currentTerm = Term::where('is_current', true)->with('academicSession')->first();
-        $publishedTermIds = $student->reportCards()->where('is_published', true)->pluck('term_id');
+        $publishedTermIds = $student->reportCards()->where('status', ReportCard::STATUS_PUBLISHED)->pluck('term_id');
 
         $results = $student->results->whereIn('term_id', $publishedTermIds);
         $averageScore = $results->count() > 0
@@ -38,12 +40,13 @@ class DashboardController extends Controller
 
         $outstanding = $student->fees->sum(function ($fee) {
             $paid = $fee->payments->sum('amount_paid');
+
             return max(0, ($fee->amount_expected ?? 0) - $paid);
         });
         $totalExpected = $student->fees->sum(fn ($fee) => $fee->amount_expected ?? 0);
         $totalPaid = $student->fees->sum(fn ($fee) => $fee->payments->sum('amount_paid'));
 
-        $grade = (new ResultService())->calculateGrade($averageScore > 0 ? $averageScore : null)['grade'];
+        $grade = (new ResultService)->calculateGrade($averageScore > 0 ? $averageScore : null)['grade'];
 
         $latestReportCard = $student->reportCards->sortByDesc(fn ($rc) => $rc->term_id)->first();
 
@@ -77,28 +80,33 @@ class DashboardController extends Controller
 
     protected function todayClasses($student)
     {
-        $periods = collect([
-            ['period' => 1, 'subject' => 'Mathematics', 'teacher' => 'Mr. Johnson'],
-            ['period' => 2, 'subject' => 'English', 'teacher' => 'Ms. Smith'],
-            ['period' => 3, 'subject' => 'Physics', 'teacher' => 'Dr. Brown'],
-            ['period' => 1, 'subject' => 'Chemistry', 'teacher' => 'Dr. Lee'],
-            ['period' => 2, 'subject' => 'Biology', 'teacher' => 'Dr. Adams'],
-            ['period' => 3, 'subject' => 'Mathematics', 'teacher' => 'Mr. Johnson'],
-        ]);
-
         $today = now()->format('l');
-        $times = [
-            1 => '8:00 AM – 8:45 AM',
-            2 => '8:45 AM – 9:30 AM',
-            3 => '9:30 AM – 10:15 AM',
-        ];
 
-        return $periods->where('period', '<=', 3)
-            ->values()
-            ->take(3)
-            ->map(function ($p) use ($times) {
-                $p['time'] = $times[$p['period']] ?? '';
-                return $p;
-            });
+        $timetable = Timetable::with([
+            'classSubject.subject',
+            'teacher.user',
+        ])
+            ->whereHas('classSubject.class', function ($query) use ($student) {
+                $query->where('id', $student->class_id);
+            })
+            ->where('day', $today)
+            ->orderBy('start_time')
+            ->get();
+
+        return $timetable->map(function (Timetable $entry, $index) {
+            $startTime = Carbon::parse($entry->start_time)->format('g:i A');
+            $endTime = Carbon::parse($entry->end_time)->format('g:i A');
+
+            $periodNumber = $index + 1;
+
+            return [
+                'period' => $periodNumber,
+                'subject' => $entry->classSubject->subject->name ?? 'Unknown Subject',
+                'teacher' => $entry->teacher && $entry->teacher->user
+                    ? $entry->teacher->user->name
+                    : 'Not assigned',
+                'time' => $startTime.' – '.$endTime,
+            ];
+        });
     }
 }

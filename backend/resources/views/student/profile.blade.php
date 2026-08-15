@@ -16,7 +16,7 @@
                         <span class="text-3xl font-medium">{{ substr($student->full_name ?? 'S', 0, 1) }}</span>
                     </div>
                     <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $student->full_name ?? '---' }}</h2>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $student->class->name ?? 'N/A' }}</p>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $student->schoolClass->name ?? 'N/A' }}</p>
                     <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">{{ $student->admission_no ?? 'N/A' }}</p>
                 </div>
             </x-ui.card>
@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-neutral-500 dark:text-neutral-400">Class</p>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $student->class->name ?? 'N/A' }}</p>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $student->schoolClass->name ?? 'N/A' }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-neutral-500 dark:text-neutral-400">Gender</p>

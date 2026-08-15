@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
-use App\Models\Result;
+use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Term;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $parent = $request->user()->parentProfile;
 
         $children = $parent
-            ? $parent->students()->with(['class', 'results.classSubject.subject', 'attendance', 'fees.payments'])->get()
+            ? $parent->students()->with(['schoolClass', 'results.classSubject.subject', 'attendance', 'fees.payments'])->get()
             : collect();
 
         $children->each(function (Student $child) {
@@ -53,7 +53,7 @@ class DashboardController extends Controller
     protected function computeMetrics(Student $child): array
     {
         $publishedTermIds = $child->reportCards()
-            ->where('is_published', true)
+            ->where('status', ReportCard::STATUS_PUBLISHED)
             ->pluck('term_id');
 
         $results = $child->results->whereIn('term_id', $publishedTermIds);
@@ -70,6 +70,7 @@ class DashboardController extends Controller
 
         $outstanding = $child->fees->sum(function ($fee) {
             $paid = $fee->payments->sum('amount_paid');
+
             return max(0, ($fee->amount_expected ?? 0) - $paid);
         });
 

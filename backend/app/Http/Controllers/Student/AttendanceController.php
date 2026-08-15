@@ -10,6 +10,7 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $student = $request->user()->student;
+        $student->load('schoolClass');
 
         $attendance = $student->attendance()
             ->with(['term', 'class'])

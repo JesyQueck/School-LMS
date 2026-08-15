@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ClassSubject extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'class_id',
+        'subject_id',
+        'is_compulsory',
+    ];
 
     protected $casts = [
         'is_compulsory' => 'boolean',

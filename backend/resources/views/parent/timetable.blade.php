@@ -14,7 +14,7 @@
             <select id="child-select" class="w-full rounded-lg border border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface px-3 py-2 text-sm text-neutral-900 dark:text-white" onchange="window.location.href = '?student=' + this.value">
                 @foreach($children as $child)
                     <option value="{{ $child->id }}" {{ $selected && $selected->id === $child->id ? 'selected' : '' }}>
-                        {{ $child->full_name ?? $child->admission_no }} - {{ $child->class->name ?? 'N/A' }}
+                        {{ $child->full_name ?? $child->admission_no }} - {{ $child->schoolClass->name ?? 'N/A' }}
                     </option>
                 @endforeach
             </select>
@@ -24,7 +24,7 @@
             <div class="mb-4">
                 <p class="text-sm text-neutral-500 dark:text-neutral-400">
                     Showing timetable for <span class="font-medium text-neutral-900 dark:text-white">{{ $selected->full_name }}</span>
-                    &middot; {{ $selected->class->name ?? 'N/A' }}
+                    &middot; {{ $selected->schoolClass->name ?? 'N/A' }}
                 </p>
             </div>
         @endif

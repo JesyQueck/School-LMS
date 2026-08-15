@@ -47,7 +47,7 @@ Route::get('/terms', [PublicController::class, 'terms'])->name('public.terms');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:login');
     Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
@@ -108,6 +108,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance');
         Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');
         Route::get('/report-cards', [StudentReportCardController::class, 'index'])->name('report-cards');
+        Route::get('/report-cards/{reportCard}/preview', [StudentReportCardController::class, 'preview'])->name('report-cards.preview');
+        Route::get('/report-cards/{reportCard}/render', [StudentReportCardController::class, 'render'])->name('report-cards.render');
         Route::get('/report-cards/{reportCard}/download', [StudentReportCardController::class, 'download'])->name('report-cards.download');
         Route::get('/timetable', [StudentTimetableController::class, 'index'])->name('timetable');
         Route::get('/profile', [StudentProfileController::class, 'index'])->name('profile');

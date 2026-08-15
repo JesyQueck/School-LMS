@@ -9,7 +9,13 @@ class Timetable extends Model
 {
     protected $table = 'timetables';
 
-    protected $guarded = [];
+    protected $fillable = [
+        'class_subject_id',
+        'teacher_id',
+        'day',
+        'start_time',
+        'end_time',
+    ];
 
     public function classSubject(): BelongsTo
     {

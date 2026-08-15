@@ -2,13 +2,25 @@
 
 namespace App\Models;
 
+use App\Services\ResultGradeCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RuntimeException;
 
 class Result extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'student_id',
+        'class_subject_id',
+        'term_id',
+        'ca_score',
+        'exam_score',
+        'total',
+        'grade',
+        'remark',
+        'submitted_by',
+        'is_locked',
+    ];
 
     protected $casts = [
         'ca_score' => 'decimal:2',
@@ -38,6 +50,17 @@ class Result extends Model
 
             if ($result->ca_score !== null || $result->exam_score !== null) {
                 $result->total = ($result->ca_score ?? 0) + ($result->exam_score ?? 0);
+
+                $scoresChanged = $result->isDirty('ca_score') || $result->isDirty('exam_score');
+                $grading = ResultGradeCalculator::calculateGrade($result->total);
+
+                if ($scoresChanged && ! $result->isDirty('grade')) {
+                    $result->grade = $grading['grade'];
+                }
+
+                if ($scoresChanged && ! $result->isDirty('remark')) {
+                    $result->remark = $grading['remark'];
+                }
             }
         });
 

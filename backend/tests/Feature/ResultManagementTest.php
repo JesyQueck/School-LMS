@@ -472,4 +472,83 @@ class ResultManagementTest extends TestCase
             'exam_score' => 50,
         ]);
     }
+
+    public function test_direct_result_creation_auto_calculates_all_fields(): void
+    {
+        $data = $this->createTestData();
+
+        $result = Result::create([
+            'student_id' => $data['student']->id,
+            'class_subject_id' => $data['classSubject']->id,
+            'term_id' => $data['term']->id,
+            'ca_score' => 35,
+            'exam_score' => 45,
+        ]);
+
+        $this->assertSame(80.0, (float) $result->total);
+        $this->assertSame('A1', $result->grade);
+        $this->assertSame('Excellent', $result->remark);
+    }
+
+    public function test_result_boundary_grades_via_direct_creation(): void
+    {
+        $data = $this->createTestData();
+
+        $boundaries = [
+            75 => ['A1', 'Excellent'],
+            70 => ['B2', 'Very Good'],
+            65 => ['B3', 'Good'],
+            60 => ['C4', 'Credit'],
+            55 => ['C5', 'Credit'],
+            50 => ['C6', 'Credit'],
+            45 => ['D7', 'Pass'],
+            40 => ['E8', 'Pass'],
+            39 => ['F9', 'Fail'],
+        ];
+
+        foreach ($boundaries as $total => $expected) {
+            $subject = Subject::create(['name' => "Subj_{$total}"]);
+            $classSubject = ClassSubject::create([
+                'class_id' => $data['class']->id,
+                'subject_id' => $subject->id,
+            ]);
+
+            $result = Result::create([
+                'student_id' => $data['student']->id,
+                'class_subject_id' => $classSubject->id,
+                'term_id' => $data['term']->id,
+                'ca_score' => $total,
+                'exam_score' => 0,
+            ]);
+
+            $this->assertSame($expected[0], $result->grade, "Failed asserting grade for total {$total}");
+            $this->assertSame($expected[1], $result->remark, "Failed asserting remark for total {$total}");
+        }
+    }
+
+    public function test_result_service_and_model_produce_same_grading(): void
+    {
+        $data = $this->createTestData();
+        $resultService = app(ResultService::class);
+
+        $serviceResult = $resultService->createResult([
+            'student_id' => $data['student']->id,
+            'class_subject_id' => $data['classSubject']->id,
+            'term_id' => $data['term']->id,
+            'ca_score' => 35,
+            'exam_score' => 45,
+        ], $data['adminUser']);
+
+        $modelResult = Result::create([
+            'student_id' => $data['student']->id,
+            'class_subject_id' => $data['otherClassSubject']->id,
+            'term_id' => $data['term']->id,
+            'ca_score' => 35,
+            'exam_score' => 45,
+        ]);
+
+        $this->assertSame($serviceResult->total, $modelResult->total);
+        $this->assertSame($serviceResult->grade, $modelResult->grade);
+        $this->assertSame($serviceResult->remark, $modelResult->remark);
+    }
 }
