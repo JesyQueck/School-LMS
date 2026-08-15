@@ -50,7 +50,7 @@
                 </div>
                 <div>
                     <h2 class="text-xl font-semibold text-neutral-900 dark:text-white mb-3">10. Contact Information</h2>
-                    <p class="text-neutral-600 dark:text-neutral-400 leading-relaxed">If you have any questions about these Terms of Service, please contact us at <a href="mailto:info@greenfieldacademy.edu" class="text-primary-600 dark:text-primary-400 hover:underline">info@greenfieldacademy.edu</a> or visit our campus at 123 Education Lane, Greenfield City, State 10001.</p>
+                    <p class="text-neutral-600 dark:text-neutral-400 leading-relaxed">If you have any questions about these Terms of Service, please contact us at <a href="mailto:{{ config('school.email', 'info@greenfieldacademy.edu') }}" class="text-primary-600 dark:text-primary-400 hover:underline">{{ config('school.email', 'info@greenfieldacademy.edu') }}</a> or visit our campus at {{ config('school.address', '123 Education Lane, Victoria Island, Lagos') }}.</p>
                 </div>
             </div>
         </div>

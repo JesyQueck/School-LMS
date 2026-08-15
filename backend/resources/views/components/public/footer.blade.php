@@ -1,9 +1,9 @@
 @props([
-    'schoolName' => 'Greenfield Academy',
+    'schoolName' => config('school.name', 'Greenfield Academy'),
     'schoolDescription' => 'Nurturing young minds through academic excellence, creative thinking, and strong moral values since 1995.',
-    'address' => '123 Education Lane, Greenfield City, State 10001',
-    'phone' => '+234 800 000 0000',
-    'email' => 'info@greenfieldacademy.edu',
+    'address' => config('school.address', '123 Education Lane, Victoria Island, Lagos'),
+    'phone' => config('school.phone', '+234 800 000 0000'),
+    'email' => config('school.email', 'info@greenfieldacademy.edu'),
 ])
 
 @php

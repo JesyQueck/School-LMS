@@ -38,6 +38,6 @@ class AnnouncementsController extends Controller
 
         $this->audit($request, 'announcement.created', Announcement::class, $announcement->id, null, $data);
 
-        return redirect()->route('admin.announcements.index')->with('status', 'Announcement published.');
+        return redirect()->route('admin.announcements')->with('status', 'Announcement published.');
     }
 }

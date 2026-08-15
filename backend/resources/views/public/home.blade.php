@@ -472,7 +472,7 @@
                     </div>
                     <h3 class="text-base font-bold text-neutral-900 dark:text-white mb-2">Visit Us</h3>
                     <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Schedule a campus tour</p>
-                    <p class="text-sm font-semibold text-primary-600 dark:text-primary-400 group-hover:underline">123 Education Lane, Greenfield City</p>
+                    <p class="text-sm font-semibold text-primary-600 dark:text-primary-400 group-hover:underline">{{ config('school.address', '123 Education Lane, Victoria Island, Lagos') }}</p>
                 </a>
             </div>
         </div>

@@ -11,6 +11,8 @@ class FeesController extends Controller
     {
         $student = $request->user()->student;
 
+        abort_if(! $student, 403, 'Student profile not found.');
+
         $fees = $student->fees()
             ->with(['feeType', 'term', 'payments'])
             ->latest()

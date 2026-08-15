@@ -14,6 +14,8 @@ class ProfileController extends Controller
             ->with(['schoolClass', 'user'])
             ->first();
 
+        abort_if(! $student, 403, 'Student profile not found.');
+
         return view('student.profile', compact('student', 'user'));
     }
 }

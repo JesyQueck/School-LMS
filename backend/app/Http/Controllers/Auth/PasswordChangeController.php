@@ -33,6 +33,16 @@ class PasswordChangeController extends Controller
 
         $this->audit($request, 'password.reset', User::class, $userId, null, null);
 
-        return redirect()->route('admin.dashboard')->with('status', 'Password changed successfully.');
+        $user = $request->user();
+
+        $redirectRoute = match ($user->role) {
+            'admin' => 'admin.dashboard',
+            'teacher' => 'teacher.dashboard',
+            'student' => 'student.dashboard',
+            'parent' => 'parent.dashboard',
+            default => '/',
+        };
+
+        return redirect()->route($redirectRoute)->with('status', 'Password changed successfully.');
     }
 }

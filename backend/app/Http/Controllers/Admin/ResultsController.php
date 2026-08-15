@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClassSubject;
 use App\Models\Result;
+use App\Models\Student;
+use App\Models\Term;
 use App\Services\CsvExportService;
 use App\Services\ResultService;
 use App\Traits\AuditsActions;
@@ -20,9 +23,13 @@ class ResultsController extends Controller
 
     public function index()
     {
-        return view('admin.results.index', [
-            'results' => Result::with(['student', 'classSubject', 'term'])->get(),
-        ]);
+        $results = Result::with(['student', 'classSubject', 'term'])->get();
+
+        $students = Student::with(['user', 'schoolClass'])->get();
+        $classSubjects = ClassSubject::with(['class', 'subject'])->get();
+        $terms = Term::orderBy('id')->get();
+
+        return view('admin.results.index', compact('results', 'students', 'classSubjects', 'terms'));
     }
 
     public function store(Request $request)

@@ -102,6 +102,93 @@ class ResultManagementTest extends TestCase
         );
     }
 
+    public function test_admin_results_route_exists_and_resolves(): void
+    {
+        $data = $this->createTestData();
+
+        $this->actingAs($data['adminUser']);
+
+        $response = $this->get('/admin/results');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('admin.results.index');
+    }
+
+    public function test_admin_results_index_provides_required_variables(): void
+    {
+        $data = $this->createTestData();
+
+        $this->actingAs($data['adminUser']);
+
+        $response = $this->get('/admin/results');
+
+        $response->assertStatus(200);
+        $response->assertViewHasAll(['results', 'students', 'classSubjects', 'terms']);
+    }
+
+    public function test_admin_results_index_does_not_throw_undefined_variable_exception(): void
+    {
+        $data = $this->createTestData();
+
+        $this->actingAs($data['adminUser']);
+
+        $response = $this->get('/admin/results');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('students', function ($students) {
+            return $students->isNotEmpty();
+        });
+        $response->assertViewHas('classSubjects', function ($classSubjects) {
+            return $classSubjects->isNotEmpty();
+        });
+        $response->assertViewHas('terms', function ($terms) {
+            return $terms->isNotEmpty();
+        });
+    }
+
+    public function test_non_admin_cannot_access_admin_results(): void
+    {
+        $data = $this->createTestData();
+
+        $this->actingAs($data['studentUser']);
+
+        $response = $this->get('/admin/results');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_teacher_cannot_access_admin_results(): void
+    {
+        $data = $this->createTestData();
+
+        $this->actingAs($data['teacherUser']);
+
+        $response = $this->get('/admin/results');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_admin_results_index_displays_filter_data(): void
+    {
+        $data = $this->createTestData();
+
+        $this->actingAs($data['adminUser']);
+
+        $response = $this->get('/admin/results');
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+        $this->assertStringContainsString((string) $data['class']->name, $content);
+    }
+
+    public function test_existing_result_management_remains_intact(): void
+    {
+        $resultService = app(ResultService::class);
+
+        $this->assertEquals(75.0, $resultService->calculateTotal(30, 45));
+        $this->assertEquals(['grade' => 'A1', 'remark' => 'Excellent'], $resultService->calculateGrade(75));
+    }
+
     public function test_result_service_calculates_total_correctly(): void
     {
         $resultService = app(ResultService::class);

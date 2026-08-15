@@ -86,4 +86,23 @@ class PublicWebsiteTest extends TestCase
             $response->assertOk();
         }
     }
+
+    public function test_footer_uses_config_school_values(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee(config('school.name', 'Greenfield Academy'));
+        $response->assertSee(config('school.address', '123 Education Lane, Victoria Island, Lagos'));
+        $response->assertSee(config('school.phone', '+234 800 000 0000'));
+        $response->assertSee(config('school.email', 'info@greenfieldacademy.edu'));
+    }
+
+    public function test_footer_does_not_contain_stale_address(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertDontSee('Greenfield City, State 10001');
+    }
 }

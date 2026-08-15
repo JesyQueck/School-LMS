@@ -10,6 +10,9 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $student = $request->user()->student;
+
+        abort_if(! $student, 403, 'Student profile not found.');
+
         $student->load('schoolClass');
 
         $attendance = $student->attendance()

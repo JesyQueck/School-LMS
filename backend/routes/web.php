@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AnnouncementsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ReportCardController;
+use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
@@ -62,7 +63,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/admin/dashboard', [DashboardController::class, 'admin'])->middleware('role:admin');
+    Route::get('/admin/dashboard', [DashboardController::class, 'admin'])->name('admin.dashboard')->middleware('role:admin');
 
     Route::middleware('role:teacher')->prefix('teacher')->name('teacher.')->group(function () {
         Route::get('/dashboard', [TeacherPortalController::class, 'dashboard'])->name('dashboard');
@@ -159,6 +160,11 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
+
+        Route::get('/results', [ResultsController::class, 'index'])->name('results');
+        Route::post('/results', [ResultsController::class, 'store'])->name('results.store');
+        Route::post('/results/{result}/lock', [ResultsController::class, 'lock'])->name('results.lock');
+        Route::get('/results/export', [ResultsController::class, 'exportResults'])->name('results.export');
 
         Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');

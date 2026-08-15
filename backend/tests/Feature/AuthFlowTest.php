@@ -470,4 +470,144 @@ class AuthFlowTest extends TestCase
             'user_agent' => $userAgent,
         ]);
     }
+
+    private function createUserForPasswordChange(string $role): User
+    {
+        return User::factory()->create([
+            'name' => ucfirst($role).' User',
+            'email' => $role.'@example.com',
+            'password' => Hash::make('OldPass123!'),
+            'role' => $role,
+            'is_active' => true,
+            'needs_password_change' => true,
+        ]);
+    }
+
+    public function test_admin_can_successfully_change_password(): void
+    {
+        $user = $this->createUserForPasswordChange('admin');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $response->assertRedirect('/admin/dashboard');
+        $response->assertSessionHas('status', 'Password changed successfully.');
+        $this->assertFalse($user->fresh()->needs_password_change);
+        $this->assertTrue(Hash::check('NewPass123!', $user->fresh()->password));
+    }
+
+    public function test_teacher_can_successfully_change_password(): void
+    {
+        $user = $this->createUserForPasswordChange('teacher');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $response->assertRedirect('/teacher/dashboard');
+        $response->assertSessionHas('status', 'Password changed successfully.');
+    }
+
+    public function test_student_can_successfully_change_password(): void
+    {
+        $user = $this->createUserForPasswordChange('student');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $response->assertRedirect('/student/dashboard');
+        $response->assertSessionHas('status', 'Password changed successfully.');
+    }
+
+    public function test_parent_can_successfully_change_password(): void
+    {
+        $user = $this->createUserForPasswordChange('parent');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $response->assertRedirect('/parent/dashboard');
+        $response->assertSessionHas('status', 'Password changed successfully.');
+    }
+
+    public function test_invalid_current_password_is_rejected(): void
+    {
+        $user = $this->createUserForPasswordChange('admin');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'WrongPassword',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $response->assertSessionHasErrors('current_password');
+        $this->assertTrue(Hash::check('OldPass123!', $user->fresh()->password));
+        $this->assertTrue($user->fresh()->needs_password_change);
+    }
+
+    public function test_mismatched_password_confirmation_is_rejected(): void
+    {
+        $user = $this->createUserForPasswordChange('admin');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'DifferentPass123!',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertTrue(Hash::check('OldPass123!', $user->fresh()->password));
+        $this->assertTrue($user->fresh()->needs_password_change);
+    }
+
+    public function test_password_change_page_is_accessible_for_user_requiring_change(): void
+    {
+        $user = $this->createUserForPasswordChange('admin');
+
+        $this->actingAs($user);
+
+        $response = $this->get('/change-password');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('auth.password-change');
+    }
+
+    public function test_password_change_redirect_does_not_reference_nonexistent_route(): void
+    {
+        $user = $this->createUserForPasswordChange('admin');
+
+        $this->actingAs($user);
+
+        $response = $this->post('/change-password', [
+            'current_password' => 'OldPass123!',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertRedirect('/admin/dashboard');
+    }
 }

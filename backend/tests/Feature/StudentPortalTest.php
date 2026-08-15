@@ -538,4 +538,70 @@ class StudentPortalTest extends TestCase
         $this->assertEquals('JSS 1', $student->schoolClass->name);
         $this->assertEquals($class->id, $student->schoolClass->id);
     }
+
+    public function test_student_without_profile_receives_403_on_dashboard(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/dashboard');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_student_without_profile_receives_403_on_attendance(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/attendance');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_student_without_profile_receives_403_on_fees(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/fees');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_student_without_profile_receives_403_on_timetable(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/timetable');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_student_without_profile_receives_403_on_profile(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/profile');
+
+        $response->assertStatus(403);
+    }
+
+    public function test_student_without_profile_receives_403_on_report_cards(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+
+        $this->actingAs($studentUser);
+
+        $response = $this->get('/student/report-cards');
+
+        $response->assertStatus(403);
+    }
 }

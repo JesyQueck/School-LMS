@@ -13,6 +13,8 @@ class TimetableController extends Controller
     {
         $student = Student::where('user_id', $request->user()->id)->with('schoolClass')->first();
 
+        abort_if(! $student, 403, 'Student profile not found.');
+
         $timetable = Timetable::with([
             'classSubject.subject',
             'classSubject.class',

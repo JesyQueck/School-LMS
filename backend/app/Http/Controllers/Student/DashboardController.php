@@ -16,6 +16,9 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $student = $request->user()->student;
+
+        abort_if(! $student, 403, 'Student profile not found.');
+
         $student->load(['schoolClass', 'results.classSubject.subject', 'attendance', 'fees.payments', 'reportCards' => function ($query) {
             $query->where('status', ReportCard::STATUS_PUBLISHED)->with('term.academicSession');
         }]);

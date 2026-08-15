@@ -77,7 +77,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-neutral-900 dark:text-white">Address</p>
-                                    <p class="text-sm text-neutral-500 dark:text-neutral-400">123 Education Lane, Greenfield City, State 10001</p>
+                                    <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ config('school.address', '123 Education Lane, Victoria Island, Lagos') }}</p>
                                 </div>
                             </div>
                         </div>

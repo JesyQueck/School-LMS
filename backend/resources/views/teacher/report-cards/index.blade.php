@@ -116,12 +116,12 @@
                 <div class="flex items-start justify-between gap-4 pb-4 border-b" style="border-color: #16324F;">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style="border: 2px solid #16324F;">
-                            <span class="font-display text-[10px] font-bold text-center leading-tight" style="color: #059669;">GHS</span>
+                            <span class="font-display text-[10px] font-bold text-center leading-tight" style="color: #059669;">{{ substr(config('school.name', 'Greenfield Academy'), 0, 3) }}</span>
                         </div>
                         <div style="min-width: 0;">
-                            <h1 class="font-display text-base font-bold tracking-wide" style="color: #16324F; margin: 0;">Greenfield High School</h1>
-                            <p class="text-[11px] text-gray-600 mt-0.5 mb-0" style="margin: 0;">123 Education Lane, Victoria Island, Lagos</p>
-                            <p class="text-[11px] text-gray-600 mb-0" style="margin: 0;">info@greenfieldhs.edu | +234 800 000 0000</p>
+                            <h1 class="font-display text-base font-bold tracking-wide" style="color: #16324F; margin: 0;">{{ config('school.name', 'Greenfield Academy') }}</h1>
+                            <p class="text-[11px] text-gray-600 mt-0.5 mb-0" style="margin: 0;">{{ config('school.address', '123 Education Lane, Victoria Island, Lagos') }}</p>
+                            <p class="text-[11px] text-gray-600 mb-0" style="margin: 0;">{{ config('school.email', 'info@greenfieldacademy.edu') }} | {{ config('school.phone', '+234 800 000 0000') }}</p>
                         </div>
                     </div>
                     <div class="text-right">
