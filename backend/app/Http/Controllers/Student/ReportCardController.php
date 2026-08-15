@@ -13,6 +13,8 @@ class ReportCardController extends Controller
     {
         $student = $request->user()->student;
 
+        abort_if(! $student, 403, 'Student profile not found.');
+
         $reportCards = $student->reportCards()
             ->where('status', ReportCard::STATUS_PUBLISHED)
             ->with(['term.academicSession', 'student.schoolClass'])
@@ -45,7 +47,13 @@ class ReportCardController extends Controller
 
         $student = $request->user()->student;
 
-        $pdf = Pdf::loadView('pdf.report-card', $this->prepareReportCardData($reportCard));
+        abort_if(! $student, 403, 'Student profile not found.');
+
+        $pdf = Pdf::loadView('pdf.report-card', $this->prepareReportCardData($reportCard))
+            ->setOption('defaultMediaType', 'print')
+            ->setOption('isPhp', true)
+            ->setOption('isHtml5Print', true)
+            ->setOption('defaultFont', 'Inter');
 
         return $pdf->download("report-card-{$student->admission_no}-{$reportCard->term->name}.pdf");
     }
@@ -57,6 +65,8 @@ class ReportCardController extends Controller
     protected function ensurePublishedForStudent(Request $request, ReportCard $reportCard): void
     {
         $student = $request->user()->student;
+
+        abort_if(! $student, 403, 'Student profile not found.');
 
         if ($reportCard->student_id !== $student->id || ! $reportCard->isPublished()) {
             abort(403);
@@ -78,7 +88,7 @@ class ReportCardController extends Controller
             'term',
         ]);
 
-        $term  = $reportCard->term;
+        $term = $reportCard->term;
         $school = $reportCard->student->school ?? null;
 
         return compact('reportCard', 'school', 'term');

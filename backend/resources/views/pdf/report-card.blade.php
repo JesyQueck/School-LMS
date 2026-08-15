@@ -4,42 +4,43 @@
     <meta charset="UTF-8">
     <title>Report Card - {{ $reportCard->student->full_name ?? $reportCard->student->admission_no }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        /*
-        =====================================================================
-        DOMPDF-SAFE LAYOUT NOTES
-        =====================================================================
-        dompdf has partial flexbox support and essentially no CSS Grid support.
-        Every layout block below (header, info grid, remarks grid) is built
-        with <table> instead, since dompdf's table/cell rendering is the most
-        reliable box model it has. Visual result matches the original design.
+    @php
+        $subjectCount = $reportCard->student->results->where('term_id', $term->id ?? null)->count() ?? 0;
 
-        This file is rendered TWICE by the app:
-          1. As plain HTML, for in-browser preview (loaded inside an iframe
-             on the student report card preview page).
-          2. Passed through Dompdf::loadView() to generate the downloadable PDF.
-        Because both paths render this exact same file, preview and PDF can
-        never drift apart.
-        =====================================================================
-        */
+        if ($subjectCount >= 25) {
+            $scaleTier = 'super-compact';
+        } elseif ($subjectCount >= 18) {
+            $scaleTier = 'compact';
+        } elseif ($subjectCount >= 15) {
+            $scaleTier = 'standard';
+        } else {
+            $scaleTier = 'relaxed';
+        }
+
+        $pageContentHeightMm = 273;
+        $fixedBlocksHeightMm = 130;
+        $tableHeaderRowMm = 8;
+        $availableForRowsMm = max(20, $pageContentHeightMm - $fixedBlocksHeightMm - $tableHeaderRowMm);
+        $rowHeightMm = $subjectCount > 0 ? $availableForRowsMm / $subjectCount : 10;
+        $rowHeightMm = max(4.0, min(12, $rowHeightMm));
+    @endphp
+    <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', sans-serif; color: #000000; background: #e9e9e4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .font-display { font-family: 'Source Serif 4', Georgia, serif; }
         @page { size: A4; margin: 0; }
-        .sheet { width: 210mm; min-height: 297mm; margin: 5mm auto; background: #ffffff; position: relative; box-shadow: 0 1px 6px rgba(0,0,0,0.1); padding: 10mm; }
+        .sheet { width: 210mm; margin: 0 auto; background: #ffffff; padding: 10mm; }
         @media print { body { background: none; } .sheet { margin: 0; box-shadow: none; padding: 10mm; } }
 
-        /* Layout tables reset - no borders/spacing bleeding into visual design */
-        table.layout { width: 100%; border-collapse: collapse; }
-        table.layout td { border: none; padding: 0; vertical-align: middle; }
+        table.layout { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        table.layout td { border: none; padding: 0; vertical-align: middle; box-sizing: border-box; }
 
-        /* ---- School header: was display:flex, now a 3-column table ---- */
-        .school-header-table { border-bottom: 2px solid #16324F; margin-bottom: 16px; padding-bottom: 12px; }
-        .school-header-table td { vertical-align: middle; }
+        .school-header-table { border-bottom: 2px solid #16324F; margin-bottom: 16px; padding-bottom: 12px; table-layout: fixed; }
+        .school-header-table td { vertical-align: middle; box-sizing: border-box; }
         .school-logo-cell { width: 60px; }
         .school-logo { width: 48px; height: 48px; border: 2px solid #16324F; border-radius: 50%; text-align: center; }
         .school-logo-text { font-family: 'Source Serif 4', Georgia, serif; font-size: 12px; font-weight: 700; color: #059669; line-height: 44px; }
-        .school-center-cell { text-align: center; }
+        .school-center-cell { text-align: center; width: auto; }
         .school-name { font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; font-weight: 700; color: #16324F; margin-bottom: 2px; }
         .school-details { font-size: 10px; color: #6b7280; line-height: 1.4; }
         .school-status-cell { width: 120px; text-align: right; }
@@ -49,42 +50,57 @@
         .title-block .section-title { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700; color: #059669; letter-spacing: 0.25em; text-transform: uppercase; }
         .title-block .subtitle { font-size: 11px; color: #6b7280; margin-top: 3px; }
 
-        /* ---- Info grid: was display:grid (4 cols), now a table with 4 cells ---- */
-        table.info-grid-table { margin-bottom: 16px; }
-        table.info-grid-table td { width: 25%; padding: 0 6px; }
+        table.info-grid-table { margin-bottom: 16px; table-layout: fixed; }
+        table.info-grid-table td { width: 25%; padding: 0 6px; box-sizing: border-box; }
         table.info-grid-table td:first-child { padding-left: 0; }
         table.info-grid-table td:last-child { padding-right: 0; }
         .info-item { border: 1px solid #C9CDD3; padding: 8px 10px; border-radius: 4px; font-size: 13px; }
         .info-item .label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.025em; color: #6b7280; display: block; margin-bottom: 3px; }
         .info-item .value { font-weight: 600; color: #000000; }
 
-        table.results { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 16px; }
-        table.results th { background: #059669; color: #fff; font-weight: 600; font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; padding: 8px 6px; text-align: left; border: 1px solid #059669; }
-        table.results td { border: 1px solid #C9CDD3; color: #000000; padding: 6px 6px; text-align: center; }
+        table.results { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 16px; line-height: 1; }
+        table.results th { background: #059669; color: #fff; font-weight: 600; font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; padding: 8px 6px; text-align: left; border: 1px solid #059669; box-sizing: border-box; }
+        table.results td { border: 1px solid #C9CDD3; color: #000000; padding: 0 6px; text-align: center; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; }
         table.results td.text-left { text-align: left; }
         table.results th.col-subject { width: 28%; }
         table.results th.col-ca, table.results th.col-exam, table.results th.col-total, table.results th.col-grade { width: 10%; }
         table.results th.col-remark { width: 22%; }
         table.results tbody tr.row-even { background: #F4F2EA; }
+        table.results tbody tr { page-break-inside: avoid; page-break-after: avoid; }
         .font-semibold { font-weight: 600; }
         .font-bold { font-weight: 700; }
         .italic { font-style: italic; }
         .text-red { color: #A3312B; }
         .text-navy { color: #16324F; }
 
+        .tier-relaxed table.results { font-size: 11px; }
+        .tier-relaxed table.results th { font-size: 9px; padding: 6px 4px; }
+        .tier-relaxed table.results td { padding: 6px 4px; }
+
+        .tier-standard table.results { font-size: 10px; }
+        .tier-standard table.results th { font-size: 8px; padding: 4px 4px; }
+        .tier-standard table.results td { padding: 4px 4px; }
+
+        .tier-compact table.results { font-size: 9px; }
+        .tier-compact table.results th { font-size: 7px; padding: 3px 3px; }
+        .tier-compact table.results td { padding: 3px 3px; }
+
+        .tier-super-compact table.results { font-size: 8px; }
+        .tier-super-compact table.results th { font-size: 6px; padding: 2px 2px; }
+        .tier-super-compact table.results td { padding: 0 2px; }
+
         .summary-block { font-size: 12px; margin-bottom: 16px; }
         .summary-block p { margin-bottom: 3px; }
         .summary-block strong { font-weight: 600; color: #000000; }
         .summary-block span { font-weight: 500; color: #000000; }
 
-        /* ---- Remarks grid: was display:grid (2 cols), now a table ---- */
-        table.remarks-grid-table { margin-bottom: 16px; }
-        table.remarks-grid-table td { width: 50%; padding: 0 6px 12px 0; vertical-align: top; }
+        table.remarks-grid-table { margin-bottom: 16px; table-layout: fixed; }
+        table.remarks-grid-table td { width: 50%; padding: 0 6px 12px 0; vertical-align: top; box-sizing: border-box; }
         table.remarks-grid-table td:nth-child(2) { padding-right: 0; padding-left: 6px; }
         table.remarks-grid-table td.full-width { width: 100%; padding-right: 0; padding-left: 0; }
         .remark-card { border: 1px solid #C9CDD3; border-radius: 4px; padding: 10px; }
         .remark-card .section-label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; color: #6b7280; margin: 0 0 6px 0; }
-        .remark-card .remark-text { font-size: 11px; font-style: italic; color: #000000; min-height: 32px; }
+        .remark-card .remark-text { font-size: 11px; font-style: italic; color: #000000; min-height: 32px; word-wrap: break-word; overflow-wrap: break-word; }
         .remark-card .signature-line { font-size: 9px; color: #6b7280; margin-top: 12px; padding-top: 6px; border-top: 1px solid #C9CDD3; }
 
         .grading-key { border: 1px solid #C9CDD3; border-radius: 4px; padding: 10px; background: #F9F8F3; margin-bottom: 16px; }
@@ -92,27 +108,26 @@
         .grading-key .key-content span.font-bold { color: #16324F; }
         .grading-key .key-content span.text-red { color: #A3312B; font-weight: 700; }
 
-        /* ---- Footer: was default block flow, fine as-is ---- */
         .footer { border-top: 1px solid #16324F; padding-top: 8px; font-size: 10px; color: #6b7280; }
         .footer .copyright { text-align: center; margin-top: 4px; }
     </style>
 </head>
 <body>
-<div class="sheet">
+<div class="sheet tier-{{ $scaleTier }}">
 
     <!-- School Header: 3-column table (logo | name+details | status badge) -->
     <table class="layout school-header-table">
         <tr>
             <td class="school-logo-cell">
                 <div class="school-logo">
-                    <span class="school-logo-text">{{ substr($school->name ?? 'GHS', 0, 3) }}</span>
+                    <span class="school-logo-text">{{ substr($school->name ?? config('school.name', 'GHS'), 0, 3) }}</span>
                 </div>
             </td>
             <td class="school-center-cell">
-                <h1 class="school-name">{{ $school->name ?? 'Greenfield High School' }}</h1>
+                <h1 class="school-name">{{ $school->name ?? config('school.name', 'Greenfield High School') }}</h1>
                 <p class="school-details">
-                    {{ $school->address ?? '123 Education Lane, Victoria Island, Lagos' }}<br>
-                    {{ $school->phone ?? '+234 800 000 0000' }} | {{ $school->email ?? 'info@greenfieldhs.edu' }}
+                    {{ $school->address ?? config('school.address', '123 Education Lane, Victoria Island, Lagos') }}<br>
+                    {{ $school->phone ?? config('school.phone', '+234 800 000 0000') }} | {{ $school->email ?? config('school.email', 'info@greenfieldhs.edu') }}
                 </p>
             </td>
             <td class="school-status-cell">
@@ -165,7 +180,7 @@
         </tr>
     </table>
 
-    <!-- Results Table -->
+    <!-- Results Table: the ONLY flexible section — row height is computed above -->
     <table class="results">
         <thead>
             <tr>
@@ -190,8 +205,8 @@
                         $remark = $grading['remark'];
                     }
                 @endphp
-                <tr class="{{ $index % 2 === 1 ? 'row-even' : '' }}">
-                    <td class="text-left" style="padding: 8px 10px;">{{ $result->classSubject->subject->name ?? '—' }}</td>
+                <tr class="{{ $index % 2 === 1 ? 'row-even' : '' }}" style="height: {{ $rowHeightMm }}mm;">
+                    <td class="text-left">{{ $result->classSubject->subject->name ?? '—' }}</td>
                     <td>{{ $result->ca_score ?? 0 }}</td>
                     <td>{{ $result->exam_score ?? 0 }}</td>
                     <td class="font-semibold">{{ number_format($total, 0) }}</td>
@@ -280,7 +295,7 @@
             Next Term Begins: <span class="font-semibold" style="color: #000000;">{{ $reportCard->next_term_begins ? \Carbon\Carbon::parse($reportCard->next_term_begins)->format('d M Y') : 'TBA' }}</span>
         </div>
         <div class="copyright">
-            &copy; {{ date('Y') }} {{ $school->name ?? 'Greenfield Academy' }}. All rights reserved.
+            &copy; {{ date('Y') }} {{ $school->name ?? config('school.name', 'Greenfield Academy') }}. All rights reserved.
         </div>
     </div>
 </div>

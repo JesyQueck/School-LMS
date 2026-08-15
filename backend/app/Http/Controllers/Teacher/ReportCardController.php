@@ -251,7 +251,12 @@ class ReportCardController extends Controller
         $pdf = Pdf::loadView('pdf.report-card', [
             'reportCard' => $reportCard,
             'term' => $term,
-        ]);
+            'school' => $reportCard->student->school ?? null,
+        ])
+            ->setOption('defaultMediaType', 'print')
+            ->setOption('isPhp', true)
+            ->setOption('isHtml5Print', true)
+            ->setOption('defaultFont', 'Inter');
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }

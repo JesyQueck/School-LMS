@@ -34,7 +34,13 @@ class ParentReportCardController extends Controller
         }
 
         $reportCard->load(['student.results.classSubject.subject', 'student.schoolClass', 'student.user', 'term']);
-        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard'));
+        $term = $reportCard->term;
+        $school = $reportCard->student->school ?? null;
+        $pdf = Pdf::loadView('pdf.report-card', compact('reportCard', 'school', 'term'))
+            ->setOption('defaultMediaType', 'print')
+            ->setOption('isPhp', true)
+            ->setOption('isHtml5Print', true)
+            ->setOption('defaultFont', 'Inter');
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }

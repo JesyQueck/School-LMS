@@ -34,11 +34,6 @@ class ReportCardController extends Controller
         ]);
     }
 
-    public function classPerformance()
-    {
-        return view('admin.report-cards.performance');
-    }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -199,7 +194,11 @@ class ReportCardController extends Controller
         $pdf = Pdf::loadView('pdf.report-card', [
             'reportCard' => $reportCard,
             'term' => $reportCard->term,
-        ]);
+            'school' => $reportCard->student->school ?? null,
+        ])->setOption('defaultMediaType', 'print')
+            ->setOption('isPhp', true)
+            ->setOption('isHtml5Print', true)
+            ->setOption('defaultFont', 'Inter');
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }
