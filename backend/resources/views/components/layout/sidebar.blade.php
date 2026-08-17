@@ -2,7 +2,11 @@
     <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface">
         <div class="flex items-center gap-3">
             <div class="h-10 w-10 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-bold shadow-lg">
-                {{ substr($title, 0, 2) }}
+                @php
+                    $nameParts = explode(' ', $title);
+                    $initials = collect($nameParts)->map(fn($part) => strtoupper(substr(trim($part), 0, 1)))->implode('');
+                @endphp
+                {{ $initials }}
             </div>
             <div>
                 <div class="text-lg font-bold text-neutral-900 dark:text-white">{{ $title }}</div>

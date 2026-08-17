@@ -25,7 +25,7 @@
             class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:relative"
             aria-label="Sidebar"
         >
-            <x-layout.sidebar :title="config('app.name', 'Greenfield Academy')">
+            <x-layout.sidebar :title="config('school.name', config('app.name', 'Greenfield Academy'))">
                 @if(auth()->check())
                     @php $role = auth()->user()->role; @endphp
 
@@ -102,7 +102,7 @@
             </main>
 
             <x-layout.footer>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} {{ config('app.name', 'Greenfield Academy') }}. All rights reserved.</p>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} {{ config('school.name', config('app.name', 'Greenfield Academy')) }}. All rights reserved.</p>
             </x-layout.footer>
         </div>
     </div>
