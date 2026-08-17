@@ -6,10 +6,11 @@ use App\Models\AcademicSession;
 use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
-use App\Models\Term;
 use App\Models\Teacher;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AdminManagementTest extends TestCase
@@ -106,6 +107,143 @@ class AdminManagementTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_admin_can_access_class_edit_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->get(route('admin.classes.edit', $class));
+
+        $response->assertOk();
+        $response->assertSee('Edit Class');
+        $response->assertSee('JSS 1');
+    }
+
+    public function test_admin_can_edit_class_name_and_form_teacher(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $user = User::factory()->create([
+            'name' => 'New Teacher',
+            'role' => 'teacher',
+            'email' => 'new.teacher@example.com',
+        ]);
+
+        $teacher = Teacher::create([
+            'user_id' => $user->id,
+            'employee_id' => 'TCH002',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->put(route('admin.classes.update', $class), [
+            'name' => 'JSS 2',
+            'form_teacher_id' => $teacher->id,
+        ]);
+
+        $response->assertRedirect(route('admin.classes'));
+        $this->assertDatabaseHas('classes', [
+            'id' => $class->id,
+            'name' => 'JSS 2',
+            'form_teacher_id' => $teacher->id,
+        ]);
+    }
+
+    public function test_admin_can_correct_class_name_typo(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1 ']);
+
+        $response = $this->put(route('admin.classes.update', $class), [
+            'name' => 'JSS 1',
+        ]);
+
+        $response->assertRedirect(route('admin.classes'));
+        $this->assertDatabaseHas('classes', [
+            'id' => $class->id,
+            'name' => 'JSS 1',
+        ]);
+        $this->assertDatabaseMissing('classes', [
+            'name' => 'JSS 1 ',
+        ]);
+    }
+
+    public function test_update_class_validates_name_is_required(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->put(route('admin.classes.update', $class), [
+            'name' => '',
+        ]);
+
+        $response->assertSessionHasErrors(['name']);
+        $this->assertDatabaseHas('classes', ['name' => 'JSS 1']);
+    }
+
+    public function test_update_class_validates_name_is_unique(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        SchoolClass::create(['name' => 'JSS 1']);
+        $class2 = SchoolClass::create(['name' => 'JSS 2']);
+
+        $response = $this->put(route('admin.classes.update', $class2), [
+            'name' => 'JSS 1',
+        ]);
+
+        $response->assertSessionHasErrors(['name']);
+    }
+
+    public function test_update_class_rejects_post_method(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->post(route('admin.classes.update', $class), [
+            'name' => 'JSS 2',
+        ]);
+
+        $response->assertMethodNotAllowed();
+    }
+
+    public function test_non_admin_cannot_access_class_edit_page(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+        $this->actingAs($user);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->get(route('admin.classes.edit', $class));
+
+        $response->assertForbidden();
+    }
+
+    public function test_non_admin_cannot_update_class(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+        $this->actingAs($user);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->put(route('admin.classes.update', $class), [
+            'name' => 'JSS 2',
+        ]);
+
+        $response->assertForbidden();
+    }
+
     public function test_admin_can_create_a_teacher(): void
     {
         $admin = User::factory()->create([
@@ -140,6 +278,227 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseHas('teachers', [
             'user_id' => $teacherUser->id,
             'qualification' => 'B.Sc. Mathematics',
+        ]);
+    }
+
+    public function test_admin_can_access_teacher_edit_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->get(route('admin.teachers.edit', $teacher));
+
+        $response->assertOk();
+        $response->assertSee('Edit Teacher');
+        $response->assertSee('John Smith');
+    }
+
+    public function test_admin_can_edit_teacher(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'John A. Smith',
+            'email' => 'john.smith@example.com',
+            'phone' => '08098765432',
+            'qualification' => 'M.Ed Mathematics',
+            'password' => '',
+        ]);
+
+        $response->assertRedirect(route('admin.teachers'));
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->user_id,
+            'name' => 'John A. Smith',
+            'email' => 'john.smith@example.com',
+            'phone' => '08098765432',
+        ]);
+        $this->assertDatabaseHas('teachers', [
+            'id' => $teacher->id,
+            'qualification' => 'M.Ed Mathematics',
+        ]);
+    }
+
+    public function test_admin_can_correct_teacher_name_typo(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('Jon Smith', 'john@example.com');
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'John Smith',
+            'email' => 'john@example.com',
+            'password' => '',
+        ]);
+
+        $response->assertRedirect(route('admin.teachers'));
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->user_id,
+            'name' => 'John Smith',
+        ]);
+        $this->assertDatabaseMissing('users', [
+            'name' => 'Jon Smith',
+        ]);
+    }
+
+    public function test_update_teacher_validates_name_required(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => '',
+            'email' => 'john@example.com',
+            'password' => '',
+        ]);
+
+        $response->assertSessionHasErrors(['name']);
+        $this->assertDatabaseHas('users', ['name' => 'John Smith']);
+    }
+
+    public function test_update_teacher_validates_email_unique(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+        $this->makeTeacher('Jane Doe', 'jane@example.com');
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'John Smith',
+            'email' => 'jane@example.com',
+            'password' => '',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+    }
+
+    public function test_update_teacher_sends_password_change(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+        $oldHash = $teacher->user->password;
+
+        $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'John Smith',
+            'email' => 'john@example.com',
+            'password' => 'NewStrongPass1!',
+        ]);
+
+        $teacher->user->refresh();
+        $this->assertNotEquals($oldHash, $teacher->user->password);
+    }
+
+    public function test_admin_can_delete_teacher(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->delete(route('admin.teachers.destroy', $teacher));
+
+        $response->assertRedirect(route('admin.teachers'));
+        $response->assertSessionHas('status');
+        $this->assertDatabaseMissing('teachers', ['id' => $teacher->id]);
+        $this->assertDatabaseMissing('users', ['id' => $teacher->user_id]);
+    }
+
+    public function test_delete_teacher_prevented_when_assigned_as_form_teacher(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+        SchoolClass::create([
+            'name' => 'JSS 1',
+            'form_teacher_id' => $teacher->id,
+        ]);
+
+        $response = $this->delete(route('admin.teachers.destroy', $teacher));
+
+        $response->assertSessionHasErrors(['teacher'])
+            ->assertRedirect(route('admin.teachers'));
+        $this->assertDatabaseHas('teachers', ['id' => $teacher->id]);
+        $this->assertDatabaseHas('users', ['id' => $teacher->user_id]);
+    }
+
+    public function test_update_teacher_rejects_post_method(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->post(route('admin.teachers.update', $teacher), [
+            'name' => 'John A. Smith',
+            'email' => 'john.smith@example.com',
+        ]);
+
+        $response->assertMethodNotAllowed();
+    }
+
+    public function test_non_admin_cannot_access_teacher_edit_page(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+        $this->actingAs($user);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->get(route('admin.teachers.edit', $teacher));
+
+        $response->assertForbidden();
+    }
+
+    public function test_non_admin_cannot_update_teacher(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+        $this->actingAs($user);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'Hacked Name',
+            'email' => 'john@example.com',
+            'password' => '',
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_non_admin_cannot_delete_teacher(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+        $this->actingAs($user);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->delete(route('admin.teachers.destroy', $teacher));
+
+        $response->assertForbidden();
+    }
+
+    protected function makeTeacher(string $name = 'John Smith', string $email = 'john@example.com'): Teacher
+    {
+        $user = User::factory()->create([
+            'name' => $name,
+            'email' => $email,
+            'role' => 'teacher',
+        ]);
+
+        return Teacher::create([
+            'user_id' => $user->id,
+            'employee_id' => 'TCH-'.Str::random(4),
+            'qualification' => 'B.Ed',
         ]);
     }
 
