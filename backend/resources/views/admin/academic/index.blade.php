@@ -54,24 +54,51 @@
                     <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                         @forelse($sessions as $session)
                             <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                                <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $session->name }}</td>
-                                <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $session->start_date?->toDateString() ?? '—' }}</td>
-                                <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $session->end_date?->toDateString() ?? '—' }}</td>
-                                <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $session->terms->count() }}</td>
-                                <td class="px-6 py-4 text-sm">
-                                    @if($session->is_current)
-                                        <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Current</span>
-                                    @else
-                                        <span class="inline-flex items-center rounded-full bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-700 dark:text-neutral-300">Archived</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-sm">
-                                    @unless($session->is_current)
-                                        <form method="POST" action="{{ route('admin.academic.sessions.current', $session) }}">
-                                            @csrf
-                                            <button type="submit" class="text-primary-600 dark:text-primary-400 hover:underline">Make Current</button>
-                                        </form>
-                                    @endunless
+                                <form id="edit-session-{{ $session->id }}" method="POST" action="{{ route('admin.academic.sessions.update', $session) }}" class="contents">
+                                    @csrf
+                                    @method('PUT')
+                                    <td class="px-6 py-4">
+                                        <input type="text" name="name" value="{{ old('name', $session->name) }}"
+                                            class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                        @error('name')
+                                            <p class="mt-1 text-xs text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="date" name="start_date" value="{{ old('start_date', $session->start_date?->toDateString()) }}"
+                                            class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                        @error('start_date')
+                                            <p class="mt-1 text-xs text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <input type="date" name="end_date" value="{{ old('end_date', $session->end_date?->toDateString()) }}"
+                                            class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                        @error('end_date')
+                                            <p class="mt-1 text-xs text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                                        @enderror
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $session->terms->count() }}</td>
+                                    <td class="px-6 py-4 text-sm">
+                                        @if($session->is_current)
+                                            <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Current</span>
+                                        @else
+                                            <span class="inline-flex items-center rounded-full bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-700 dark:text-neutral-300">Archived</span>
+                                        @endif
+                                    </td>
+                                </form>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-end gap-2">
+                                        <button type="submit" form="edit-session-{{ $session->id }}"
+                                            class="bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-700 dark:text-neutral-200 font-medium px-3 py-1.5 rounded-lg text-sm">Save</button>
+                                        @unless($session->is_current)
+                                            <form method="POST" action="{{ route('admin.academic.sessions.current', $session) }}">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1.5 rounded-lg text-sm">Make Current</button>
+                                            </form>
+                                        @endunless
+                                    </div>
                                 </td>
                             </tr>
                         @empty

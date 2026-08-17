@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\ClassSubject;
+use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Term;
 use Illuminate\Http\Request;
@@ -15,7 +16,8 @@ class AcademicStructureController extends Controller
     {
         return view('admin.academic.index', [
             'sessions' => AcademicSession::with('terms')->get(),
-            'subjects' => Subject::all(),
+            'subjects' => Subject::with('classSubjects.class')->get(),
+            'classes' => SchoolClass::all(),
             'classSubjects' => ClassSubject::with(['class', 'subject'])->get(),
         ]);
     }
@@ -67,17 +69,6 @@ class AcademicStructureController extends Controller
         return redirect()->route('admin.academic')->with('status', 'Term created.');
     }
 
-    public function createSubject(Request $request)
-    {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:subjects,name'],
-        ]);
-
-        Subject::create($data);
-
-        return redirect()->route('admin.academic')->with('status', 'Subject created.');
-    }
-
     public function createClassSubject(Request $request)
     {
         $data = $request->validate([
@@ -92,6 +83,16 @@ class AcademicStructureController extends Controller
     }
 
     /**
+     * Remove a class-subject association.
+     */
+    public function destroyClassSubject(ClassSubject $classSubject)
+    {
+        $classSubject->delete();
+
+        return redirect()->route('admin.academic')->with('status', 'Class-subject association removed.');
+    }
+
+    /**
      * Mark a session as the current academic session (only one at a time).
      */
     public function makeSessionCurrent(AcademicSession $session)
@@ -100,6 +101,22 @@ class AcademicStructureController extends Controller
         $session->update(['is_current' => true]);
 
         return redirect()->route('admin.academic')->with('status', "{$session->name} is now the current session.");
+    }
+
+    /**
+     * Update a session's name and dates.
+     */
+    public function updateSession(Request $request, AcademicSession $session)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $session->update($data);
+
+        return redirect()->route('admin.academic')->with('status', "{$session->name} session updated.");
     }
 
     /**
