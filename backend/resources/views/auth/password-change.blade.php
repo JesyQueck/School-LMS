@@ -11,9 +11,7 @@
                 </div>
 
                 @if(session('status'))
-                    <div class="mb-4 p-3 rounded-lg bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800">
-                        <p class="text-sm text-success-700 dark:text-success-300 font-medium">{{ session('status') }}</p>
-                    </div>
+                    <x-ui.alert variant="success" class="mb-4">{{ session('status') }}</x-ui.alert>
                 @endif
 
                 <form method="POST" action="{{ route('password.change.update') }}" class="space-y-5">

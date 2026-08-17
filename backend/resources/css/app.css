@@ -54,6 +54,9 @@
     --color-success-500: #16A34A;
     --color-success-600: #15803D;
     --color-success-700: #166534;
+    --color-success-800: #14532D;
+    --color-success-900: #052E16;
+    --color-success-950: #021410;
 
     --color-warning-50: #FEF3C7;
     --color-warning-100: #FDE68A;
@@ -62,6 +65,10 @@
     --color-warning-400: #F59E0B;
     --color-warning-500: #D97706;
     --color-warning-600: #B45309;
+    --color-warning-700: #92400E;
+    --color-warning-800: #78350F;
+    --color-warning-900: #662D0F;
+    --color-warning-950: #3D1A05;
 
     --color-danger-50: #FEE2E2;
     --color-danger-100: #FECACA;
@@ -71,6 +78,9 @@
     --color-danger-500: #DC2626;
     --color-danger-600: #B91C1C;
     --color-danger-700: #991B1B;
+    --color-danger-800: #7F1D1D;
+    --color-danger-900: #6B1010;
+    --color-danger-950: #390707;
 
     --color-info-50: #E0F2FE;
     --color-info-100: #BAE6FD;
@@ -80,6 +90,9 @@
     --color-info-500: #0284C7;
     --color-info-600: #0369A1;
     --color-info-700: #075985;
+    --color-info-800: #0C4A6E;
+    --color-info-900: #0E3A5A;
+    --color-info-950: #031D33;
 
     /* ============================================
        GREENFIELD ACADEMY - NEUTRAL COLORS

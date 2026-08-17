@@ -9,9 +9,7 @@
     </div>
 
     @if(session('status'))
-        <div class="mb-4 p-4 bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 rounded-lg">
-            <p class="text-sm text-success-800 dark:text-success-200">{{ session('status') }}</p>
-        </div>
+        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
     @endif
 
     <x-ui.card>

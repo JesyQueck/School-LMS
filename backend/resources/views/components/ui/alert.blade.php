@@ -2,10 +2,10 @@
 
 @php
     $variants = [
-        'success' => ['bg' => 'bg-success-50 dark:bg-success-900/20', 'border' => 'border-2 border-success-200 dark:border-success-800', 'text' => 'text-success-800 dark:text-success-200', 'icon' => 'text-success-600 dark:text-success-400'],
-        'warning' => ['bg' => 'bg-warning-50 dark:bg-warning-900/20', 'border' => 'border-2 border-warning-200 dark:border-warning-800', 'text' => 'text-warning-800 dark:text-warning-200', 'icon' => 'text-warning-600 dark:text-warning-400'],
-        'danger' => ['bg' => 'bg-danger-50 dark:bg-danger-900/20', 'border' => 'border-2 border-danger-200 dark:border-danger-800', 'text' => 'text-danger-800 dark:text-danger-200', 'icon' => 'text-danger-600 dark:text-danger-400'],
-        'info' => ['bg' => 'bg-info-50 dark:bg-info-900/20', 'border' => 'border-2 border-info-200 dark:border-info-800', 'text' => 'text-info-800 dark:text-info-200', 'icon' => 'text-info-600 dark:text-info-400'],
+        'success' => ['bg' => 'bg-success-50 dark:bg-success-950/40', 'border' => 'border-l-4 border-success-200 dark:border-success-800', 'text' => 'text-success-800 dark:text-success-300', 'icon' => 'text-success-600 dark:text-success-400'],
+        'warning' => ['bg' => 'bg-warning-50 dark:bg-warning-950/40', 'border' => 'border-l-4 border-warning-200 dark:border-warning-800', 'text' => 'text-warning-800 dark:text-warning-300', 'icon' => 'text-warning-600 dark:text-warning-400'],
+        'danger' => ['bg' => 'bg-danger-50 dark:bg-danger-950/40', 'border' => 'border-l-4 border-danger-200 dark:border-danger-800', 'text' => 'text-danger-800 dark:text-danger-300', 'icon' => 'text-danger-600 dark:text-danger-400'],
+        'info' => ['bg' => 'bg-info-50 dark:bg-info-950/40', 'border' => 'border-l-4 border-info-200 dark:border-info-800', 'text' => 'text-info-800 dark:text-info-300', 'icon' => 'text-info-600 dark:text-info-400'],
     ];
     $v = $variants[$variant];
 @endphp
