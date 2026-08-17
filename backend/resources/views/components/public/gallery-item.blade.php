@@ -1,29 +1,29 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        lll@props(['title' => '', 'category' => '', 'image' => null, 'href' => '#'])
+@props(['title' => '', 'category' => '', 'image' => null, 'href' => '#'])
 
 @php
     $galleryImages = [
-        'Classroom Learning' => asset('images/classroom.svg'),
-        'Sports Day' => asset('images/student-life.svg'),
-        'Science Lab' => asset('images/science_lab_img.png'),
-        'Art Class' => asset('images/facilities_img1.png'),
-        'Library' => asset('images/facilities_img1.png'),
-        'Music Room' => asset('images/facilities_img1.png'),
-        'Assembly' => asset('images/student-life.svg'),
-        'Field Trip' => asset('images/facilities_img1.png'),
-        'Library Reading' => asset('images/facilities_img1.png'),
-        'Football Match' => asset('images/student-life.svg'),
-        'Athletics Track' => asset('images/student-life.svg'),
-        'Art Exhibition' => asset('images/facilities_img1.png'),
-        'Music Performance' => asset('images/facilities_img1.png'),
-        'Drama Club' => asset('images/facilities_img1.png'),
-        'Graduation Day' => asset('images/student-life.svg'),
-        'Prize Giving' => asset('images/facilities_img1.png'),
-        'Cultural Day' => asset('images/student-life.svg'),
-        'Science Fair' => asset('images/science_lab_img.png'),
-        'Swimming' => asset('images/student-life.svg'),
-        'Talent Show' => asset('images/facilities_img1.png'),
+        'Classroom Learning' => asset('images/learning_img.webp'),
+        'Sports Day' => asset('images/Sports_day_img.webp'),
+        'Science Lab' => asset('images/Science_room_img.webp'),
+        'Art Class' => asset('images/Art_class_img.webp'),
+        'Library' => asset('images/library_img.webp'),
+        'Music Room' => asset('images/Music_room_img.webp'),
+        'Assembly' => asset('images/Assembly_img.webp'),
+        'Field Trip' => asset('images/Field_trip_img.webp'),
+        'Library Reading' => asset('images/reading_img.webp'),
+        'Football Match' => asset('images/student_life_img.webp'),
+        'Athletics Track' => asset('images/student_life_img.webp'),
+        'Art Exhibition' => asset('images/Art_class_img.webp'),
+        'Music Performance' => asset('images/Music_room_img.webp'),
+        'Drama Club' => asset('images/facilities_img1.webp'),
+        'Graduation Day' => asset('images/student_life_img.webp'),
+        'Prize Giving' => asset('images/student_life_img.webp'),
+        'Cultural Day' => asset('images/student_life_img.webp'),
+        'Science Fair' => asset('images/Science_achievement_img.webp'),
+        'Swimming' => asset('images/student_life_img.webp'),
+        'Talent Show' => asset('images/facilities_img1.webp'),
     ];
-    $imgSrc = $image ?? $galleryImages[$title] ?? asset('images/facilities_img1.png');
+    $imgSrc = $image ?? $galleryImages[$title] ?? asset('images/facilities_img1.webp');
 @endphp
 
 <div class="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer image-zoom shadow-premium hover:shadow-premium-lg transition-all duration-300">

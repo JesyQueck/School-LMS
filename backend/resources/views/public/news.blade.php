@@ -13,40 +13,45 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <x-public.news-card
-                    title="Welcome Back to School"
-                    excerpt="We are excited to welcome all our students back for the 2026/2027 academic session. School resumes on September 1st with an exciting lineup of activities."
-                    date="August 28, 2026"
-                    author="Admin"
-                    href="#"
-                />
+                     title="Welcome Back to School"
+                     excerpt="We are excited to welcome all our students back for the 2026/2027 academic session. School resumes on September 1st with an exciting lineup of activities."
+                     date="August 28, 2026"
+                     author="Admin"
+                     image="school"
+                     href="#"
+                 />
                 <x-public.news-card
-                    title="PTA Meeting This Saturday"
-                    excerpt="All parents are cordially invited to attend our quarterly Parent-Teacher Association meeting this Saturday at 10am in the main hall."
-                    date="August 25, 2026"
-                    author="Admin"
-                    href="#"
-                />
+                     title="PTA Meeting This Saturday"
+                     excerpt="All parents are cordially invited to attend our quarterly Parent-Teacher Association meeting this Saturday at 10am in the main hall."
+                     date="August 25, 2026"
+                     author="Admin"
+                     image="meeting"
+                     href="#"
+                 />
                 <x-public.news-card
-                    title="Science Fair Winners Announced"
-                    excerpt="Congratulations to all participants in this year's Science Fair. The winning projects showcased incredible innovation and scientific thinking."
-                    date="August 20, 2026"
-                    author="Mrs. Smith"
-                    href="#"
-                />
+                     title="Science Fair Winners Announced"
+                     excerpt="Congratulations to all participants in this year's Science Fair. The winning projects showcased incredible innovation and scientific thinking."
+                     date="August 20, 2026"
+                     author="Mrs. Smith"
+                     image="science"
+                     href="#"
+                 />
                 <x-public.news-card
-                    title="New Computer Lab Opening"
-                    excerpt="We are thrilled to announce the opening of our state-of-the-art computer laboratory equipped with 40 modern workstations."
-                    date="August 15, 2026"
-                    author="Mr. Jones"
-                    href="#"
-                />
+                     title="New Computer Lab Opening"
+                     excerpt="We are thrilled to announce the opening of our state-of-the-art computer laboratory equipped with 40 modern workstations."
+                     date="August 15, 2026"
+                     author="Mr. Jones"
+                     image="computer"
+                     href="#"
+                 />
                 <x-public.news-card
-                    title="Inter-House Sports Results"
-                    excerpt="Green House emerged as the overall winner of this year's inter-house sports competition. Congratulations to all participants."
-                    date="August 10, 2026"
-                    author="Admin"
-                    href="#"
-                />
+                     title="Inter-House Sports Results"
+                     excerpt="Green House emerged as the overall winner of this year's inter-house sports competition. Congratulations to all participants."
+                     date="August 10, 2026"
+                     author="Admin"
+                     image="sports"
+                     href="#"
+                 />
                 <x-public.news-card
                     title="Scholarship Opportunities"
                     excerpt="Applications are now open for the Greenfield Academy Merit Scholarship for outstanding students entering JSS 1."

@@ -53,15 +53,15 @@
             <div class="lg:col-span-6 relative animate-scale-in delay-200">
                 <div class="relative grid grid-cols-2 gap-4">
                     <div class="col-span-2 relative rounded-3xl overflow-hidden shadow-premium-xl image-zoom aspect-16/10">
-                        <img src="{{ asset('images/Hero_img1.png') }}" alt="Greenfield Academy modern campus building" class="w-full h-full object-cover zoom-target" loading="eager" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/Hero_img1.webp') }}" alt="Greenfield Academy modern campus building" class="w-full h-full object-cover zoom-target" loading="eager" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                         <div class="absolute inset-0 bg-linear-to-t from-black/20 to-transparent"></div>
                     </div>
 
                     <div class="relative rounded-2xl overflow-hidden shadow-premium-lg image-zoom aspect-square">
-                        <img src="{{ asset('images/Hero_img2.png') }}" alt="Students in classroom at Greenfield Academy" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/Hero_img2.webp') }}" alt="Students in classroom at Greenfield Academy" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                     </div>
                     <div class="relative rounded-2xl overflow-hidden shadow-premium-lg image-zoom aspect-square">
-                        <img src="{{ asset('images/Hero_img3.png') }}" alt="Academic excellence at Greenfield Academy" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
+                        <img src="{{ asset('images/Hero_img3.webp') }}" alt="Academic excellence at Greenfield Academy" class="w-full h-full object-cover zoom-target" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('bg-linear-to-br','from-neutral-100','to-neutral-200','dark:from-neutral-800','dark:to-neutral-700')">
                     </div>
                 </div>
 

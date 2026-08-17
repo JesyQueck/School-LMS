@@ -8,11 +8,12 @@
     ];
 
     $imageUrls = [
-        'default' => asset('images/facilities_img1.png'),
-        'school' => asset('images/facilities_img1.png'),
-        'science' => asset('images/science_lab_img.png'),
-        'sports' => asset('images/student-life.svg'),
-        'meeting' => asset('images/facilities_img1.png'),
+        'default' => asset('images/facilities_img1.webp'),
+        'school' => asset('images/Welcome_back_news_img.webp'),
+        'science' => asset('images/Science_achievement_img.webp'),
+        'sports' => asset('images/Sports_day_img.webp'),
+        'meeting' => asset('images/facilities_img1.webp'),
+        'computer' => asset('images/computer_lab_img.webp'),
     ];
     $imgSrc = $imageUrls[$image] ?? $image ?? $imageUrls['default'];
 @endphp
