@@ -36,7 +36,14 @@
                     @forelse($classes as $class)
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                             <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $class->name }}</td>
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $class->formTeacher?->user?->name ?? '<span class="text-neutral-400">Not assigned</span>' }}</td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">
+                                            @php($teacherName = $class->formTeacher?->user?->name)
+                                            @if($teacherName)
+                                                {{ $teacherName }}
+                                            @else
+                                                <span class="text-neutral-400">Not assigned</span>
+                                            @endif
+                                        </td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $class->students->count() }}</td>
                             <td class="px-6 py-4 text-sm">
                                 <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Active</span>

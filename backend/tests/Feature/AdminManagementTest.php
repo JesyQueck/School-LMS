@@ -7,6 +7,7 @@ use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Term;
+use App\Models\Teacher;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,6 +33,77 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseHas('classes', [
             'name' => 'JSS 1',
         ]);
+    }
+
+    public function test_classes_index_shows_not_assigned_without_literal_span_tags(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($admin);
+
+        SchoolClass::create(['name' => 'JSS 2']);
+
+        $response = $this->get('/admin/classes');
+
+        $response->assertOk();
+        $response->assertSee('Not assigned');
+        $response->assertSee('<span class="text-neutral-400">Not assigned</span>', false);
+        $response->assertDontSee('&lt;span', false);
+    }
+
+    public function test_classes_index_shows_form_teacher_name_when_assigned(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($admin);
+
+        $user = User::factory()->create([
+            'name' => 'Jane Teacher',
+            'role' => 'teacher',
+            'email' => 'jane.teacher@example.com',
+        ]);
+
+        $teacher = Teacher::create([
+            'user_id' => $user->id,
+            'employee_id' => 'TCH001',
+            'qualification' => 'B.Ed',
+        ]);
+
+        SchoolClass::create([
+            'name' => 'JSS 3',
+            'form_teacher_id' => $teacher->id,
+        ]);
+
+        $response = $this->get('/admin/classes');
+
+        $response->assertOk();
+        $response->assertSee('Jane Teacher');
+        $response->assertSee('JSS 3');
+    }
+
+    public function test_classes_index_page_is_accessible_to_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/admin/classes');
+
+        $response->assertOk();
+        $response->assertSee('Manage school classes');
+    }
+
+    public function test_classes_index_is_forbidden_for_non_admin(): void
+    {
+        $user = User::factory()->create(['role' => 'student']);
+        $this->actingAs($user);
+
+        $response = $this->get('/admin/classes');
+
+        $response->assertForbidden();
     }
 
     public function test_admin_can_create_a_teacher(): void
