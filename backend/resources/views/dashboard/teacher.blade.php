@@ -71,14 +71,14 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="My Classes" :value="$subjectAssignments->count()" icon="school" />
         <x-ui.stat-card label="My Subjects" :value="$subjectAssignments->pluck('classSubject.subject_id')->unique()->count()" icon="book-open" />
-        <x-ui.stat-card label="Students" :value="$totalStudents" icon="users" />
+        <x-ui.stat-card label="Students" :value="$totalStudents" icon="user" />
         <x-ui.stat-card label="Attendance Today" :value="$todayAttendanceRate . '%'" icon="calendar-check" />
         @if($isClassTeacher && $classAssignment)
             <x-ui.stat-card
                 label="My Class"
                 :value="$classAssignment->class->name ?? 'N/A'"
                 :trend="['direction' => 'neutral', 'value' => ($classAssignment->class->students->count() ?? 0) . ' students']"
-                icon="users"
+                icon="user"
             />
         @endif
     </div>

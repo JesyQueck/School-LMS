@@ -35,7 +35,8 @@
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
                         <x-layout.sidebar-item href="/admin/classes" icon="school" label="Classes" />
                         <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic Structure" />
-                        <x-layout.sidebar-item href="/admin/assignments" icon="book-open" label="Teacher Assignments" />
+                        <x-layout.sidebar-item href="/admin/subjects" icon="book-open" label="Subjects" />
+                        <x-layout.sidebar-item href="/admin/assignments" icon="user-check" label="Teacher Assignments" />
                         <x-layout.sidebar-item href="/admin/report-cards" icon="file-text" label="Report Cards" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
@@ -106,5 +107,6 @@
             </x-layout.footer>
         </div>
     </div>
+    @stack('scripts')
 </body>
 </html>
