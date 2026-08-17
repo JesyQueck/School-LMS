@@ -134,11 +134,20 @@
                     </select>
                 </div>
                 <div>
-                    <label for="class_subject_id_sa" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class Subject <span class="text-danger-500">*</span></label>
+                    <label for="class_id_sa" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class <span class="text-danger-500">*</span></label>
+                    <select id="class_id_sa" name="class_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">Select class</option>
+                        @foreach($classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="class_subject_id_sa" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Subject <span class="text-danger-500">*</span></label>
                     <select id="class_subject_id_sa" name="class_subject_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        <option value="">Select class-subject</option>
+                        <option value="">Select a class first</option>
                         @foreach($classSubjects as $cs)
-                            <option value="{{ $cs->id }}">{{ $cs->class->name ?? 'Unknown' }} - {{ $cs->subject->name ?? 'Unknown' }}</option>
+                            <option value="{{ $cs->id }}" data-class-id="{{ $cs->class_id }}">{{ $cs->subject->name ?? 'Unknown' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -153,6 +162,37 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var classSelect = document.getElementById('class_id_sa');
+            var subjectSelect = document.getElementById('class_subject_id_sa');
+
+            if (classSelect && subjectSelect) {
+                classSelect.addEventListener('change', function() {
+                    var selectedClassId = this.value;
+                    var options = subjectSelect.querySelectorAll('option[data-class-id]');
+
+                    if (selectedClassId === '') {
+                        subjectSelect.innerHTML = '<option value="">Select a class first</option>';
+                        return;
+                    }
+
+                    subjectSelect.innerHTML = '<option value="">Select subject</option>';
+
+                    options.forEach(function(opt) {
+                        if (opt.getAttribute('data-class-id') === selectedClassId) {
+                            subjectSelect.appendChild(opt);
+                        }
+                    });
+
+                    if (subjectSelect.options.length <= 1) {
+                        subjectSelect.innerHTML = '<option value="">No subjects for this class</option>';
+                    }
+                });
+            }
+        });
+    </script>
 
     <!-- Class Teacher Assignment Modal -->
     <div id="class-assignment-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

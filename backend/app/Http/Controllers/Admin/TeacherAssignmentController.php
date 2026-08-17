@@ -38,9 +38,19 @@ class TeacherAssignmentController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        TeacherClassSubject::create($data);
+        $existing = TeacherClassSubject::where('teacher_id', $data['teacher_id'])
+            ->where('class_subject_id', $data['class_subject_id'])
+            ->first();
 
-        $this->audit($request, 'subject_assignment.created', TeacherClassSubject::class, TeacherClassSubject::query()->latest('id')->value('id'), null, $data);
+        if ($existing) {
+            return redirect()->route('admin.assignments')->withErrors([
+                'class_subject_id' => 'This teacher is already assigned to this class and subject.',
+            ]);
+        }
+
+        $assignment = TeacherClassSubject::create($data);
+
+        $this->audit($request, 'subject_assignment.created', TeacherClassSubject::class, $assignment->id, null, $data);
 
         return redirect()->route('admin.assignments')->with('status', 'Subject assignment created.');
     }
