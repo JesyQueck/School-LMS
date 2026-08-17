@@ -136,7 +136,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/academic/subjects', [AcademicStructureController::class, 'createSubject'])->name('academic.subjects.store');
         Route::post('/academic/sessions/{session}/current', [AcademicStructureController::class, 'makeSessionCurrent'])->name('academic.sessions.current');
         Route::post('/academic/terms/{term}/current', [AcademicStructureController::class, 'makeTermCurrent'])->name('academic.terms.current');
-        Route::post('/academic/terms/{term}', [AcademicStructureController::class, 'updateTerm'])->name('academic.terms.update');
+        Route::put('/academic/terms/{term}', [AcademicStructureController::class, 'updateTerm'])->name('academic.terms.update');
 
         Route::get('/assignments', [TeacherAssignmentController::class, 'index'])->name('assignments');
         Route::post('/assignments', [TeacherAssignmentController::class, 'store'])->name('assignments.store');
