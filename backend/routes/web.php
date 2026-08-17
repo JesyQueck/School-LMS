@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SchoolAdminController;
+use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordChangeController;
@@ -124,16 +125,23 @@ Route::middleware('auth')->group(function () {
         Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
         Route::get('/classes', [SchoolAdminController::class, 'classes'])->name('classes');
         Route::post('/classes', [SchoolAdminController::class, 'createClass'])->name('classes.store');
+        Route::get('/classes/{class}/edit', [SchoolAdminController::class, 'editClass'])->name('classes.edit');
+        Route::put('/classes/{class}', [SchoolAdminController::class, 'updateClass'])->name('classes.update');
         Route::get('/teachers', [SchoolAdminController::class, 'teachers'])->name('teachers');
         Route::post('/teachers', [SchoolAdminController::class, 'createTeacher'])->name('teachers.store');
+        Route::get('/teachers/{teacher}/edit', [SchoolAdminController::class, 'editTeacher'])->name('teachers.edit');
+        Route::put('/teachers/{teacher}', [SchoolAdminController::class, 'updateTeacher'])->name('teachers.update');
+        Route::delete('/teachers/{teacher}', [SchoolAdminController::class, 'destroyTeacher'])->name('teachers.destroy');
         Route::get('/students', [SchoolAdminController::class, 'students'])->name('students');
         Route::get('/students/export', [SchoolAdminController::class, 'exportStudents'])->name('students.export');
         Route::post('/students', [SchoolAdminController::class, 'createStudent'])->name('students.store');
 
         Route::get('/academic', [AcademicStructureController::class, 'index'])->name('academic');
         Route::post('/academic/sessions', [AcademicStructureController::class, 'createSession'])->name('academic.sessions.store');
+        Route::put('/academic/sessions/{session}', [AcademicStructureController::class, 'updateSession'])->name('academic.sessions.update');
         Route::post('/academic/terms', [AcademicStructureController::class, 'createTerm'])->name('academic.terms.store');
-        Route::post('/academic/subjects', [AcademicStructureController::class, 'createSubject'])->name('academic.subjects.store');
+        Route::post('/academic/class-subjects', [AcademicStructureController::class, 'createClassSubject'])->name('academic.class_subjects.store');
+        Route::delete('/academic/class-subjects/{classSubject}', [AcademicStructureController::class, 'destroyClassSubject'])->name('academic.class_subjects.destroy');
         Route::post('/academic/sessions/{session}/current', [AcademicStructureController::class, 'makeSessionCurrent'])->name('academic.sessions.current');
         Route::post('/academic/terms/{term}/current', [AcademicStructureController::class, 'makeTermCurrent'])->name('academic.terms.current');
         Route::put('/academic/terms/{term}', [AcademicStructureController::class, 'updateTerm'])->name('academic.terms.update');
@@ -141,6 +149,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/assignments', [TeacherAssignmentController::class, 'index'])->name('assignments');
         Route::post('/assignments', [TeacherAssignmentController::class, 'store'])->name('assignments.store');
         Route::delete('/assignments/{assignment}', [TeacherAssignmentController::class, 'destroy'])->name('assignments.destroy');
+
+        Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects.index');
+        Route::get('/subjects/create', [SubjectController::class, 'create'])->name('subjects.create');
+        Route::post('/subjects', [SubjectController::class, 'store'])->name('subjects.store');
+        Route::get('/subjects/{subject}/edit', [SubjectController::class, 'edit'])->name('subjects.edit');
+        Route::put('/subjects/{subject}', [SubjectController::class, 'update'])->name('subjects.update');
+        Route::delete('/subjects/{subject}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
 
         Route::get('/class-assignments', [TeacherAssignmentController::class, 'index'])->name('class-assignments.index');
         Route::post('/class-assignments', [TeacherAssignmentController::class, 'storeClassAssignment'])->name('class-assignments.store');
