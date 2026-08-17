@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\StoreTeacherRequest;
+use App\Http\Requests\UpdateTeacherRequest;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -77,6 +78,30 @@ class SchoolAdminController extends Controller
         return redirect()->route('admin.classes')->with('status', 'Class created.');
     }
 
+    public function editClass(SchoolClass $class)
+    {
+        return view('admin.classes.edit', [
+            'class' => $class->load('formTeacher.user'),
+            'teachers' => Teacher::with('user')->get(),
+        ]);
+    }
+
+    public function updateClass(Request $request, SchoolClass $class)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:classes,name,'.$class->id],
+            'form_teacher_id' => ['nullable', 'exists:teachers,id'],
+        ]);
+
+        $oldData = $class->getOriginal();
+
+        $class->update($data);
+
+        $this->audit($request, 'class.updated', SchoolClass::class, $class->id, $oldData, $data);
+
+        return redirect()->route('admin.classes')->with('status', 'Class updated.');
+    }
+
     public function createTeacher(StoreTeacherRequest $request)
     {
         $data = $request->validated();
@@ -106,6 +131,52 @@ class SchoolAdminController extends Controller
         ]);
 
         return redirect()->route('admin.teachers')->with('status', "Teacher created. Temporary password: {$temporaryPassword}");
+    }
+
+    public function editTeacher(Teacher $teacher)
+    {
+        return view('admin.teachers.edit', [
+            'teacher' => $teacher->load('user'),
+        ]);
+    }
+
+    public function updateTeacher(UpdateTeacherRequest $request, Teacher $teacher)
+    {
+        $data = $request->validated();
+
+        $userUpdates = [
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'] ?? null,
+        ];
+
+        if (! empty($data['password'])) {
+            $userUpdates['password'] = Hash::make($data['password']);
+        }
+
+        $teacher->user()->update($userUpdates);
+
+        $teacher->update([
+            'qualification' => $data['qualification'] ?? null,
+        ]);
+
+        $this->audit($request, 'teacher.updated', Teacher::class, $teacher->id, null, $data);
+
+        return redirect()->route('admin.teachers')->with('status', 'Teacher updated.');
+    }
+
+    public function destroyTeacher(Request $request, Teacher $teacher)
+    {
+        if (SchoolClass::where('form_teacher_id', $teacher->id)->exists()) {
+            return redirect()->route('admin.teachers')->withErrors(['teacher' => 'Cannot delete a teacher assigned as a form teacher to a class.']);
+        }
+
+        $teacherName = $teacher->user->name ?? 'Unknown';
+        $this->audit($request, 'teacher.deleted', Teacher::class, $teacher->id);
+        $teacher->user()->delete();
+        $teacher->delete();
+
+        return redirect()->route('admin.teachers')->with('status', "Teacher {$teacherName} deleted.");
     }
 
     public function createStudent(StoreStudentRequest $request)
