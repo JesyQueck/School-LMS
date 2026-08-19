@@ -15,12 +15,26 @@ class Student extends Model
         'admission_no',
         'class_id',
         'first_name',
+        'middle_name',
         'last_name',
+        'admission_date',
+        'academic_session_id',
+        'student_type',
+        'previous_school',
+        'previous_school_address',
+        'previous_class',
+        'previous_year_attended',
         'house',
         'gender',
         'state_of_origin',
+        'nationality',
+        'lga',
+        'religion',
         'date_of_birth',
         'blood_group',
+        'home_address',
+        'city',
+        'state',
         'emergency_contact',
         'emergency_phone',
         'status',
@@ -28,6 +42,7 @@ class Student extends Model
 
     protected $casts = [
         'date_of_birth' => 'date',
+        'admission_date' => 'date',
     ];
 
     public function getFullNameAttribute(): string
@@ -78,5 +93,25 @@ class Student extends Model
     public function parents(): BelongsToMany
     {
         return $this->belongsToMany(ParentProfile::class, 'parent_student', 'student_id', 'parent_id');
+    }
+
+    public function academicSession(): BelongsTo
+    {
+        return $this->belongsTo(AcademicSession::class);
+    }
+
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(StudentContact::class);
+    }
+
+    public function emergencyContacts(): HasMany
+    {
+        return $this->hasMany(StudentEmergencyContact::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(StudentDocument::class);
     }
 }

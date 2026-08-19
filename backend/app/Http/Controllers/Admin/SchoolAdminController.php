@@ -3,19 +3,32 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ImportStudentsRequest;
 use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\StoreTeacherRequest;
+use App\Http\Requests\UpdateStudentRequest;
 use App\Http\Requests\UpdateTeacherRequest;
+use App\Models\AcademicSession;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\StudentContact;
+use App\Models\StudentDocument;
+use App\Models\StudentEmergencyContact;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Services\CsvExportService;
+use App\Services\StudentImportService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Csv as CsvWriter;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 
 class SchoolAdminController extends Controller
 {
@@ -57,6 +70,14 @@ class SchoolAdminController extends Controller
             'students' => Student::with(['user', 'schoolClass'])->get(),
             'classes' => SchoolClass::all(),
             'users' => User::where('role', 'student')->where('needs_password_change', true)->get(),
+        ]);
+    }
+
+    public function enrollStudent()
+    {
+        return view('admin.students.enroll', [
+            'classes' => SchoolClass::orderBy('name')->get(),
+            'academicSessions' => AcademicSession::orderBy('start_date', 'desc')->get(),
         ]);
     }
 
@@ -184,54 +205,226 @@ class SchoolAdminController extends Controller
         $data = $request->validated();
 
         $temporaryPassword = $data['password'] ?? Str::random(12);
-        $admissionNumber = 'ADM-'.Str::upper(Str::random(6));
 
-        $studentData = [
-            'first_name' => $data['first_name'] ?? null,
-            'last_name' => $data['last_name'] ?? null,
-            'date_of_birth' => $data['date_of_birth'] ?? null,
-            'gender' => $data['gender'] ?? null,
-            'admission_no' => $admissionNumber,
-            'status' => 'active',
-        ];
+        $parent = $this->getOrCreateParent($data['parent_email'], $data);
 
-        $parent = null;
-
-        if (! empty($data['parent_email'])) {
-            $parent = $this->getOrCreateParent($data['parent_email'], $data);
-        }
+        $studentEmail = $data['email'] ?? null ?: Str::slug($data['name'], '.').'.'.Str::random(6).'@placeholder.local';
 
         $user = User::create([
             'name' => $data['name'],
-            'email' => $data['email'],
+            'email' => $studentEmail,
+            'phone' => $data['phone'] ?? null,
             'password' => Hash::make($temporaryPassword),
             'role' => 'student',
             'is_active' => true,
             'needs_password_change' => true,
         ]);
 
-        $student = Student::create(array_merge($studentData, [
+        $student = Student::create([
             'user_id' => $user->id,
-            'class_id' => $data['class_id'] ?? null,
-        ]));
+            'first_name' => $data['first_name'],
+            'middle_name' => $data['middle_name'] ?? null,
+            'last_name' => $data['last_name'],
+            'admission_no' => $data['admission_no'],
+            'class_id' => $data['class_id'],
+            'admission_date' => $data['admission_date'],
+            'academic_session_id' => $data['academic_session_id'],
+            'student_type' => $data['student_type'],
+            'previous_school' => $data['previous_school'] ?? null,
+            'previous_school_address' => $data['previous_school_address'] ?? null,
+            'previous_class' => $data['previous_class'] ?? null,
+            'previous_year_attended' => $data['previous_year_attended'] ?? null,
+            'house' => $data['house'] ?? null,
+            'gender' => $data['gender'],
+            'state_of_origin' => $data['state_of_origin'] ?? null,
+            'nationality' => $data['nationality'] ?? null,
+            'lga' => $data['lga'] ?? null,
+            'religion' => $data['religion'] ?? null,
+            'date_of_birth' => $data['date_of_birth'],
+            'blood_group' => $data['blood_group'] ?? null,
+            'home_address' => $data['home_address'] ?? null,
+            'city' => $data['city'] ?? null,
+            'state' => $data['state'] ?? null,
+            'emergency_contact' => $data['emergency_contact'] ?? null,
+            'emergency_phone' => $data['emergency_phone'] ?? null,
+            'status' => 'active',
+        ]);
 
         if ($parent) {
             $student->parents()->attach($parent->id);
         }
 
+        $this->createStudentContacts($student, $data);
+        $this->createEmergencyContacts($student, $data);
+        $this->handleDocumentUploads($student, $data, $request);
+
         $this->audit($request, 'student.created', Student::class, $student->id, null, [
             'user_id' => $user->id,
-            'admission_no' => $admissionNumber,
+            'admission_no' => $data['admission_no'],
             'temp_password' => $temporaryPassword,
         ]);
 
-        $redirectMessage = "Student created. Admission No: {$admissionNumber}";
+        $redirectMessage = 'Student enrolled. Admission No: '.$data['admission_no'];
         if ($parent) {
             $redirectMessage .= ', Parent linked';
         }
-        $redirectMessage .= ". Temporary password: {$temporaryPassword}";
+        $redirectMessage .= '. Temporary password: '.$temporaryPassword;
 
         return redirect()->route('admin.students')->with('status', $redirectMessage);
+    }
+
+    protected function createStudentContacts(Student $student, array $data): void
+    {
+        $contacts = [];
+
+        if (! empty($data['father_name'])) {
+            $contacts[] = [
+                'student_id' => $student->id,
+                'type' => 'father',
+                'full_name' => $data['father_name'],
+                'phone' => $data['father_phone'] ?? null,
+                'whatsapp' => $data['father_whatsapp'] ?? null,
+                'email' => $data['father_email'] ?? null,
+                'occupation' => $data['father_occupation'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (! empty($data['mother_name'])) {
+            $contacts[] = [
+                'student_id' => $student->id,
+                'type' => 'mother',
+                'full_name' => $data['mother_name'],
+                'phone' => $data['mother_phone'] ?? null,
+                'whatsapp' => $data['mother_whatsapp'] ?? null,
+                'email' => $data['mother_email'] ?? null,
+                'occupation' => $data['mother_occupation'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if ($contacts) {
+            StudentContact::insert($contacts);
+        }
+    }
+
+    protected function createEmergencyContacts(Student $student, array $data): void
+    {
+        $contacts = [];
+
+        $contacts[] = [
+            'student_id' => $student->id,
+            'name' => $data['emergency_1_name'],
+            'relationship' => $data['emergency_1_relationship'],
+            'phone' => $data['emergency_1_phone'],
+            'whatsapp' => $data['emergency_1_whatsapp'] ?? null,
+            'address' => $data['emergency_1_address'] ?? null,
+            'is_primary' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        if (! empty($data['emergency_2_name'])) {
+            $contacts[] = [
+                'student_id' => $student->id,
+                'name' => $data['emergency_2_name'],
+                'relationship' => $data['emergency_2_relationship'],
+                'phone' => $data['emergency_2_phone'] ?? null,
+                'whatsapp' => $data['emergency_2_whatsapp'] ?? null,
+                'address' => $data['emergency_2_address'] ?? null,
+                'is_primary' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        StudentEmergencyContact::insert($contacts);
+    }
+
+    protected function handleDocumentUploads(Student $student, array $data, Request $request): void
+    {
+        $documentFields = [
+            'document_passport' => 'passport',
+            'document_birth_certificate' => 'birth_certificate',
+            'document_previous_result' => 'previous_result',
+            'document_transfer_certificate' => 'transfer_certificate',
+            'document_identification' => 'identification',
+            'document_other' => 'other',
+        ];
+
+        foreach ($documentFields as $field => $type) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $fileName = Str::uuid().'.'.$file->getClientOriginalExtension();
+                $filePath = $file->storeAs('students/'.$student->id.'/documents', $fileName, 'public');
+
+                StudentDocument::create([
+                    'student_id' => $student->id,
+                    'type' => $type,
+                    'file_path' => $filePath,
+                    'file_name' => $file->getClientOriginalName(),
+                    'uploaded_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    public function editStudent(Student $student)
+    {
+        return view('admin.students.edit', [
+            'student' => $student->load('user', 'schoolClass', 'parents.user'),
+            'classes' => SchoolClass::orderBy('name')->get(),
+            'academicSessions' => AcademicSession::orderBy('start_date', 'desc')->get(),
+        ]);
+    }
+
+    public function updateStudent(UpdateStudentRequest $request, Student $student)
+    {
+        $data = $request->validated();
+
+        $student->user()->update([
+            'name' => $data['name'],
+            'email' => $data['email'] ?? ($student->user->email ?? null),
+            'phone' => $data['phone'] ?? null,
+        ]);
+
+        if (! empty($data['password'])) {
+            $student->user()->update(['password' => Hash::make($data['password'])]);
+        }
+
+        $student->update([
+            'first_name' => $data['first_name'],
+            'middle_name' => $data['middle_name'] ?? null,
+            'last_name' => $data['last_name'],
+            'admission_no' => $data['admission_no'],
+            'class_id' => $data['class_id'],
+            'admission_date' => $data['admission_date'],
+            'academic_session_id' => $data['academic_session_id'],
+            'student_type' => $data['student_type'],
+            'previous_school' => $data['previous_school'] ?? null,
+            'previous_school_address' => $data['previous_school_address'] ?? null,
+            'previous_class' => $data['previous_class'] ?? null,
+            'previous_year_attended' => $data['previous_year_attended'] ?? null,
+            'house' => $data['house'] ?? null,
+            'gender' => $data['gender'],
+            'state_of_origin' => $data['state_of_origin'] ?? null,
+            'nationality' => $data['nationality'] ?? null,
+            'lga' => $data['lga'] ?? null,
+            'religion' => $data['religion'] ?? null,
+            'date_of_birth' => $data['date_of_birth'],
+            'blood_group' => $data['blood_group'] ?? null,
+            'home_address' => $data['home_address'] ?? null,
+            'city' => $data['city'] ?? null,
+            'state' => $data['state'] ?? null,
+            'emergency_contact' => $data['emergency_contact'] ?? null,
+            'emergency_phone' => $data['emergency_phone'] ?? null,
+        ]);
+
+        $this->audit($request, 'student.updated', Student::class, $student->id, null, $data);
+
+        return redirect()->route('admin.students')->with('status', 'Student updated.');
     }
 
     protected function getOrCreateParent(string $parentEmail, array $requestData)
@@ -239,6 +432,22 @@ class SchoolAdminController extends Controller
         $existingParent = ParentProfile::whereHas('user', fn ($q) => $q->where('email', $parentEmail))->first();
 
         if ($existingParent) {
+            $existingParent->user()->update([
+                'phone' => $requestData['parent_phone'] ?? $existingParent->user->phone,
+            ]);
+
+            $existingParent->update([
+                'occupation' => $requestData['parent_occupation'] ?? $existingParent->occupation,
+                'phone' => $requestData['parent_phone'] ?? $existingParent->phone,
+                'first_name' => $requestData['parent_first_name'] ?? $existingParent->first_name,
+                'last_name' => $requestData['parent_last_name'] ?? $existingParent->last_name,
+                'relationship_to_student' => $requestData['parent_relationship'] ?? $existingParent->relationship_to_student,
+                'whatsapp' => $requestData['parent_whatsapp'] ?? $existingParent->whatsapp,
+                'address' => $requestData['parent_address'] ?? $existingParent->address,
+                'city' => $requestData['parent_city'] ?? $existingParent->city,
+                'state' => $requestData['parent_state'] ?? $existingParent->state,
+            ]);
+
             return $existingParent;
         }
 
@@ -256,11 +465,175 @@ class SchoolAdminController extends Controller
             'user_id' => $parentUser->id,
             'occupation' => $requestData['parent_occupation'] ?? null,
             'phone' => $requestData['parent_phone'] ?? null,
+            'first_name' => $requestData['parent_first_name'] ?? null,
+            'last_name' => $requestData['parent_last_name'] ?? null,
+            'relationship_to_student' => $requestData['parent_relationship'] ?? null,
+            'whatsapp' => $requestData['parent_whatsapp'] ?? null,
+            'address' => $requestData['parent_address'] ?? null,
+            'city' => $requestData['parent_city'] ?? null,
+            'state' => $requestData['parent_state'] ?? null,
         ]);
     }
 
     public function exportStudents(Request $request)
     {
         return $this->csvExportService->exportStudents($request);
+    }
+
+    public function showImportForm()
+    {
+        return view('admin.students.import');
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        $format = $request->query('format', 'csv');
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $headers = StudentImportService::REQUIRED_COLUMNS;
+        $sheet->fromArray($headers, null, 'A1');
+
+        $exampleRow = [
+            'GAA/2024/001',
+            'Amina',
+            'Bello',
+            '2012-05-14',
+            'Female',
+            '2026-09-01',
+            '2026/2027',
+            'JSS 1',
+            'New',
+            'Ahmed Bello',
+            'Father',
+            '08030000001',
+        ];
+        $sheet->fromArray($exampleRow, null, 'A2');
+
+        if ($format === 'xlsx') {
+            $response = Response::stream(function () use ($spreadsheet) {
+                $writer = new XlsxWriter($spreadsheet);
+                $writer->save('php://output');
+            }, 200, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="student-import-template.xlsx"',
+            ]);
+        } else {
+            $response = Response::stream(function () use ($spreadsheet) {
+                $writer = new CsvWriter($spreadsheet);
+                $writer->save('php://output');
+            }, 200, [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="student-import-template.csv"',
+            ]);
+        }
+
+        return $response;
+    }
+
+    public function importPreview(ImportStudentsRequest $request, StudentImportService $importService)
+    {
+        $file = $request->file('import_file');
+        $tempPath = $file->getRealPath();
+
+        $result = $importService->preview($tempPath);
+
+        session([
+            'student_import_preview' => [
+                'temp_path' => $tempPath,
+                'valid_rows' => $result['valid_rows'],
+                'invalid_rows' => $result['invalid_rows'],
+                'total_rows' => $result['total_rows'],
+                'warnings' => $result['warnings'],
+            ],
+        ]);
+
+        return redirect()->route('admin.students.import')->with('preview', true);
+    }
+
+    public function importConfirm(Request $request, StudentImportService $importService)
+    {
+        $previewData = session('student_import_preview');
+
+        if (! $previewData) {
+            return redirect()->route('admin.students.import')->with('error', 'No import data found. Please upload a file first.');
+        }
+
+        $validRows = collect($previewData['valid_rows']);
+
+        if ($validRows->isEmpty()) {
+            $this->cleanupTempFile($previewData['temp_path'] ?? null);
+            return redirect()->route('admin.students.import')->with('error', 'No valid rows to import.');
+        }
+
+        $stats = $importService->import($validRows);
+
+        $this->cleanupTempFile($previewData['temp_path'] ?? null);
+        session()->put('import_stats', $stats);
+        session()->forget('student_import_preview');
+
+        return redirect()->route('admin.students')->with('status', sprintf(
+            'Import complete. %d students imported, %d parents created, %d parents reused. %d errors.',
+            $stats['imported'],
+            $stats['parents_created'],
+            $stats['parents_reused'],
+            $stats['errors']->count()
+        ));
+    }
+
+    public function downloadImportErrors(Request $request)
+    {
+        $previewData = session('student_import_preview');
+
+        if (! $previewData) {
+            return redirect()->route('admin.students.import')->with('error', 'No errors to download.');
+        }
+
+        $invalidRows = collect($previewData['invalid_rows'] ?? []);
+
+        if ($invalidRows->isEmpty()) {
+            return redirect()->route('admin.students.import')->with('error', 'No errors to download.');
+        }
+
+        $response = Response::stream(function () use ($invalidRows) {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, ['row_number', 'field', 'value', 'error']);
+
+            foreach ($invalidRows as $invalidRow) {
+                $errors = collect($invalidRow['errors'] ?? []);
+                foreach ($errors as $error) {
+                    fputcsv($output, [
+                        $invalidRow['row_number'],
+                        $error['field'],
+                        $error['value'] ?? '',
+                        $error['error'],
+                    ]);
+                }
+            }
+
+            fclose($output);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="import-errors.csv"',
+        ]);
+
+        return $response;
+    }
+
+    public function cancelImport(Request $request)
+    {
+        $previewData = session('student_import_preview');
+        $this->cleanupTempFile($previewData['temp_path'] ?? null);
+        session()->forget('student_import_preview');
+
+        return redirect()->route('admin.students.import')->with('status', 'Import cancelled.');
+    }
+
+    protected function cleanupTempFile(?string $path): void
+    {
+        if ($path && file_exists($path)) {
+            unlink($path);
+        }
     }
 }

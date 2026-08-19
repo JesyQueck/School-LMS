@@ -4,9 +4,10 @@ namespace App\Http\Requests;
 
 use App\Models\AcademicSession;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-class StoreStudentRequest extends FormRequest
+class UpdateStudentRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,15 +16,17 @@ class StoreStudentRequest extends FormRequest
 
     public function rules(): array
     {
+        $student = $this->route('student');
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'first_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:users,email,'.$student->user_id],
             'phone' => ['nullable', 'string', 'max:20'],
             'class_id' => ['required', 'exists:classes,id'],
-            'admission_no' => ['required', 'string', 'max:255', 'unique:students,admission_no'],
+            'admission_no' => ['required', 'string', 'max:255', Rule::unique('students', 'admission_no')->ignore($student->id)],
             'date_of_birth' => ['required', 'date'],
             'gender' => ['required', 'in:male,female,other'],
             'nationality' => ['nullable', 'string', 'max:100'],
@@ -33,7 +36,6 @@ class StoreStudentRequest extends FormRequest
             'home_address' => ['nullable', 'string', 'max:500'],
             'city' => ['nullable', 'string', 'max:100'],
             'state' => ['nullable', 'string', 'max:100'],
-            'document_passport' => ['nullable', 'image', 'max:2048'],
 
             'admission_date' => ['required', 'date'],
             'academic_session_id' => ['required', 'exists:academic_sessions,id'],
@@ -52,34 +54,6 @@ class StoreStudentRequest extends FormRequest
             'parent_state' => ['nullable', 'string', 'max:100'],
             'parent_relationship' => ['nullable', 'string', 'max:100'],
             'parent_occupation' => ['nullable', 'string', 'max:255'],
-
-            'father_name' => ['nullable', 'string', 'max:255'],
-            'father_phone' => ['nullable', 'string', 'max:20'],
-            'father_whatsapp' => ['nullable', 'string', 'max:20'],
-            'father_email' => ['nullable', 'email', 'max:255'],
-            'father_occupation' => ['nullable', 'string', 'max:255'],
-
-            'mother_name' => ['nullable', 'string', 'max:255'],
-            'mother_phone' => ['nullable', 'string', 'max:20'],
-            'mother_whatsapp' => ['nullable', 'string', 'max:20'],
-            'mother_email' => ['nullable', 'email', 'max:255'],
-            'mother_occupation' => ['nullable', 'string', 'max:255'],
-
-            'emergency_1_name' => ['required', 'string', 'max:255'],
-            'emergency_1_relationship' => ['required', 'string', 'max:100'],
-            'emergency_1_phone' => ['required', 'string', 'max:20'],
-            'emergency_1_whatsapp' => ['nullable', 'string', 'max:20'],
-            'emergency_1_address' => ['nullable', 'string', 'max:500'],
-            'emergency_2_name' => ['nullable', 'string', 'max:255'],
-            'emergency_2_relationship' => ['nullable', 'string', 'max:100'],
-            'emergency_2_phone' => ['nullable', 'string', 'max:20'],
-            'emergency_2_address' => ['nullable', 'string', 'max:500'],
-
-            'document_birth_certificate' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
-            'document_previous_result' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
-            'document_transfer_certificate' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
-            'document_identification' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
-            'document_other' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:2048'],
 
             'password' => ['nullable', 'string', Password::min(8)->mixedCase()->numbers()->symbols()],
         ];

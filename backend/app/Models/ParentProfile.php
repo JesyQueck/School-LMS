@@ -14,6 +14,13 @@ class ParentProfile extends Model
         'user_id',
         'occupation',
         'phone',
+        'first_name',
+        'last_name',
+        'relationship_to_student',
+        'whatsapp',
+        'address',
+        'city',
+        'state',
     ];
 
     public function user(): BelongsTo
