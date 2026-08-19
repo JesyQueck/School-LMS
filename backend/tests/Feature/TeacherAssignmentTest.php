@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
-use App\Models\ClassAssignment;
 use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\Subject;
@@ -107,6 +106,19 @@ class TeacherAssignmentTest extends TestCase
         $response->assertSee('Assign Subject');
         $response->assertSee('class_id_sa');
         $response->assertSee('class_subject_id_sa');
+    }
+
+    public function test_subject_dropdown_has_data_class_id_attributes(): void
+    {
+        $data = $this->createSetup();
+        $admin = $this->adminUser();
+        $this->actingAs($admin);
+
+        $response = $this->get(route('admin.assignments'));
+
+        $response->assertOk();
+        $response->assertSee('data-class-id="'.$data['class1']->id.'"', false);
+        $response->assertSee('data-class-id="'.$data['class2']->id.'"', false);
     }
 
     public function test_teacher_a_can_be_assigned_mathematics_to_jss1(): void

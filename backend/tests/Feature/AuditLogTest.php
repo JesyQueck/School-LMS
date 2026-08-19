@@ -21,6 +21,18 @@ class AuditLogTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+    }
+
     public function test_admin_can_create_class_and_audit_log_is_recorded(): void
     {
         $adminUser = User::factory()->create([
@@ -56,11 +68,20 @@ class AuditLogTest extends TestCase
 
         $response = $this->post('/admin/students', [
             'name' => 'Jane Student',
+            'first_name' => 'Jane',
+            'last_name' => 'Student',
             'email' => 'jane.student@example.com',
+            'parent_email' => 'parent.jane@example.com',
+            'parent_name' => 'Parent Name',
+            'parent_phone' => '08012345678',
+            'admission_no' => 'GRA-0001',
             'class_id' => $class->id,
             'date_of_birth' => '2012-05-10',
             'gender' => 'female',
             'password' => 'Password123!',
+            'emergency_1_name' => 'Emergency Contact',
+            'emergency_1_relationship' => 'Uncle',
+            'emergency_1_phone' => '08098765432',
         ]);
 
         $response->assertRedirect('/admin/students');
@@ -185,19 +206,37 @@ class AuditLogTest extends TestCase
 
         $this->withHeaders(['User-Agent' => $userAgent1])->post('/admin/students', [
             'name' => 'Student One',
+            'first_name' => 'Student',
+            'last_name' => 'One',
             'email' => 'one@example.com',
+            'parent_email' => 'parent.one@example.com',
+            'parent_name' => 'Parent Name',
+            'parent_phone' => '08012345678',
+            'admission_no' => 'GRA-0001',
             'class_id' => $class->id,
             'date_of_birth' => '2012-01-01',
             'gender' => 'male',
+            'emergency_1_name' => 'Emergency Contact',
+            'emergency_1_relationship' => 'Uncle',
+            'emergency_1_phone' => '08098765432',
             'password' => 'Password123!',
         ]);
 
         $this->withHeaders(['User-Agent' => $userAgent2])->post('/admin/students', [
             'name' => 'Student Two',
+            'first_name' => 'Student',
+            'last_name' => 'Two',
             'email' => 'two@example.com',
+            'parent_email' => 'parent.two@example.com',
+            'parent_name' => 'Parent Name',
+            'parent_phone' => '08012345678',
+            'admission_no' => 'GRA-0002',
             'class_id' => $class->id,
             'date_of_birth' => '2012-02-02',
             'gender' => 'female',
+            'emergency_1_name' => 'Emergency Contact',
+            'emergency_1_relationship' => 'Aunt',
+            'emergency_1_phone' => '08098765433',
             'password' => 'Password123!',
         ]);
 
