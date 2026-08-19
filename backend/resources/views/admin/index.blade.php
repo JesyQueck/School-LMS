@@ -138,7 +138,7 @@
                     <a href="{{ route('admin.audit-logs.index') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Audit Logs</a>
                 </div>
                 <div class="p-6">
-                    @forelse($recentActivity as $activity)
+                    @forelse($recentActivity->take(4) as $activity)
                         <div class="flex items-start gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
                             <div class="h-2 w-2 mt-2 rounded-full bg-primary-500 shrink-0"></div>
                             <div class="flex-1 min-w-0">

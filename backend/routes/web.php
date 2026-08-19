@@ -133,8 +133,18 @@ Route::middleware('auth')->group(function () {
         Route::put('/teachers/{teacher}', [SchoolAdminController::class, 'updateTeacher'])->name('teachers.update');
         Route::delete('/teachers/{teacher}', [SchoolAdminController::class, 'destroyTeacher'])->name('teachers.destroy');
         Route::get('/students', [SchoolAdminController::class, 'students'])->name('students');
+        Route::get('/students/enroll', [SchoolAdminController::class, 'enrollStudent'])->name('students.enroll');
         Route::get('/students/export', [SchoolAdminController::class, 'exportStudents'])->name('students.export');
         Route::post('/students', [SchoolAdminController::class, 'createStudent'])->name('students.store');
+        Route::get('/students/{student}/edit', [SchoolAdminController::class, 'editStudent'])->name('students.edit');
+        Route::put('/students/{student}', [SchoolAdminController::class, 'updateStudent'])->name('students.update');
+
+        Route::get('/students/import', [SchoolAdminController::class, 'showImportForm'])->name('students.import');
+        Route::get('/students/import/template', [SchoolAdminController::class, 'downloadTemplate'])->name('students.import.template');
+        Route::post('/students/import/preview', [SchoolAdminController::class, 'importPreview'])->name('students.import.preview');
+        Route::post('/students/import/confirm', [SchoolAdminController::class, 'importConfirm'])->name('students.import.confirm');
+        Route::post('/students/import/cancel', [SchoolAdminController::class, 'cancelImport'])->name('students.import.cancel');
+        Route::get('/students/import/errors/download', [SchoolAdminController::class, 'downloadImportErrors'])->name('students.import.errors');
 
         Route::get('/academic', [AcademicStructureController::class, 'index'])->name('academic');
         Route::post('/academic/sessions', [AcademicStructureController::class, 'createSession'])->name('academic.sessions.store');

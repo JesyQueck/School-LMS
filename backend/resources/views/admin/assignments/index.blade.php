@@ -169,27 +169,44 @@
             var subjectSelect = document.getElementById('class_subject_id_sa');
 
             if (classSelect && subjectSelect) {
-                classSelect.addEventListener('change', function() {
-                    var selectedClassId = this.value;
-                    var options = subjectSelect.querySelectorAll('option[data-class-id]');
+                var allOptions = Array.from(subjectSelect.querySelectorAll('option[data-class-id]'));
 
+                function filterSubjects(selectedClassId) {
                     if (selectedClassId === '') {
                         subjectSelect.innerHTML = '<option value="">Select a class first</option>';
                         return;
                     }
 
-                    subjectSelect.innerHTML = '<option value="">Select subject</option>';
+                    var filtered = ['<option value="">Select subject</option>'];
 
-                    options.forEach(function(opt) {
+                    allOptions.forEach(function(opt) {
                         if (opt.getAttribute('data-class-id') === selectedClassId) {
-                            subjectSelect.appendChild(opt);
+                            filtered.push(opt.outerHTML);
                         }
                     });
 
-                    if (subjectSelect.options.length <= 1) {
-                        subjectSelect.innerHTML = '<option value="">No subjects for this class</option>';
-                    }
+                    subjectSelect.innerHTML = filtered.length > 1
+                        ? filtered.join('')
+                        : '<option value="">No subjects for this class</option>';
+                }
+
+                classSelect.addEventListener('change', function() {
+                    filterSubjects(this.value);
                 });
+
+                var modal = document.getElementById('subject-assignment-modal');
+                if (modal) {
+                    var observer = new MutationObserver(function(mutations) {
+                        mutations.forEach(function(m) {
+                            if (m.type === 'class' || m.type === 'attributes') {
+                                if (!modal.classList.contains('hidden')) {
+                                    filterSubjects(classSelect.value);
+                                }
+                            }
+                        });
+                    });
+                    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+                }
             }
         });
     </script>

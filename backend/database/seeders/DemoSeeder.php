@@ -3,17 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\AcademicSession;
-use App\Models\Announcement;
-use App\Models\Attendance;
 use App\Models\ClassAssignment;
 use App\Models\ClassSubject;
-use App\Models\FeeType;
-use App\Models\ParentProfile;
-use App\Models\ReportCard;
-use App\Models\Result;
 use App\Models\SchoolClass;
-use App\Models\Student;
-use App\Models\StudentFee;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\TeacherClassSubject;
@@ -28,62 +20,21 @@ class DemoSeeder extends Seeder
     {
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@demo.school'],
-            ['name' => 'Admin User', 'password' => Hash::make('password'), 'role' => 'admin']
-        );
-
-        $teacherUser1 = User::updateOrCreate(
-            ['email' => 'teacher1@demo.school'],
-            ['name' => 'Mrs. Smith', 'password' => Hash::make('password'), 'role' => 'teacher']
-        );
-
-        $teacherUser2 = User::updateOrCreate(
-            ['email' => 'teacher2@demo.school'],
-            ['name' => 'Mr. Jones', 'password' => Hash::make('password'), 'role' => 'teacher']
-        );
-
-        $parentUser1 = User::updateOrCreate(
-            ['email' => 'parent1@demo.school'],
-            ['name' => 'Mr. and Mrs. Doe', 'password' => Hash::make('password'), 'role' => 'parent']
-        );
-
-        $parentUser2 = User::updateOrCreate(
-            ['email' => 'parent2@demo.school'],
-            ['name' => 'Mr. and Mrs. Smith', 'password' => Hash::make('password'), 'role' => 'parent']
-        );
-
-        $studentUser1 = User::updateOrCreate(
-            ['email' => 'student1@demo.school'],
-            ['name' => 'John Doe', 'password' => Hash::make('password'), 'role' => 'student']
-        );
-
-        $studentUser2 = User::updateOrCreate(
-            ['email' => 'student2@demo.school'],
-            ['name' => 'Jane Smith', 'password' => Hash::make('password'), 'role' => 'student']
-        );
-
-        $teacher1 = Teacher::updateOrCreate(
-            ['employee_id' => 'T-1001'],
-            ['user_id' => $teacherUser1->id, 'qualification' => 'B.Ed Mathematics']
-        );
-
-        $teacher2 = Teacher::updateOrCreate(
-            ['employee_id' => 'T-1002'],
-            ['user_id' => $teacherUser2->id, 'qualification' => 'B.Sc English']
-        );
-
-        $parent1 = ParentProfile::updateOrCreate(
-            ['user_id' => $parentUser1->id],
-            ['occupation' => 'Engineer', 'phone' => '08012345678']
-        );
-
-        $parent2 = ParentProfile::updateOrCreate(
-            ['user_id' => $parentUser2->id],
-            ['occupation' => 'Doctor', 'phone' => '08087654321']
+            [
+                'name' => 'System Administrator',
+                'password' => Hash::make('AdminTest123!'),
+                'role' => 'admin',
+                'is_active' => true,
+            ]
         );
 
         $session = AcademicSession::updateOrCreate(
             ['name' => '2026/2027'],
-            ['start_date' => '2026-09-01', 'end_date' => '2027-07-31', 'is_current' => true]
+            [
+                'start_date' => '2026-09-01',
+                'end_date' => '2027-07-31',
+                'is_current' => true,
+            ]
         );
 
         $term1 = Term::updateOrCreate(
@@ -98,100 +49,124 @@ class DemoSeeder extends Seeder
 
         $term3 = Term::updateOrCreate(
             ['academic_session_id' => $session->id, 'name' => 'Third Term'],
-            ['start_date' => '2027-04-15', 'end_date' => '2027-07-31', 'is_current' => false]
+            ['start_date' => '2027-04-26', 'end_date' => '2027-07-31', 'is_current' => false]
         );
 
-        $class1 = SchoolClass::updateOrCreate(['name' => 'JSS 1'], ['form_teacher_id' => $teacher1->id]);
-        $class2 = SchoolClass::updateOrCreate(['name' => 'JSS 2'], ['form_teacher_id' => $teacher2->id]);
+        $classJss1 = SchoolClass::updateOrCreate(['name' => 'JSS 1']);
+        $classJss2 = SchoolClass::updateOrCreate(['name' => 'JSS 2']);
+        $classSss1 = SchoolClass::updateOrCreate(['name' => 'SSS 1']);
+        $classSss2 = SchoolClass::updateOrCreate(['name' => 'SSS 2']);
 
-        $math = Subject::firstOrCreate(['name' => 'Mathematics']);
-        $english = Subject::firstOrCreate(['name' => 'English']);
-        $science = Subject::firstOrCreate(['name' => 'Science']);
+        $subjects = [];
+        $subjectNames = [
+            'English Language',
+            'Mathematics',
+            'Basic Science',
+            'Social Studies',
+            'Computer Studies',
+            'Biology',
+            'Chemistry',
+            'Physics',
+        ];
 
-        $classSubject1 = ClassSubject::updateOrCreate(
-            ['class_id' => $class1->id, 'subject_id' => $math->id],
-            ['is_compulsory' => true]
-        );
+        foreach ($subjectNames as $name) {
+            $subjects[$name] = Subject::firstOrCreate(['name' => $name]);
+        }
 
-        $classSubject2 = ClassSubject::updateOrCreate(
-            ['class_id' => $class1->id, 'subject_id' => $english->id],
-            ['is_compulsory' => true]
-        );
+        $classSubjectMap = [
+            'English Language'      => [$classJss1, $classJss2, $classSss1, $classSss2],
+            'Mathematics'           => [$classJss1, $classJss2, $classSss1, $classSss2],
+            'Basic Science'         => [$classJss1, $classJss2],
+            'Social Studies'        => [$classJss1, $classJss2],
+            'Computer Studies'      => [$classJss1, $classJss2, $classSss1, $classSss2],
+            'Biology'               => [$classSss1, $classSss2],
+            'Chemistry'             => [$classSss1, $classSss2],
+            'Physics'               => [$classSss1, $classSss2],
+        ];
 
-        $classSubject3 = ClassSubject::updateOrCreate(
-            ['class_id' => $class2->id, 'subject_id' => $science->id],
-            ['is_compulsory' => true]
-        );
+        $classSubjects = [];
 
-        TeacherClassSubject::updateOrCreate(
-            ['teacher_id' => $teacher1->id, 'class_subject_id' => $classSubject1->id],
-            ['is_active' => true]
-        );
+        foreach ($classSubjectMap as $subjectName => $classes) {
+            foreach ($classes as $class) {
+                $key = "{$subjectName}-{$class->name}";
+                $classSubjects[$key] = ClassSubject::updateOrCreate(
+                    ['class_id' => $class->id, 'subject_id' => $subjects[$subjectName]->id],
+                    ['is_compulsory' => true]
+                );
+            }
+        }
 
-        TeacherClassSubject::updateOrCreate(
-            ['teacher_id' => $teacher2->id, 'class_subject_id' => $classSubject2->id],
-            ['is_active' => true]
-        );
+        $teacherData = [
+            ['Sarah Adeyemi', 'sarah.adeyemi@demo.school', 'T-1001', 'B.Ed Mathematics'],
+            ['Daniel Okafor', 'daniel.okafor@demo.school', 'T-1002', 'B.Sc Computer Science'],
+            ['Grace Williams', 'grace.williams@demo.school', 'T-1003', 'B.Ed English'],
+            ['Samuel Ibrahim', 'samuel.ibrahim@demo.school', 'T-1004', 'B.Sc Chemistry'],
+            ['Linda Eze', 'linda.eze@demo.school', 'T-1005', 'B.Sc Biology'],
+            ['Michael Yusuf', 'michael.yusuf@demo.school', 'T-1006', 'B.Sc Physics'],
+        ];
 
-        ClassAssignment::updateOrCreate(
-            ['teacher_id' => $teacher1->id, 'class_id' => $class1->id, 'academic_session_id' => $session->id, 'term_id' => $term1->id]
-        );
+        $teachers = [];
 
-        ClassAssignment::updateOrCreate(
-            ['teacher_id' => $teacher2->id, 'class_id' => $class2->id, 'academic_session_id' => $session->id, 'term_id' => $term1->id]
-        );
+        foreach ($teacherData as $data) {
+            $user = User::updateOrCreate(
+                ['email' => $data[1]],
+                [
+                    'name' => $data[0],
+                    'password' => Hash::make('SchoolTest123!'),
+                    'role' => 'teacher',
+                    'is_active' => true,
+                ]
+            );
 
-        $student1 = Student::updateOrCreate(
-            ['user_id' => $studentUser1->id],
-            ['admission_no' => 'ADM-001', 'class_id' => $class1->id, 'gender' => 'Male', 'status' => 'active']
-        );
+            $teachers[$data[0]] = Teacher::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'employee_id' => $data[2],
+                    'qualification' => $data[3],
+                ]
+            );
+        }
 
-        $student2 = Student::updateOrCreate(
-            ['user_id' => $studentUser2->id],
-            ['admission_no' => 'ADM-002', 'class_id' => $class2->id, 'gender' => 'Female', 'status' => 'active']
-        );
+        $formTeacherMap = [
+            [$classJss1, $teachers['Sarah Adeyemi']],
+            [$classJss2, $teachers['Daniel Okafor']],
+            [$classSss1, $teachers['Grace Williams']],
+            [$classSss2, $teachers['Samuel Ibrahim']],
+        ];
 
-        $parent1->students()->sync([$student1->id, $student2->id]);
-        $parent2->students()->sync([$student1->id]);
+        foreach ($formTeacherMap as [$class, $teacher]) {
+            $class->update(['form_teacher_id' => $teacher->id]);
 
-        $feeType = FeeType::updateOrCreate(
-            ['name' => 'Tuition Fee', 'term_id' => $term1->id],
-            ['amount' => 50000.00]
-        );
+            ClassAssignment::updateOrCreate(
+                [
+                    'teacher_id' => $teacher->id,
+                    'class_id' => $class->id,
+                    'academic_session_id' => $session->id,
+                    'term_id' => $term1->id,
+                ]
+            );
+        }
 
-        $studentFee = StudentFee::updateOrCreate(
-            ['student_id' => $student1->id, 'fee_type_id' => $feeType->id, 'term_id' => $term1->id],
-            ['amount_expected' => 50000.00, 'status' => 'paid']
-        );
+        $teacherSubjectMap = [
+            'Sarah Adeyemi'    => [[$classJss1, 'Mathematics'], [$classJss2, 'Mathematics'], [$classSss1, 'Mathematics'], [$classSss2, 'Mathematics'], [$classJss1, 'Basic Science']],
+            'Daniel Okafor'    => [[$classJss1, 'Computer Studies'], [$classJss2, 'Computer Studies'], [$classSss1, 'Computer Studies'], [$classSss2, 'Computer Studies']],
+            'Grace Williams'   => [[$classJss1, 'English Language'], [$classJss2, 'English Language'], [$classSss1, 'English Language'], [$classSss2, 'English Language']],
+            'Samuel Ibrahim'   => [[$classSss1, 'Chemistry'], [$classSss2, 'Chemistry']],
+            'Linda Eze'        => [[$classSss1, 'Biology'], [$classSss2, 'Biology']],
+            'Michael Yusuf'    => [[$classSss1, 'Physics'], [$classSss2, 'Physics']],
+        ];
 
-        $reportCard1 = ReportCard::updateOrCreate(
-            ['student_id' => $student1->id, 'term_id' => $term1->id],
-            ['status' => ReportCard::STATUS_PUBLISHED, 'generated_at' => now()]
-        );
-
-        Result::updateOrCreate(
-            ['student_id' => $student1->id, 'class_subject_id' => $classSubject1->id, 'term_id' => $term1->id],
-            ['ca_score' => 30, 'exam_score' => 50, 'total' => 80, 'grade' => 'A1', 'is_locked' => true]
-        );
-
-        Result::updateOrCreate(
-            ['student_id' => $student1->id, 'class_subject_id' => $classSubject2->id, 'term_id' => $term1->id],
-            ['ca_score' => 28, 'exam_score' => 45, 'total' => 73, 'grade' => 'B2', 'is_locked' => true]
-        );
-
-        Attendance::updateOrCreate(
-            ['student_id' => $student1->id, 'class_id' => $class1->id, 'term_id' => $term1->id, 'date' => '2026-09-15'],
-            ['status' => 'present', 'marked_by' => $teacher1->id]
-        );
-
-        Announcement::updateOrCreate(
-            ['title' => 'Welcome Back!'],
-            ['body' => 'School resumes on September 1st, 2026.', 'target_role' => 'all', 'created_by' => $adminUser->id]
-        );
-
-        Announcement::updateOrCreate(
-            ['title' => 'Parent Meeting'],
-            ['body' => 'All parents are invited to the PTA meeting.', 'target_role' => 'parent', 'created_by' => $adminUser->id]
-        );
+        foreach ($teacherSubjectMap as $teacherName => $assignments) {
+            foreach ($assignments as [$class, $subjectName]) {
+                $csKey = "{$subjectName}-{$class->name}";
+                TeacherClassSubject::updateOrCreate(
+                    [
+                        'teacher_id' => $teachers[$teacherName]->id,
+                        'class_subject_id' => $classSubjects[$csKey]->id,
+                    ],
+                    ['is_active' => true, 'assigned_at' => now()]
+                );
+            }
+        }
     }
 }
