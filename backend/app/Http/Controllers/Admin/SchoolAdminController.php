@@ -480,8 +480,6 @@ class SchoolAdminController extends Controller
 
     public function showImportForm()
     {
-        session()->forget('import_stats');
-
         return view('admin.students.import');
     }
 
@@ -576,14 +574,13 @@ class SchoolAdminController extends Controller
         session()->put('import_stats', $stats);
         session()->forget('student_import_preview');
 
-        return redirect()->route('admin.students')->with('status', sprintf(
-            'Import complete. %d students imported, %d parents created, %d parents reused. %d errors. %d login credentials generated. <a href="%s" class="underline">Download credentials CSV</a>',
+        return redirect()->route('admin.students.import')->with('status', sprintf(
+            'Import complete. %d students imported, %d parents created, %d parents reused. %d errors. %d login credentials generated.',
             $stats['imported'],
             $stats['parents_created'],
             $stats['parents_reused'],
             $stats['errors']->count(),
             $stats['credentials']->count(),
-            route('admin.students.import.credentials'),
         ));
     }
 

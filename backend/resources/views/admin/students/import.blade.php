@@ -45,6 +45,7 @@
             <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                 <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">Import Complete — Login Credentials</h2>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Temporary passwords for newly created accounts. Share these securely with users. They must change their password on first login.</p>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Students without email: login with their admission number as email (format: <code>admission_no@{{ config('school.email_domain', 'school.local') }}</code>) and surname as password.</p>
             </div>
             <div class="p-6">
                 @if($credentials->isNotEmpty())
@@ -69,7 +70,7 @@
                                     <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                                         <td class="px-4 py-2 text-sm">{{ $cred['role'] }}</td>
                                         <td class="px-4 py-2 text-sm font-medium text-neutral-900 dark:text-white">{{ $cred['name'] }}</td>
-                                        <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $cred['email'] }}</td>
+                                        <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $cred['email'] }}</td>
                                         <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $cred['password'] }}</td>
                                         <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $cred['related_to'] ?? '' }}</td>
                                     </tr>

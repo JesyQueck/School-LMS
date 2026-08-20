@@ -496,7 +496,7 @@ class StudentImportTest extends TestCase
 
         $response = $this->post(route('admin.students.import.confirm'));
 
-        $response->assertRedirect(route('admin.students'));
+        $response->assertRedirect(route('admin.students.import'));
 
         $this->assertEquals(1, ParentProfile::count());
         $this->assertDatabaseHas('parent_student', [
@@ -908,5 +908,109 @@ class StudentImportTest extends TestCase
         $this->assertNotNull($student);
         $this->assertEquals('2012-05-14', $student->date_of_birth->format('Y-m-d'));
         $this->assertEquals('2026-09-01', $student->admission_date->format('Y-m-d'));
+    }
+
+    public function test_student_without_email_gets_admission_no_as_email(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/NOEMAIL', 'no.email@example.com');
+        unset($row['student_email']);
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $this->post(route('admin.students.import.confirm'));
+
+        $student = Student::where('admission_no', 'GAA/2024/NOEMAIL')->first();
+        $this->assertNotNull($student);
+        $this->assertStringContainsString('GAA/2024/NOEMAIL@', $student->user->email);
+    }
+
+    public function test_student_without_email_gets_surname_as_password(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/SURNAME', 'surname@example.com');
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $this->post(route('admin.students.import.confirm'));
+
+        $stats = session('import_stats');
+        $credential = $stats['credentials']->firstWhere('role', 'student');
+        $this->assertEquals('bello', $credential['password']);
+    }
+
+    public function test_parent_without_last_name_gets_random_password(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/RANDPW', 'randpw@example.com');
+        // Parent name is a single word (no last name extractable)
+        $row['parent_name'] = 'Singleword';
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $this->post(route('admin.students.import.confirm'));
+
+        $stats = session('import_stats');
+        $credential = $stats['credentials']->firstWhere('role', 'parent');
+        $this->assertEquals(12, strlen($credential['password']));
+    }
+
+    public function test_credentials_are_stored_in_import_stats_session(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/SESSION', 'session.creds@example.com');
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $this->post(route('admin.students.import.confirm'));
+
+        $stats = session('import_stats');
+        $this->assertNotNull($stats);
+        $this->assertCount(2, $stats['credentials']);
+        $this->assertTrue($stats['credentials']->contains(fn ($c) => $c['role'] === 'student'));
+        $this->assertTrue($stats['credentials']->contains(fn ($c) => $c['role'] === 'parent'));
+    }
+
+    public function test_import_page_shows_credentials_after_import(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/SHOWCREDS', 'show.creds@example.com');
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $this->post(route('admin.students.import.confirm'));
+
+        // importConfirm redirects to admin.students.import with import_stats in session
+        $response = $this->get(route('admin.students.import'));
+
+        $response->assertOk();
+        $response->assertSee('Import Complete');
+        $response->assertSee('show.creds@example.com');
+        $response->assertSee('bello');
     }
 }

@@ -143,10 +143,10 @@ class StudentImportService
                 $parent = $this->findOrCreateParent($data, $stats);
 
                 $studentEmail = $data['student_email'] ?? null;
+                $studentProvidedEmail = ! empty($studentEmail);
 
                 if (empty($studentEmail)) {
-                    $studentEmail = Str::slug($data['name'] ?? ($data['first_name'].' '.$data['last_name']), '.')
-                        .'.'.Str::random(6).'@placeholder.local';
+                    $studentEmail = $data['admission_no'].'@'.config('school.email_domain', 'school.local');
                 }
 
                 $existingUser = User::where('email', $studentEmail)->first();
@@ -162,7 +162,7 @@ class StudentImportService
                     continue;
                 }
 
-                $temporaryPassword = $data['password'] ?? Str::random(12);
+                $temporaryPassword = $this->generateStudentPassword($data);
 
                 $user = User::create([
                     'name' => trim($data['first_name'].' '.$data['last_name']),
@@ -180,6 +180,7 @@ class StudentImportService
                     'email' => $studentEmail,
                     'password' => $temporaryPassword,
                     'related_to' => $parent ? ($parent->user->name ?? '') : null,
+                    'was_email_provided' => $studentProvidedEmail,
                 ]);
 
                 $student = Student::create([
@@ -544,7 +545,7 @@ class StudentImportService
             return $parent;
         }
 
-        $parentPassword = $data['parent_password'] ?? Str::random(12);
+        $parentPassword = $this->generateParentPassword($data);
 
         $parentUser = User::create([
             'name' => $data['parent_name'],
@@ -579,6 +580,36 @@ class StudentImportService
         ]);
 
         return $parent;
+    }
+
+    protected function generateStudentPassword(array $data): string
+    {
+        $lastName = strtolower(trim($data['last_name'] ?? ''));
+
+        if (! empty($lastName) && preg_match('/^[a-zA-Z]+$/', $lastName)) {
+            return $lastName;
+        }
+
+        return Str::random(12);
+    }
+
+    protected function generateParentPassword(array $data): string
+    {
+        $lastName = strtolower(trim($data['parent_last_name'] ?? ''));
+
+        if (empty($lastName)) {
+            $parentName = $data['parent_name'] ?? '';
+            $parts = explode(' ', trim($parentName));
+            if (count($parts) >= 2) {
+                $lastName = strtolower(end($parts));
+            }
+        }
+
+        if (! empty($lastName) && preg_match('/^[a-zA-Z]+$/', $lastName)) {
+            return $lastName;
+        }
+
+        return Str::random(12);
     }
 
     protected function isValidDate(string $date): bool
