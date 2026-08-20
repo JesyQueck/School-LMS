@@ -145,6 +145,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/students/import/confirm', [SchoolAdminController::class, 'importConfirm'])->name('students.import.confirm');
         Route::post('/students/import/cancel', [SchoolAdminController::class, 'cancelImport'])->name('students.import.cancel');
         Route::get('/students/import/errors/download', [SchoolAdminController::class, 'downloadImportErrors'])->name('students.import.errors');
+        Route::get('/students/import/credentials/download', [SchoolAdminController::class, 'downloadImportCredentials'])->name('students.import.credentials');
 
         Route::get('/academic', [AcademicStructureController::class, 'index'])->name('academic');
         Route::post('/academic/sessions', [AcademicStructureController::class, 'createSession'])->name('academic.sessions.store');

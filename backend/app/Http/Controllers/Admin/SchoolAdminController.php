@@ -23,9 +23,7 @@ use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv as CsvWriter;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
@@ -489,7 +487,7 @@ class SchoolAdminController extends Controller
     {
         $format = $request->query('format', 'csv');
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
         $headers = StudentImportService::REQUIRED_COLUMNS;
@@ -564,6 +562,7 @@ class SchoolAdminController extends Controller
 
         if ($validRows->isEmpty()) {
             $this->cleanupTempFile($previewData['temp_path'] ?? null);
+
             return redirect()->route('admin.students.import')->with('error', 'No valid rows to import.');
         }
 
@@ -574,11 +573,13 @@ class SchoolAdminController extends Controller
         session()->forget('student_import_preview');
 
         return redirect()->route('admin.students')->with('status', sprintf(
-            'Import complete. %d students imported, %d parents created, %d parents reused. %d errors.',
+            'Import complete. %d students imported, %d parents created, %d parents reused. %d errors. %d login credentials generated. <a href="%s" class="underline">Download credentials CSV</a>',
             $stats['imported'],
             $stats['parents_created'],
             $stats['parents_reused'],
-            $stats['errors']->count()
+            $stats['errors']->count(),
+            $stats['credentials']->count(),
+            route('admin.students.import.credentials'),
         ));
     }
 
@@ -626,8 +627,40 @@ class SchoolAdminController extends Controller
         $previewData = session('student_import_preview');
         $this->cleanupTempFile($previewData['temp_path'] ?? null);
         session()->forget('student_import_preview');
+        session()->forget('import_stats');
 
         return redirect()->route('admin.students.import')->with('status', 'Import cancelled.');
+    }
+
+    public function downloadImportCredentials(Request $request)
+    {
+        $stats = session('import_stats');
+
+        if (! $stats || ! isset($stats['credentials']) || $stats['credentials']->isEmpty()) {
+            return redirect()->route('admin.students')->with('error', 'No credentials to download.');
+        }
+
+        $response = Response::stream(function () use ($stats) {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, ['Role', 'Name', 'Email', 'Temporary Password', 'Related Student']);
+
+            foreach ($stats['credentials'] as $credential) {
+                fputcsv($output, [
+                    $credential['role'],
+                    $credential['name'],
+                    $credential['email'],
+                    $credential['password'],
+                    $credential['related_to'] ?? '',
+                ]);
+            }
+
+            fclose($output);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="import-credentials.csv"',
+        ]);
+
+        return $response;
     }
 
     protected function cleanupTempFile(?string $path): void

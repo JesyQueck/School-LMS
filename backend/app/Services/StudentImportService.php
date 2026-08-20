@@ -117,6 +117,7 @@ class StudentImportService
             'parents_reused' => 0,
             'skipped' => 0,
             'errors' => collect(),
+            'credentials' => collect(),
         ];
 
         DB::beginTransaction();
@@ -171,6 +172,14 @@ class StudentImportService
                     'role' => 'student',
                     'is_active' => true,
                     'needs_password_change' => true,
+                ]);
+
+                $stats['credentials']->push([
+                    'role' => 'student',
+                    'name' => trim($data['first_name'].' '.$data['last_name']),
+                    'email' => $studentEmail,
+                    'password' => $temporaryPassword,
+                    'related_to' => $parent ? ($parent->user->name ?? '') : null,
                 ]);
 
                 $student = Student::create([
@@ -535,10 +544,12 @@ class StudentImportService
             return $parent;
         }
 
+        $parentPassword = $data['parent_password'] ?? Str::random(12);
+
         $parentUser = User::create([
             'name' => $data['parent_name'],
             'email' => $parentEmail ?? Str::slug($data['parent_name'], '.').'.'.Str::random(6).'@placeholder.local',
-            'password' => Hash::make(Str::random(12)),
+            'password' => Hash::make($parentPassword),
             'phone' => $parentPhone ?? null,
             'role' => 'parent',
             'is_active' => true,
@@ -559,6 +570,13 @@ class StudentImportService
         ]);
 
         $stats['parents_created']++;
+        $stats['credentials']->push([
+            'role' => 'parent',
+            'name' => $data['parent_name'] ?? 'Parent',
+            'email' => $parentUser->email,
+            'password' => $parentPassword,
+            'related_to' => trim($data['first_name'].' '.$data['last_name']),
+        ]);
 
         return $parent;
     }
