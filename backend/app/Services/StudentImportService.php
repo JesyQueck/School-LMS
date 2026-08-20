@@ -11,9 +11,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Csv as CsvReader;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use PhpOffice\PhpSpreadsheet\Shared\Date as SpreadsheetDate;
 
 class StudentImportService
 {
@@ -56,6 +56,7 @@ class StudentImportService
     ];
 
     public const VALID_GENDERS = ['male', 'female', 'other'];
+
     public const VALID_STUDENT_TYPES = ['new', 'returning', 'transfer'];
 
     protected string $tempPath;
@@ -94,7 +95,7 @@ class StudentImportService
                     $seenAdmissionNos[] = $row['admission_no'];
                 }
 
-                if (isset($row['student_email']) && !empty($row['student_email'])) {
+                if (isset($row['student_email']) && ! empty($row['student_email'])) {
                     $seenEmails[] = strtolower($row['student_email']);
                 }
             }
@@ -134,6 +135,7 @@ class StudentImportService
                         'value' => $data['class'],
                         'error' => 'Class or session no longer exists',
                     ]);
+
                     continue;
                 }
 
@@ -155,6 +157,7 @@ class StudentImportService
                         'value' => $studentEmail,
                         'error' => 'Student email already in use',
                     ]);
+
                     continue;
                 }
 
@@ -222,7 +225,6 @@ class StudentImportService
     protected function parseSpreadsheet(string $filePath): Collection
     {
         $reader = IOFactory::createReaderForFile($filePath);
-        $reader->setReadDataOnly(true);
 
         $spreadsheet = $reader->load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
@@ -235,12 +237,15 @@ class StudentImportService
             $cellIterator->setIterateOnlyExistingCells(false);
 
             $cellValues = [];
+            $cells = [];
             foreach ($cellIterator as $cell) {
                 $cellValues[] = $cell->getValue();
+                $cells[] = $cell;
             }
 
             if ($rowIndex === 1) {
                 $headers = $cellValues;
+
                 continue;
             }
 
@@ -251,13 +256,108 @@ class StudentImportService
             $rowData = [];
             foreach ($headers as $colIndex => $header) {
                 $header = strtolower(trim($header));
-                $rowData[$header] = isset($cellValues[$colIndex]) ? $cellValues[$colIndex] : null;
+                $rawValue = isset($cellValues[$colIndex]) ? $cellValues[$colIndex] : null;
+                $cell = $cells[$colIndex] ?? null;
+                $rowData[$header] = $this->normalizeFieldValue($header, $rawValue, $cell);
             }
 
             $rows->push($rowData);
         }
 
         return $rows;
+    }
+
+    protected function normalizeFieldValue(string $field, mixed $value, mixed $cell = null): mixed
+    {
+        if (in_array($field, ['date_of_birth', 'admission_date'])) {
+            return $this->normalizeDate($value, $cell);
+        }
+
+        if ($value === null) {
+            return null;
+        }
+
+        return $this->normalizeScalarField($field, $value);
+    }
+
+    protected function normalizeScalarField(string $field, mixed $value): mixed
+    {
+        if (in_array($field, ['admission_no', 'parent_phone', 'parent_whatsapp', 'student_phone', 'previous_year'])) {
+            $stringValue = (string) $value;
+
+            return $stringValue === '' ? null : $stringValue;
+        }
+
+        if (is_string($value)) {
+            return $value === '' ? null : $value;
+        }
+
+        return $value;
+    }
+
+    public function normalizeDate(mixed $value, mixed $cell = null): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        if (is_numeric($value) && $cell !== null && $cell instanceof Cell) {
+            $formatCode = $cell->getStyle()->getNumberFormat()->getFormatCode();
+
+            if (SpreadsheetDate::isDateTimeFormatCode($formatCode)) {
+                $dateTime = SpreadsheetDate::excelToDateTimeObject((float) $value);
+
+                return $dateTime->format('Y-m-d');
+            }
+        }
+
+        if (is_numeric($value)) {
+            $floatValue = (float) $value;
+
+            if ($floatValue > 1 && $floatValue < 100000) {
+                $dateTime = SpreadsheetDate::excelToDateTimeObject($floatValue);
+
+                return $dateTime->format('Y-m-d');
+            }
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+
+            if ($trimmed === '') {
+                return null;
+            }
+
+            $d = \DateTime::createFromFormat('Y-m-d', $trimmed);
+
+            if ($d && $d->format('Y-m-d') === $trimmed) {
+                return $trimmed;
+            }
+
+            $d = \DateTime::createFromFormat('Y-m-d H:i:s', $trimmed);
+
+            if ($d && $d->format('Y-m-d') === substr($trimmed, 0, 10)) {
+                return $d->format('Y-m-d');
+            }
+
+            $timestamps = [
+                \DateTime::createFromFormat('m/d/Y', $trimmed),
+                \DateTime::createFromFormat('d/m/Y', $trimmed),
+                \DateTime::createFromFormat('Y/m/d', $trimmed),
+            ];
+
+            foreach ($timestamps as $ts) {
+                if ($ts && $ts->format('Y-m-d') === $trimmed) {
+                    return $trimmed;
+                }
+            }
+        }
+
+        return null;
     }
 
     protected function validateRow(
@@ -300,19 +400,19 @@ class StudentImportService
         }
 
         $dob = $row['date_of_birth'] ?? null;
-        if ($dob && ! $this->isValidDate($dob)) {
+        if (isset($row['date_of_birth']) && ! $this->isValidDate($dob)) {
             $errors->push([
                 'field' => 'date_of_birth',
-                'value' => $dob,
+                'value' => $row['date_of_birth'] ?? '',
                 'error' => 'Invalid date format. Expected: YYYY-MM-DD',
             ]);
         }
 
         $admissionDate = $row['admission_date'] ?? null;
-        if ($admissionDate && ! $this->isValidDate($admissionDate)) {
+        if (isset($row['admission_date']) && ! $this->isValidDate($admissionDate)) {
             $errors->push([
                 'field' => 'admission_date',
-                'value' => $admissionDate,
+                'value' => $row['admission_date'] ?? '',
                 'error' => 'Invalid date format. Expected: YYYY-MM-DD',
             ]);
         }

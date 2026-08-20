@@ -9,10 +9,10 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
-use App\Services\StudentImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Testing\File;
 use Illuminate\Support\Facades\Hash;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as XlsxWriter;
 use Tests\TestCase;
@@ -98,6 +98,7 @@ class StudentImportTest extends TestCase
                 if (str_contains($v, ',') || str_contains($v, '"') || str_contains($v, "\n")) {
                     return '"'.str_replace('"', '""', $v).'"';
                 }
+
                 return $v;
             }, $row);
             $lines[] = implode(',', $values);
@@ -113,15 +114,48 @@ class StudentImportTest extends TestCase
 
     protected function makeXlsxFile(array $rows, string $filename = 'test.xlsx'): File
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
 
-        if (!empty($rows)) {
+        if (! empty($rows)) {
             $headers = array_keys(reset($rows));
             $sheet->fromArray($headers, null, 'A1');
 
             foreach ($rows as $index => $row) {
                 $sheet->fromArray(array_values($row), null, 'A'.($index + 2));
+            }
+        }
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_').'.xlsx';
+        $writer = new XlsxWriter($spreadsheet);
+        $writer->save($tempFile);
+
+        return File::createWithContent($filename, file_get_contents($tempFile));
+    }
+
+    protected function makeXlsxWithSerialDates(array $rows, array $serialDateColumns, string $filename = 'test.xlsx'): File
+    {
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+
+        if (! empty($rows)) {
+            $headers = array_keys(reset($rows));
+            $sheet->fromArray($headers, null, 'A1');
+
+            foreach ($rows as $index => $row) {
+                $rowIndex = $index + 2;
+                $colIndex = 0;
+                foreach ($row as $key => $value) {
+                    $columnLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
+                    $cell = $sheet->getCell($columnLetter.$rowIndex);
+                    if (in_array($key, $serialDateColumns, true) && is_int($value)) {
+                        $cell->setValue($value);
+                        $cell->getStyle()->getNumberFormat()->setFormatCode('yyyy-mm-dd');
+                    } else {
+                        $cell->setValue($value);
+                    }
+                    $colIndex++;
+                }
             }
         }
 
@@ -173,6 +207,35 @@ class StudentImportTest extends TestCase
         $response = $this->get(route('admin.students.import'));
 
         $response->assertRedirect(route('login'));
+    }
+
+    public function test_import_page_renders_with_preview_session_data(): void
+    {
+        $this->actingAs($this->admin);
+
+        session(['preview' => true]);
+        session(['student_import_preview' => [
+            'temp_path' => '/tmp/test.csv',
+            'valid_rows' => [],
+            'invalid_rows' => [
+                [
+                    'row_number' => 2,
+                    'data' => [],
+                    'errors' => [
+                        ['field' => 'class', 'value' => '', 'error' => 'Class is required'],
+                    ],
+                ],
+            ],
+            'total_rows' => 1,
+            'warnings' => [],
+        ]]);
+
+        $response = $this->get(route('admin.students.import'));
+
+        $response->assertOk();
+        $response->assertSee('Import Preview');
+        $response->assertSee('Invalid Rows');
+        $response->assertSee('Errors Found');
     }
 
     public function test_template_download_works(): void
@@ -654,5 +717,196 @@ class StudentImportTest extends TestCase
         $response->assertRedirect(route('admin.students.import'));
         $response->assertSessionHas('error');
         $this->assertEquals(0, Student::count());
+    }
+
+    public function test_xlsx_excel_serial_date_of_birth_is_normalized(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/SER1', 'serial.dob@example.com');
+        $row['date_of_birth'] = 41043; // Excel serial for 2012-05-14
+        $row['admission_date'] = '2026-09-01';
+
+        $file = $this->makeXlsxWithSerialDates([$row], ['date_of_birth']);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertEquals(0, $preview['invalid_rows']->count());
+        $this->assertEquals('2012-05-14', $preview['valid_rows']->first()['data']['date_of_birth']);
+    }
+
+    public function test_xlsx_excel_serial_admission_date_is_normalized(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/SER2', 'serial.adm@example.com');
+        $row['date_of_birth'] = '2012-05-14';
+        $row['admission_date'] = 46266; // Excel serial for 2026-09-01
+
+        $file = $this->makeXlsxWithSerialDates([$row], ['admission_date']);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertEquals(0, $preview['invalid_rows']->count());
+        $this->assertEquals('2026-09-01', $preview['valid_rows']->first()['data']['admission_date']);
+    }
+
+    public function test_xlsx_native_date_cell_is_normalized(): void
+    {
+        $this->actingAs($this->admin);
+
+        // Create XLSX where DOB is a native DateTime cell, admission_date is a serial
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $headers = array_keys($this->validRow('GAA/2024/DAT', 'native.date@example.com'));
+        $sheet->fromArray($headers, null, 'A1');
+
+        $row = $this->validRow('GAA/2024/DAT', 'native.date@example.com');
+        $colIndex = 0;
+        foreach ($row as $key => $value) {
+            $columnLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
+            $cell = $sheet->getCell($columnLetter.'2');
+            if ($key === 'date_of_birth') {
+                $cell->setValue(new \DateTime('2012-05-14'));
+            } elseif ($key === 'admission_date') {
+                $cell->setValue(46266);
+                $cell->getStyle()->getNumberFormat()->setFormatCode('yyyy-mm-dd');
+            } else {
+                $cell->setValue($value);
+            }
+            $colIndex++;
+        }
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_').'.xlsx';
+        (new XlsxWriter($spreadsheet))->save($tempFile);
+        $file = File::createWithContent('native.xlsx', file_get_contents($tempFile));
+        unlink($tempFile);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertEquals(0, $preview['invalid_rows']->count());
+        $this->assertEquals('2012-05-14', $preview['valid_rows']->first()['data']['date_of_birth']);
+        $this->assertEquals('2026-09-01', $preview['valid_rows']->first()['data']['admission_date']);
+    }
+
+    public function test_csv_yyyy_mm_dd_date_is_accepted(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/CSV', 'csv.date@example.com');
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertEquals(0, $preview['invalid_rows']->count());
+        $this->assertEquals('2012-05-14', $preview['valid_rows']->first()['data']['date_of_birth']);
+    }
+
+    public function test_invalid_date_string_is_rejected(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/BAD1', 'bad.date@example.com');
+        $row['date_of_birth'] = 'not-a-date';
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertTrue($preview['invalid_rows']->contains('row_number', 2));
+        $this->assertTrue($preview['invalid_rows']->first()['errors']->contains(fn ($e) => $e['field'] === 'date_of_birth'));
+    }
+
+    public function test_impossible_date_is_rejected(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/BAD2', 'impossible@example.com');
+        $row['date_of_birth'] = '2012-13-45';
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertTrue($preview['invalid_rows']->contains('row_number', 2));
+        $this->assertTrue($preview['invalid_rows']->first()['errors']->contains(fn ($e) => $e['field'] === 'date_of_birth'));
+    }
+
+    public function test_invalid_numeric_date_is_rejected(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/BAD3', 'invalidnum@example.com');
+        $row['date_of_birth'] = 'not-serial-99999';
+
+        $file = $this->makeCsvFile([$row]);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertTrue($preview['invalid_rows']->contains('row_number', 2));
+        $this->assertTrue($preview['invalid_rows']->first()['errors']->contains(fn ($e) => $e['field'] === 'date_of_birth'));
+    }
+
+    public function test_negative_excel_serial_date_is_rejected(): void
+    {
+        $this->actingAs($this->admin);
+
+        // -41043 is a negative Excel serial — no real Excel date produces a negative serial
+        $row = $this->validRow('GAA/2024/BAD4', 'negserial@example.com');
+        $row['date_of_birth'] = -41043;
+
+        $file = $this->makeXlsxWithSerialDates([$row], []);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $preview = session('student_import_preview');
+        $this->assertTrue($preview['invalid_rows']->contains('row_number', 2));
+        $this->assertTrue($preview['invalid_rows']->first()['errors']->contains(fn ($e) => $e['field'] === 'date_of_birth'));
+    }
+
+    public function test_imported_student_stores_normalized_dates_in_database(): void
+    {
+        $this->actingAs($this->admin);
+
+        $row = $this->validRow('GAA/2024/DB1', 'db.date@example.com');
+        $row['date_of_birth'] = 41043;   // Excel serial for 2012-05-14
+        $row['admission_date'] = 46266;  // Excel serial for 2026-09-01
+
+        $file = $this->makeXlsxWithSerialDates([$row], ['date_of_birth', 'admission_date']);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $file,
+        ]);
+
+        $this->post(route('admin.students.import.confirm'));
+
+        $student = Student::where('admission_no', 'GAA/2024/DB1')->first();
+        $this->assertNotNull($student);
+        $this->assertEquals('2012-05-14', $student->date_of_birth->format('Y-m-d'));
+        $this->assertEquals('2026-09-01', $student->admission_date->format('Y-m-d'));
     }
 }
