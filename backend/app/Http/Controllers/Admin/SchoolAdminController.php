@@ -480,6 +480,8 @@ class SchoolAdminController extends Controller
 
     public function showImportForm()
     {
+        session()->forget('import_stats');
+
         return view('admin.students.import');
     }
 
@@ -536,6 +538,8 @@ class SchoolAdminController extends Controller
         $tempPath = $file->getRealPath();
 
         $result = $importService->preview($tempPath);
+
+        session()->forget('import_stats');
 
         session([
             'student_import_preview' => [
