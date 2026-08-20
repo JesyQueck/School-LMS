@@ -59,7 +59,7 @@ class FinanceManagementTest extends TestCase
         $feeType = FeeType::where('name', 'Tuition Fee')->firstOrFail();
 
         $studentFeeResponse = $this->post('/admin/finance/student-fees', [
-            'student_id' => $student->id,
+            'class_id' => $class->id,
             'fee_type_id' => $feeType->id,
             'term_id' => $term->id,
             'amount_expected' => '1500.00',
@@ -238,7 +238,7 @@ class FinanceManagementTest extends TestCase
         ]);
 
         $studentFeeResponse = $this->post('/admin/finance/student-fees', [
-            'student_id' => $student->id,
+            'class_id' => $class->id,
             'fee_type_id' => $feeType->id,
             'term_id' => $term->id,
             'amount_expected' => '-500.00',

@@ -38,19 +38,25 @@
     @if(session('preview'))
         @php
             $preview = session('student_import_preview');
-            $invalidRows = $preview['invalid_rows'] ?? collect();
-            $validCount = $preview['total_rows'] - $invalidRows->count();
+            $invalidRows = collect($preview['invalid_rows'] ?? []);
+            $validRows = collect($preview['valid_rows'] ?? []);
+            $totalRows = $preview['total_rows'] ?? 0;
+            $validCount = $totalRows - $invalidRows->count();
+            $parentsToCreate = $validRows->sum(function ($row) {
+                return isset($row['data']['parent_name']) && !empty($row['data']['parent_name']) ? 1 : 0;
+            });
         @endphp
 
         <div class="space-y-6">
             <x-ui.card>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">Import Preview</h2>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Review the data before importing students.</p>
                 </div>
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <div class="bg-neutral-50 dark:bg-dark-surface rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $preview['total_rows'] ?? 0 }}</div>
+                            <div class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $totalRows }}</div>
                             <div class="text-sm text-neutral-500 dark:text-neutral-400">Total Rows</div>
                         </div>
                         <div class="bg-success-50 dark:bg-success-900/20 rounded-lg p-4 text-center">
@@ -61,11 +67,41 @@
                             <div class="text-2xl font-bold text-danger-700 dark:text-danger-300">{{ $invalidRows->count() }}</div>
                             <div class="text-sm text-neutral-500 dark:text-neutral-400">Invalid Rows</div>
                         </div>
-                        <div class="bg-neutral-50 dark:bg-dark-surface rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $stats['parents_to_create'] ?? 0 }}</div>
+                        <div class="bg-warning-50 dark:bg-warning-900/20 rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-warning-700 dark:text-warning-300">{{ $parentsToCreate }}</div>
                             <div class="text-sm text-neutral-500 dark:text-neutral-400">Parents to Create</div>
                         </div>
                     </div>
+
+                    @if($validRows->isNotEmpty())
+                        <div class="mb-6">
+                            <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">Valid Rows (Ready to Import)</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+                                    <thead class="bg-neutral-50 dark:bg-dark-surface">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400">Row</th>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400">Admission No</th>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400">Student Name</th>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400">Class</th>
+                                            <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400">Parent</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                                        @foreach($validRows as $validRow)
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm text-neutral-900 dark:text-white">{{ $validRow['row_number'] }}</td>
+                                                <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $validRow['data']['admission_no'] ?? '' }}</td>
+                                                <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ ($validRow['data']['first_name'] ?? '') . ' ' . ($validRow['data']['last_name'] ?? '') }}</td>
+                                                <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $validRow['data']['class'] ?? '' }}</td>
+                                                <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $validRow['data']['parent_name'] ?? '' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
 
                     @if($invalidRows->isNotEmpty())
                         <div class="mb-6">
@@ -83,10 +119,10 @@
                                     <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                                         @foreach($invalidRows as $invalidRow)
                                             @foreach($invalidRow['errors'] as $error)
-                                                <tr>
+                                                <tr class="bg-danger-50 dark:bg-danger-900/20">
                                                     <td class="px-4 py-2 text-sm text-neutral-900 dark:text-white">{{ $invalidRow['row_number'] }}</td>
-                                                    <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $error['field'] }}</td>
-                                                    <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $error['error'] }}</td>
+                                                    <td class="px-4 py-2 text-sm text-danger-700 dark:text-danger-300 font-medium">{{ $error['field'] }}</td>
+                                                    <td class="px-4 py-2 text-sm text-danger-700 dark:text-danger-300">{{ $error['error'] }}</td>
                                                     <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $error['value'] ?? '' }}</td>
                                                 </tr>
                                             @endforeach
@@ -95,13 +131,11 @@
                                 </table>
                             </div>
 
-                            @if($invalidRows->count() > 0)
-                                <div class="mt-4">
-                                    <a href="{{ route('admin.students.import.errors') }}" class="inline-flex items-center gap-2 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border text-neutral-700 dark:text-dark-text hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
-                                        Download Errors CSV
-                                    </a>
-                                </div>
-                            @endif
+                            <div class="mt-4">
+                                <a href="{{ route('admin.students.import.errors') }}" class="inline-flex items-center gap-2 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border text-neutral-700 dark:text-dark-text hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
+                                    Download Errors CSV
+                                </a>
+                            </div>
                         </div>
                     @endif
 

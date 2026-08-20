@@ -65,15 +65,15 @@
         <div class="lg:col-span-6">
             <x-ui.card>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Assign Fee to Student</h3>
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Assign Fee to Class</h3>
                 </div>
                 <form method="POST" action="{{ route('admin.finance.student-fees.store') }}" class="p-6 space-y-4">
                     @csrf
                     <div>
-                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student <span class="text-danger-500">*</span></label>
-                        <select name="student_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base">
-                            @foreach($students as $student)
-                                <option value="{{ $student->id }}">{{ $student->full_name }} ({{ $student->admission_no }})</option>
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class <span class="text-danger-500">*</span></label>
+                        <select name="class_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base">
+                            @foreach($classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
                             @endforeach
                         </select>
                     </div>

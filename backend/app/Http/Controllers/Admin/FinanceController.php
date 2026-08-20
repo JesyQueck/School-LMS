@@ -16,6 +16,7 @@ use App\Services\FeeService;
 use App\Traits\AuditsActions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
@@ -92,12 +93,23 @@ class FinanceController extends Controller
     {
         $data = $request->validated();
 
-        $studentFee = StudentFee::create($data);
-        $studentFee->update(['status' => $this->feeService->recomputeStatus($studentFee)]);
+        $class = SchoolClass::findOrFail($data['class_id']);
 
-        $this->audit($request, 'student_fee.created', StudentFee::class, $studentFee->id, null, $studentFee->toArray());
+        DB::transaction(function () use ($class, $data, $request) {
+            $class->students()->each(function ($student) use ($data, $request) {
+                $studentFee = StudentFee::create([
+                    'student_id' => $student->id,
+                    'fee_type_id' => $data['fee_type_id'],
+                    'term_id' => $data['term_id'],
+                    'amount_expected' => $data['amount_expected'],
+                    'status' => $this->feeService->recomputeStatus(StudentFee::make(['amount_expected' => $data['amount_expected']])),
+                ]);
 
-        return redirect()->route('admin.finance')->with('status', 'Student fee created.');
+                $this->audit($request, 'student_fee.created', StudentFee::class, $studentFee->id, null, $studentFee->toArray());
+            });
+        });
+
+        return redirect()->route('admin.finance')->with('status', 'Fee assigned to all students in '.$class->name.'.');
     }
 
     public function createPayment(StorePaymentRequest $request)

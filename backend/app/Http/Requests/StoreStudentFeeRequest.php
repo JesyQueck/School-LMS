@@ -14,7 +14,7 @@ class StoreStudentFeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_id' => ['required', 'exists:students,id'],
+            'class_id' => ['required', 'exists:classes,id'],
             'fee_type_id' => ['required', 'exists:fee_types,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'amount_expected' => ['required', 'numeric', 'gte:0'],
