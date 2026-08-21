@@ -26,8 +26,8 @@ class ReportCardController extends Controller
         $currentTerm = Term::where('is_current', true)->first();
 
         return view('admin.report-cards.index', [
-            'classes' => SchoolClass::with(['students.user'])->get(),
-            'students' => Student::with('schoolClass.user', 'user')->get(),
+            'classes' => SchoolClass::with(['students.user', 'formTeacher.user'])->get(),
+            'students' => Student::with('schoolClass.formTeacher.user', 'user')->get(),
             'subjects' => Subject::all(),
             'terms' => Term::all(),
             'currentTerm' => $currentTerm,

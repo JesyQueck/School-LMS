@@ -9,7 +9,9 @@ use Illuminate\View\Component;
 class TeacherNav extends Component
 {
     public bool $isClassTeacher;
+
     public bool $isSubjectTeacher;
+
     public $subjectAssignments;
 
     public function __construct()

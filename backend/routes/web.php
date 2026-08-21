@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
+use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordChangeController;
 use App\Http\Controllers\Auth\PasswordResetController;
@@ -123,6 +124,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');
         Route::get('/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
         Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
+        Route::get('/accounts/credentials', [AccountController::class, 'credentials'])->name('accounts.credentials');
+        Route::get('/accounts/credentials/download', [AccountController::class, 'downloadAllCredentials'])->name('accounts.credentials.download');
         Route::get('/classes', [SchoolAdminController::class, 'classes'])->name('classes');
         Route::post('/classes', [SchoolAdminController::class, 'createClass'])->name('classes.store');
         Route::get('/classes/{class}/edit', [SchoolAdminController::class, 'editClass'])->name('classes.edit');
@@ -146,6 +149,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/students/import/cancel', [SchoolAdminController::class, 'cancelImport'])->name('students.import.cancel');
         Route::get('/students/import/errors/download', [SchoolAdminController::class, 'downloadImportErrors'])->name('students.import.errors');
         Route::get('/students/import/credentials/download', [SchoolAdminController::class, 'downloadImportCredentials'])->name('students.import.credentials');
+        Route::get('/students/import/credentials', [SchoolAdminController::class, 'viewImportCredentials'])->name('students.import.credentials.view');
+        Route::post('/students/import/credentials/mark-viewed', [SchoolAdminController::class, 'markCredentialsViewed'])->name('students.import.credentials.mark-viewed');
 
         Route::get('/academic', [AcademicStructureController::class, 'index'])->name('academic');
         Route::post('/academic/sessions', [AcademicStructureController::class, 'createSession'])->name('academic.sessions.store');
@@ -200,5 +205,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/report-cards/{reportCard}/return', [ReportCardController::class, 'returnForCorrection'])->name('report-cards.return');
         Route::post('/report-cards/publish-all/{term}', [ReportCardController::class, 'publishAll'])->name('report-cards.publish-all');
         Route::get('/report-cards/{reportCard}/download', [ReportCardController::class, 'download'])->name('report-cards.download');
+
+        Route::get('/timetable', [TimetableController::class, 'index'])->name('timetable.index');
+        Route::get('/timetable/create', [TimetableController::class, 'create'])->name('timetable.create');
+        Route::post('/timetable', [TimetableController::class, 'store'])->name('timetable.store');
+        Route::get('/timetable/{timetable}/edit', [TimetableController::class, 'edit'])->name('timetable.edit');
+        Route::put('/timetable/{timetable}', [TimetableController::class, 'update'])->name('timetable.update');
+        Route::delete('/timetable/{timetable}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
     });
 });

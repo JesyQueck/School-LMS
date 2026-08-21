@@ -46,7 +46,15 @@
     $href = $method === 'POST' ? route('logout') : $href;
     $method = $method === 'POST' ? 'POST' : 'GET';
 
-    $isActive = $active ?? request()->is(ltrim(parse_url($href, PHP_URL_PATH), '/') . '*');
+    $path = ltrim(parse_url($href, PHP_URL_PATH), '/');
+    if ($active !== null) {
+        $isActive = $active;
+    } else {
+        $isActive = request()->is($path);
+        if (!$isActive && strpos($path, '/') !== false) {
+            $isActive = request()->is($path.'/*');
+        }
+    }
 @endphp
 
 @if($method === 'POST')

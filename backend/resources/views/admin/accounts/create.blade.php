@@ -9,6 +9,21 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Create user accounts for teachers, students, and parents.</p>
     </div>
 
+    @if(session('new_account_credentials'))
+        @php
+            $cred = session('new_account_credentials');
+        @endphp
+        <x-ui.alert type="info" class="mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <strong>{{ ucfirst($cred['role']) }}</strong> account created for {{ $cred['name'] }} ({{ $cred['email'] }}).
+                    Temporary password: <span class="font-mono font-medium">{{ $cred['password'] }}</span>.
+                    The user must change their password on first login. This credential is also saved in the <a href="{{ route('admin.students.import.credentials.view') }}" class="underline font-medium">credentials manager</a>.
+                </div>
+            </div>
+        </x-ui.alert>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7">
             <x-ui.card>

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
+use App\Models\ImportCredential;
 use App\Models\ParentProfile;
 use App\Models\ReportCard;
 use App\Models\SchoolClass;
@@ -1663,5 +1664,170 @@ class AdminManagementTest extends TestCase
             'student_id' => $student->id,
             'type' => 'transfer_certificate',
         ]);
+    }
+
+    public function test_admin_accounts_index_filters_by_role(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        User::factory()->create(['role' => 'teacher', 'name' => 'Filter Teacher']);
+        User::factory()->create(['role' => 'student', 'name' => 'Filter Student']);
+        User::factory()->create(['role' => 'parent', 'name' => 'Filter Parent']);
+
+        $teacherResponse = $this->get('/admin/accounts?role=teacher');
+        $teacherResponse->assertOk();
+        $teacherResponse->assertSee('Filter Teacher');
+        $teacherResponse->assertDontSee('Filter Student');
+
+        $studentResponse = $this->get('/admin/accounts?role=student');
+        $studentResponse->assertOk();
+        $studentResponse->assertSee('Filter Student');
+        $studentResponse->assertDontSee('Filter Teacher');
+
+        $allResponse = $this->get('/admin/accounts');
+        $allResponse->assertOk();
+        $allResponse->assertSee('Filter Teacher');
+        $allResponse->assertSee('Filter Student');
+        $allResponse->assertSee('Filter Parent');
+    }
+
+    public function test_teacher_creation_persists_credentials(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $this->post('/admin/teachers', [
+            'name' => 'Cred Teacher',
+            'email' => 'cred.teacher@example.com',
+            'phone' => '08011111111',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $this->assertDatabaseHas('import_credentials', [
+            'role' => 'teacher',
+            'email' => 'cred.teacher@example.com',
+            'created_by' => $admin->id,
+        ]);
+    }
+
+    public function test_account_creation_persists_credentials(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Account Cred Teacher',
+            'email' => 'acct.cred.teacher@example.com',
+            'phone' => '08022222222',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertDatabaseHas('import_credentials', [
+            'role' => 'teacher',
+            'email' => 'acct.cred.teacher@example.com',
+            'created_by' => $admin->id,
+        ]);
+    }
+
+    public function test_credentials_persist_across_sessions(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
+        $this->actingAs($admin);
+
+        ImportCredential::create([
+            'role' => 'teacher',
+            'name' => 'Persisted Teacher',
+            'email' => 'persisted@example.com',
+            'password' => 'tempPass123',
+            'user_id' => $admin->id,
+            'created_by' => $admin->id,
+            'expires_at' => null,
+        ]);
+
+        $response = $this->get(route('admin.accounts.credentials'));
+        $response->assertOk();
+        $response->assertSee('Persisted Teacher');
+        $response->assertSee('tempPass123');
+    }
+
+    public function test_credentials_can_be_downloaded_as_csv(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
+        $this->actingAs($admin);
+
+        ImportCredential::create([
+            'role' => 'teacher',
+            'name' => 'CSV Teacher',
+            'email' => 'csv@example.com',
+            'password' => 'csvPass123',
+            'user_id' => $admin->id,
+            'created_by' => $admin->id,
+            'expires_at' => null,
+        ]);
+
+        $response = $this->get(route('admin.accounts.credentials.download'));
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="all-credentials.csv"');
+    }
+
+    public function test_credentials_show_changed_indicator_when_password_updated(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacherUser = User::factory()->create([
+            'name' => 'Changed Teacher',
+            'email' => 'changed@example.com',
+            'role' => 'teacher',
+            'needs_password_change' => false,
+        ]);
+
+        ImportCredential::create([
+            'role' => 'teacher',
+            'name' => 'Changed Teacher',
+            'email' => 'changed@example.com',
+            'password' => 'oldPass123',
+            'user_id' => $teacherUser->id,
+            'created_by' => $admin->id,
+            'expires_at' => null,
+        ]);
+
+        $response = $this->get(route('admin.accounts.credentials'));
+        $response->assertOk();
+        $response->assertSee('[CHANGED]');
+        $response->assertDontSee('oldPass123');
+    }
+
+    public function test_credentials_filter_by_role(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
+        $this->actingAs($admin);
+
+        ImportCredential::create([
+            'role' => 'teacher',
+            'name' => 'Filter Teacher',
+            'email' => 'filter.t@example.com',
+            'password' => 'tPass',
+            'created_by' => $admin->id,
+            'expires_at' => null,
+        ]);
+
+        ImportCredential::create([
+            'role' => 'student',
+            'name' => 'Filter Student',
+            'email' => 'filter.s@example.com',
+            'password' => 'sPass',
+            'created_by' => $admin->id,
+            'expires_at' => null,
+        ]);
+
+        $response = $this->get(route('admin.accounts.credentials', ['role' => 'teacher']));
+        $response->assertOk();
+        $response->assertSee('Filter Teacher');
+        $response->assertDontSee('Filter Student');
     }
 }

@@ -38,6 +38,7 @@
                         <x-layout.sidebar-item href="/admin/subjects" icon="book-open" label="Subjects" />
                         <x-layout.sidebar-item href="/admin/assignments" icon="user-check" label="Teacher Assignments" />
                         <x-layout.sidebar-item href="/admin/report-cards" icon="file-text" label="Report Cards" />
+                        <x-layout.sidebar-item href="/admin/timetable" icon="calendar-check" label="Timetable" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
                         <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />

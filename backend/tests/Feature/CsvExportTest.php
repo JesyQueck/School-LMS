@@ -2,13 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\AcademicSession;
-use App\Models\ClassSubject;
-use App\Models\Result;
 use App\Models\SchoolClass;
 use App\Models\Student;
-use App\Models\Subject;
-use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -36,5 +31,4 @@ class CsvExportTest extends TestCase
         $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         $response->assertHeader('Content-Disposition', 'attachment; filename="students.csv"');
     }
-
 }

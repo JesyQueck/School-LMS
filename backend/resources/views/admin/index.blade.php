@@ -7,7 +7,7 @@
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $greeting }}, {{ $user->name }} 👋</h1>
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Greenfield Academy</p>
-        <p class="text-sm font-medium text-primary-600 dark:text-primary-400 mt-1">{{ $session }} &middot; {{ $termName }}</p>
+        <p class="text-sm font-medium text-primary-600 dark:text-primary-400 mt-1">{{ $session ?? '' }} &middot; {{ $termName ?? '' }}</p>
     </div>
 
     @if(session('status'))

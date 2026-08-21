@@ -8,20 +8,25 @@ use App\Http\Requests\StoreStudentRequest;
 use App\Http\Requests\StoreTeacherRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Http\Requests\UpdateTeacherRequest;
+use App\Mail\EnrollmentNotification;
 use App\Models\AcademicSession;
+use App\Models\ImportCredential;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentContact;
 use App\Models\StudentDocument;
 use App\Models\StudentEmergencyContact;
+use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Services\CsvExportService;
 use App\Services\StudentImportService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -38,12 +43,39 @@ class SchoolAdminController extends Controller
 
     public function index()
     {
-        return view('admin.index', [
-            'classes' => SchoolClass::count(),
-            'teachers' => Teacher::count(),
-            'students' => Student::count(),
-            'parents' => ParentProfile::count(),
-        ]);
+        $totalStudents = Student::count();
+        $totalTeachers = Teacher::count();
+        $totalClasses = SchoolClass::count();
+        $totalParents = ParentProfile::count();
+        $activeClasses = SchoolClass::count();
+        $subjects = Subject::count();
+        $teachersAssigned = Teacher::whereHas('classAssignments')->count();
+        $totalTeachersForAssignment = Teacher::count();
+        $session = AcademicSession::where('is_current', true)->value('name') ?? 'N/A';
+        $termName = 'N/A';
+        $resultsSubmitted = 0;
+        $resultsLocked = 0;
+        $resultsPending = 0;
+        $finance = ['expected' => 0, 'collected' => 0, 'outstanding' => 0, 'collection_rate' => 0, 'paid' => 0, 'partial' => 0, 'unpaid' => 0];
+        $recentActivity = AuditLog::latest()->take(5)->get();
+
+        return view('admin.index', compact(
+            'totalStudents',
+            'totalTeachers',
+            'totalClasses',
+            'totalParents',
+            'activeClasses',
+            'subjects',
+            'teachersAssigned',
+            'totalTeachersForAssignment',
+            'session',
+            'termName',
+            'resultsSubmitted',
+            'resultsLocked',
+            'resultsPending',
+            'finance',
+            'recentActivity',
+        ));
     }
 
     public function classes()
@@ -144,12 +176,33 @@ class SchoolAdminController extends Controller
             'employee_id' => 'T-'.Str::upper(Str::random(6)),
         ]);
 
+        $this->persistImportCredentials(collect([
+            [
+                'role' => 'teacher',
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $temporaryPassword,
+                'related_to' => null,
+                'user_id' => $user->id,
+            ],
+        ]), auth()->id());
+
+        try {
+            Mail::to($user->email)->send(new EnrollmentNotification($user, $temporaryPassword));
+        } catch (\Exception $e) {
+        }
+
         $this->audit($request, 'teacher.created', Teacher::class, Teacher::query()->latest('id')->value('id'), null, [
             'user_id' => $user->id,
             'temp_password' => $temporaryPassword,
         ]);
 
-        return redirect()->route('admin.teachers')->with('status', "Teacher created. Temporary password: {$temporaryPassword}");
+        return redirect()->route('admin.teachers')->with('status', "Teacher created. Temporary password: {$temporaryPassword}")
+            ->with('new_teacher_credentials', [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => $temporaryPassword,
+            ]);
     }
 
     public function editTeacher(Teacher $teacher)
@@ -250,6 +303,37 @@ class SchoolAdminController extends Controller
 
         if ($parent) {
             $student->parents()->attach($parent->id);
+        }
+
+        $this->persistImportCredentials(collect([
+            [
+                'role' => 'student',
+                'name' => $data['name'],
+                'email' => $studentEmail,
+                'password' => $temporaryPassword,
+                'related_to' => $parent ? ($parent->user->name ?? '') : null,
+                'user_id' => $user->id,
+            ],
+        ]), auth()->id());
+
+        try {
+            Mail::to($user->email)->send(new EnrollmentNotification(
+                $user,
+                $temporaryPassword,
+                $parent ? ($parent->user->name ?? '') : '',
+            ));
+        } catch (\Exception $e) {
+        }
+
+        if ($parent) {
+            try {
+                Mail::to($parent->user->email)->send(new EnrollmentNotification(
+                    $parent->user,
+                    $temporaryPassword,
+                    $data['name'],
+                ));
+            } catch (\Exception $e) {
+            }
         }
 
         $this->createStudentContacts($student, $data);
@@ -480,7 +564,19 @@ class SchoolAdminController extends Controller
 
     public function showImportForm()
     {
-        return view('admin.students.import');
+        $importCredentials = ImportCredential::where('created_by', auth()->id())
+            ->whereNull('viewed_at')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest('created_at')
+            ->get();
+
+        $pendingCredentialsCount = $importCredentials->count();
+
+        return view('admin.students.import', [
+            'pendingCredentialsCount' => $pendingCredentialsCount,
+        ]);
     }
 
     public function downloadTemplate(Request $request)
@@ -570,8 +666,12 @@ class SchoolAdminController extends Controller
 
         $stats = $importService->import($validRows);
 
+        if ($stats['imported'] > 0) {
+            $this->persistImportCredentials($stats['credentials'], auth()->id());
+        }
+
         $this->cleanupTempFile($previewData['temp_path'] ?? null);
-        session()->put('import_stats', $stats);
+        session()->forget('import_stats');
         session()->forget('student_import_preview');
 
         return redirect()->route('admin.students.import')->with('status', sprintf(
@@ -582,6 +682,16 @@ class SchoolAdminController extends Controller
             $stats['errors']->count(),
             $stats['credentials']->count(),
         ));
+    }
+
+    public function viewImportCredentials(Request $request)
+    {
+        return redirect()->route('admin.accounts.credentials');
+    }
+
+    public function markCredentialsViewed(Request $request)
+    {
+        return redirect()->route('admin.accounts.credentials');
     }
 
     public function downloadImportErrors(Request $request)
@@ -633,25 +743,47 @@ class SchoolAdminController extends Controller
         return redirect()->route('admin.students.import')->with('status', 'Import cancelled.');
     }
 
+    protected function persistImportCredentials(Collection $credentials, int $createdBy): void
+    {
+        foreach ($credentials as $credential) {
+            ImportCredential::create([
+                'role' => $credential['role'],
+                'name' => $credential['name'],
+                'email' => $credential['email'],
+                'password' => $credential['password'],
+                'related_to' => $credential['related_to'] ?? null,
+                'user_id' => $credential['user_id'] ?? null,
+                'created_by' => $createdBy,
+                'expires_at' => null,
+            ]);
+        }
+    }
+
     public function downloadImportCredentials(Request $request)
     {
-        $stats = session('import_stats');
+        $credentials = ImportCredential::where('created_by', auth()->id())
+            ->whereNull('viewed_at')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest('created_at')
+            ->get();
 
-        if (! $stats || ! isset($stats['credentials']) || $stats['credentials']->isEmpty()) {
+        if ($credentials->isEmpty()) {
             return redirect()->route('admin.students')->with('error', 'No credentials to download.');
         }
 
-        $response = Response::stream(function () use ($stats) {
+        $response = Response::stream(function () use ($credentials) {
             $output = fopen('php://output', 'w');
             fputcsv($output, ['Role', 'Name', 'Email', 'Temporary Password', 'Related Student']);
 
-            foreach ($stats['credentials'] as $credential) {
+            foreach ($credentials as $credential) {
                 fputcsv($output, [
-                    $credential['role'],
-                    $credential['name'],
-                    $credential['email'],
-                    $credential['password'],
-                    $credential['related_to'] ?? '',
+                    $credential->role,
+                    $credential->name,
+                    $credential->email,
+                    $credential->password,
+                    $credential->related_to ?? '',
                 ]);
             }
 

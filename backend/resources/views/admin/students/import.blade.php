@@ -35,54 +35,12 @@
         </x-ui.alert>
     @endif
 
-    @if(session('import_stats'))
-        @php
-            $stats = session('import_stats');
-            $credentials = collect($stats['credentials'] ?? []);
-        @endphp
-
-        <x-ui.card class="mb-6">
-            <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">Import Complete — Login Credentials</h2>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Temporary passwords for newly created accounts. Share these securely with users. They must change their password on first login.</p>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Students without email: login with their admission number as email (format: <code>admission_no@{{ config('school.email_domain', 'school.local') }}</code>) and surname as password.</p>
+    @if(isset($pendingCredentialsCount) && $pendingCredentialsCount > 0)
+        <x-ui.alert type="info" class="mb-6">
+            <div class="flex items-center justify-between">
+                <span>{{ $pendingCredentialsCount }} set(s) of login credentials are available. <a href="{{ route('admin.accounts.credentials') }}" class="font-medium underline">View credentials</a>.</span>
             </div>
-            <div class="p-6">
-                @if($credentials->isNotEmpty())
-                    <div class="mb-4">
-                        <a href="{{ route('admin.students.import.credentials') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
-                            Download Credentials CSV
-                        </a>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
-                            <thead class="bg-neutral-50 dark:bg-dark-surface">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Role</th>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Name</th>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Email</th>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Temporary Password</th>
-                                    <th class="px-4 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Related Student</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
-                                @foreach($credentials as $cred)
-                                    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                                        <td class="px-4 py-2 text-sm">{{ $cred['role'] }}</td>
-                                        <td class="px-4 py-2 text-sm font-medium text-neutral-900 dark:text-white">{{ $cred['name'] }}</td>
-                                        <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $cred['email'] }}</td>
-                                        <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $cred['password'] }}</td>
-                                        <td class="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $cred['related_to'] ?? '' }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400">All accounts were reused from existing parents — no new credentials were generated.</p>
-                @endif
-            </div>
-        </x-ui.card>
+        </x-ui.alert>
     @endif
 
     @if(session('preview'))

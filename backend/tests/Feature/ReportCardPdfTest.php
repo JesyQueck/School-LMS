@@ -130,6 +130,7 @@ class ReportCardPdfTest extends TestCase
             $beforeStream = $nextStream > 0 ? $pdfContent[$nextStream - 1] : '';
             if ($beforeStream !== "\n" && $beforeStream !== "\r" && $beforeStream !== ' ') {
                 $offset = $nextStream + 6;
+
                 continue;
             }
 
@@ -155,7 +156,7 @@ class ReportCardPdfTest extends TestCase
                 $searchStart = $nextEndstream + 9;
             }
 
-            if (!$foundEnd) {
+            if (! $foundEnd) {
                 $result .= substr($pdfContent, $nextStream);
                 break;
             }
@@ -205,6 +206,7 @@ class ReportCardPdfTest extends TestCase
         if (preg_match_all('/\/Type\s*\/Page(?!s)/', $pdfContent, $m)) {
             return count($m[0]);
         }
+
         return 0;
     }
 

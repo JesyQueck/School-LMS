@@ -36,6 +36,11 @@ class Teacher extends Model
         return $this->hasMany(ClassAssignment::class);
     }
 
+    public function timetables(): HasMany
+    {
+        return $this->hasMany(Timetable::class);
+    }
+
     public function currentClassAssignment(): BelongsTo
     {
         return $this->belongsTo(ClassAssignment::class, 'id')

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\EnrollmentNotification;
 use App\Models\AcademicSession;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -180,6 +182,7 @@ class StudentImportService
                     'email' => $studentEmail,
                     'password' => $temporaryPassword,
                     'related_to' => $parent ? ($parent->user->name ?? '') : null,
+                    'user_id' => $user->id,
                     'was_email_provided' => $studentProvidedEmail,
                 ]);
 
@@ -215,6 +218,41 @@ class StudentImportService
                     $student->parents()->attach($parent->id);
                 }
 
+                $studentName = trim($data['first_name'].' '.$data['last_name']);
+
+                try {
+                    Mail::to($user->email)->send(new EnrollmentNotification(
+                        $user,
+                        $temporaryPassword,
+                        $parent ? ($parent->user->name ?? '') : '',
+                    ));
+                } catch (\Exception $e) {
+                    $stats['errors']->push([
+                        'row_number' => $row['row_number'],
+                        'field' => 'email',
+                        'value' => $user->email,
+                        'error' => 'Email delivery failed: '.$e->getMessage(),
+                    ]);
+
+                    $stats['emails_failed'] = ($stats['emails_failed'] ?? 0) + 1;
+                }
+
+                if ($parent) {
+                    $parentPassword = $stats['credentials']->firstWhere('role', 'parent')['password'] ?? null;
+                    if ($parentPassword) {
+                        try {
+                            Mail::to($parent->user->email)->send(new EnrollmentNotification(
+                                $parent->user,
+                                $parentPassword,
+                                $studentName,
+                            ));
+                        } catch (\Exception $e) {
+                            $stats['emails_failed'] = ($stats['emails_failed'] ?? 0) + 1;
+                        }
+                    }
+                }
+
+                $stats['emails_sent'] = ($stats['emails_sent'] ?? 0) + ($parent ? 2 : 1);
                 $stats['imported']++;
             }
 
@@ -577,6 +615,7 @@ class StudentImportService
             'email' => $parentUser->email,
             'password' => $parentPassword,
             'related_to' => trim($data['first_name'].' '.$data['last_name']),
+            'user_id' => $parentUser->id,
         ]);
 
         return $parent;

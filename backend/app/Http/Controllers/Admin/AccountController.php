@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAccountRequest;
+use App\Mail\EnrollmentNotification;
+use App\Models\ImportCredential;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -12,16 +14,29 @@ use App\Models\User;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 
 class AccountController extends Controller
 {
     use AuditsActions;
 
-    public function index()
+    public function index(Request $request)
     {
+        $role = $request->query('role');
+
+        $validRoles = ['teacher', 'student', 'parent', 'admin'];
+
+        $users = User::with(['teacher', 'student', 'parentProfile'])
+            ->when(in_array($role, $validRoles), fn ($q) => $q->where('role', $role))
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return view('admin.accounts.index', [
-            'users' => User::with(['teacher', 'student', 'parentProfile'])->orderBy('created_at', 'desc')->get(),
+            'users' => $users,
+            'currentRole' => $role,
+            'roles' => $validRoles,
         ]);
     }
 
@@ -59,13 +74,120 @@ class AccountController extends Controller
             'parent' => $accountId = $this->createParentAccount($user, $request),
         };
 
+        $this->persistAccountCredential($user, $data['type'], $temporaryPassword);
+
+        try {
+            $relatedStudent = null;
+            if ($data['type'] === 'student' && $accountId && $accountId->user && $accountId->user->parentProfile) {
+                $relatedStudent = $accountId->user->parentProfile->user->name ?? null;
+            } elseif ($data['type'] === 'parent') {
+                $relatedStudent = $data['name'];
+            }
+
+            Mail::to($user->email)->send(new EnrollmentNotification(
+                $user,
+                $temporaryPassword,
+                $relatedStudent ?? '',
+            ));
+        } catch (\Exception $e) {
+        }
+
         $this->audit($request, 'account.created', User::class, $user->id, null, [
             'type' => $data['type'],
             'temp_password' => $temporaryPassword,
         ]);
 
         return redirect()->route('admin.accounts.create')
-            ->with('status', "Account created successfully. Temporary password: {$temporaryPassword}");
+            ->with('status', "Account created successfully. Temporary password: {$temporaryPassword}")
+            ->with('new_account_credentials', [
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => $data['type'],
+                'password' => $temporaryPassword,
+            ]);
+    }
+
+    public function credentials(Request $request)
+    {
+        $role = $request->query('role');
+        $validRoles = ['teacher', 'student', 'parent', 'admin'];
+
+        $credentials = ImportCredential::with('user')
+            ->where(function ($q) use ($validRoles, $role) {
+                if (in_array($role, $validRoles)) {
+                    $q->where('role', $role);
+                }
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $roleLabels = [
+            'admin' => 'Admin',
+            'teacher' => 'Teacher',
+            'student' => 'Student',
+            'parent' => 'Parent',
+        ];
+
+        return view('admin.accounts.credentials', [
+            'credentials' => $credentials,
+            'currentRole' => $role,
+            'roles' => $validRoles,
+            'roleLabels' => $roleLabels,
+        ]);
+    }
+
+    public function downloadAllCredentials(Request $request)
+    {
+        $role = $request->query('role');
+        $validRoles = ['teacher', 'student', 'parent', 'admin'];
+
+        $credentials = ImportCredential::with('user')
+            ->when(in_array($role, $validRoles), fn ($q) => $q->where('role', $role))
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $response = Response::stream(function () use ($credentials) {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, ['Role', 'Name', 'Email', 'Temporary Password', 'Related Student', 'Status']);
+
+            foreach ($credentials as $credential) {
+                $pwd = $credential->password;
+                if ($credential->user && ! $credential->user->needs_password_change) {
+                    $pwd = '[CHANGED]';
+                }
+                fputcsv($output, [
+                    ucfirst($credential->role),
+                    $credential->name,
+                    $credential->email,
+                    $pwd,
+                    $credential->related_to ?? '',
+                    $credential->user && ! $credential->user->needs_password_change
+                        ? 'Password Changed'
+                        : ($credential->user ? 'Needs Change' : 'N/A'),
+                ]);
+            }
+
+            fclose($output);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="all-credentials.csv"',
+        ]);
+
+        return $response;
+    }
+
+    protected function persistAccountCredential(User $user, string $role, string $password): void
+    {
+        ImportCredential::create([
+            'role' => $role,
+            'name' => $user->name,
+            'email' => $user->email,
+            'password' => $password,
+            'related_to' => null,
+            'user_id' => $user->id,
+            'created_by' => auth()->id(),
+            'expires_at' => null,
+        ]);
     }
 
     protected function createTeacherAccount(User $user, Request $request)

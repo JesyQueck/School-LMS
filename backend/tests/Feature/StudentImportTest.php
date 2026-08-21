@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
+use App\Models\ImportCredential;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -655,8 +656,9 @@ class StudentImportTest extends TestCase
 
         $this->post(route('admin.students.import.confirm'));
 
-        $stats = session('import_stats');
-        $this->assertNotTrue($stats['errors']->isEmpty());
+        // On a failed transaction, no credentials should be persisted to DB
+        $persistedCreds = ImportCredential::where('created_by', $this->admin->id)->get();
+        $this->assertTrue($persistedCreds->isEmpty());
     }
 
     public function test_imported_students_can_immediately_use_student_portal(): void
@@ -928,6 +930,11 @@ class StudentImportTest extends TestCase
         $student = Student::where('admission_no', 'GAA/2024/NOEMAIL')->first();
         $this->assertNotNull($student);
         $this->assertStringContainsString('GAA/2024/NOEMAIL@', $student->user->email);
+
+        // Parent email notification should be sent to parent's email
+        $parent = ParentProfile::where('phone', '08030000001')->first();
+        $this->assertNotNull($parent);
+        $this->assertEquals('ahmed.bello@example.com', $parent->user->email);
     }
 
     public function test_student_without_email_gets_surname_as_password(): void
@@ -944,9 +951,11 @@ class StudentImportTest extends TestCase
 
         $this->post(route('admin.students.import.confirm'));
 
-        $stats = session('import_stats');
-        $credential = $stats['credentials']->firstWhere('role', 'student');
-        $this->assertEquals('bello', $credential['password']);
+        $credential = ImportCredential::where('created_by', $this->admin->id)
+            ->where('role', 'student')
+            ->first();
+        $this->assertNotNull($credential);
+        $this->assertEquals('bello', $credential->password);
     }
 
     public function test_parent_without_last_name_gets_random_password(): void
@@ -965,12 +974,14 @@ class StudentImportTest extends TestCase
 
         $this->post(route('admin.students.import.confirm'));
 
-        $stats = session('import_stats');
-        $credential = $stats['credentials']->firstWhere('role', 'parent');
-        $this->assertEquals(12, strlen($credential['password']));
+        $credential = ImportCredential::where('created_by', $this->admin->id)
+            ->where('role', 'parent')
+            ->first();
+        $this->assertNotNull($credential);
+        $this->assertEquals(12, strlen($credential->password));
     }
 
-    public function test_credentials_are_stored_in_import_stats_session(): void
+    public function test_credentials_are_stored_in_import_credentials_table(): void
     {
         $this->actingAs($this->admin);
 
@@ -984,14 +995,13 @@ class StudentImportTest extends TestCase
 
         $this->post(route('admin.students.import.confirm'));
 
-        $stats = session('import_stats');
-        $this->assertNotNull($stats);
-        $this->assertCount(2, $stats['credentials']);
-        $this->assertTrue($stats['credentials']->contains(fn ($c) => $c['role'] === 'student'));
-        $this->assertTrue($stats['credentials']->contains(fn ($c) => $c['role'] === 'parent'));
+        $credentials = ImportCredential::where('created_by', $this->admin->id)->get();
+        $this->assertCount(2, $credentials);
+        $this->assertTrue($credentials->contains('role', 'student'));
+        $this->assertTrue($credentials->contains('role', 'parent'));
     }
 
-    public function test_import_page_shows_credentials_after_import(): void
+    public function test_import_page_shows_credentials_notification_after_import(): void
     {
         $this->actingAs($this->admin);
 
@@ -1005,12 +1015,11 @@ class StudentImportTest extends TestCase
 
         $this->post(route('admin.students.import.confirm'));
 
-        // importConfirm redirects to admin.students.import with import_stats in session
+        // importConfirm redirects to admin.students.import
         $response = $this->get(route('admin.students.import'));
 
         $response->assertOk();
-        $response->assertSee('Import Complete');
-        $response->assertSee('show.creds@example.com');
-        $response->assertSee('bello');
+        $response->assertSee('Import complete');
+        $response->assertSee(route('admin.accounts.credentials'));
     }
 }

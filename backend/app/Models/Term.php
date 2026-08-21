@@ -36,4 +36,9 @@ class Term extends Model
     {
         return $this->hasMany(ReportCard::class);
     }
+
+    public function timetables(): HasMany
+    {
+        return $this->hasMany(Timetable::class);
+    }
 }

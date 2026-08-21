@@ -8,6 +8,21 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage teaching staff and their assignments.</p>
     </div>
 
+    @if(session('new_teacher_credentials'))
+        @php
+            $cred = session('new_teacher_credentials');
+        @endphp
+        <x-ui.alert type="info" class="mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    Teacher account created for <strong>{{ $cred['name'] }}</strong> ({{ $cred['email'] }}).
+                    Temporary password: <span class="font-mono font-medium">{{ $cred['password'] }}</span>.
+                    This credential is also saved in the <a href="{{ route('admin.students.import.credentials.view') }}" class="underline font-medium">credentials manager</a>.
+                </div>
+            </div>
+        </x-ui.alert>
+    @endif
+
     <div class="mb-6">
         <button type="button" onclick="document.getElementById('add-teacher-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>

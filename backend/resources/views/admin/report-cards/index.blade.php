@@ -27,7 +27,7 @@
                 ->get();
         @endphp
         
-        @if($pendingReportCards->count() > 0 || $approvedReportCards->count() > 0)
+        @if($pendingReportCards->count() > 0 || $publishedReportCards->count() > 0)
         <div class="border border-neutral-200 dark:border-dark-border rounded-lg overflow-hidden">
             <div class="bg-neutral-50 dark:bg-neutral-800 px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
                 <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">{{ $class->name }}</h3>

@@ -74,14 +74,14 @@ class DemoSeeder extends Seeder
         }
 
         $classSubjectMap = [
-            'English Language'      => [$classJss1, $classJss2, $classSss1, $classSss2],
-            'Mathematics'           => [$classJss1, $classJss2, $classSss1, $classSss2],
-            'Basic Science'         => [$classJss1, $classJss2],
-            'Social Studies'        => [$classJss1, $classJss2],
-            'Computer Studies'      => [$classJss1, $classJss2, $classSss1, $classSss2],
-            'Biology'               => [$classSss1, $classSss2],
-            'Chemistry'             => [$classSss1, $classSss2],
-            'Physics'               => [$classSss1, $classSss2],
+            'English Language' => [$classJss1, $classJss2, $classSss1, $classSss2],
+            'Mathematics' => [$classJss1, $classJss2, $classSss1, $classSss2],
+            'Basic Science' => [$classJss1, $classJss2],
+            'Social Studies' => [$classJss1, $classJss2],
+            'Computer Studies' => [$classJss1, $classJss2, $classSss1, $classSss2],
+            'Biology' => [$classSss1, $classSss2],
+            'Chemistry' => [$classSss1, $classSss2],
+            'Physics' => [$classSss1, $classSss2],
         ];
 
         $classSubjects = [];
@@ -148,12 +148,12 @@ class DemoSeeder extends Seeder
         }
 
         $teacherSubjectMap = [
-            'Sarah Adeyemi'    => [[$classJss1, 'Mathematics'], [$classJss2, 'Mathematics'], [$classSss1, 'Mathematics'], [$classSss2, 'Mathematics'], [$classJss1, 'Basic Science']],
-            'Daniel Okafor'    => [[$classJss1, 'Computer Studies'], [$classJss2, 'Computer Studies'], [$classSss1, 'Computer Studies'], [$classSss2, 'Computer Studies']],
-            'Grace Williams'   => [[$classJss1, 'English Language'], [$classJss2, 'English Language'], [$classSss1, 'English Language'], [$classSss2, 'English Language']],
-            'Samuel Ibrahim'   => [[$classSss1, 'Chemistry'], [$classSss2, 'Chemistry']],
-            'Linda Eze'        => [[$classSss1, 'Biology'], [$classSss2, 'Biology']],
-            'Michael Yusuf'    => [[$classSss1, 'Physics'], [$classSss2, 'Physics']],
+            'Sarah Adeyemi' => [[$classJss1, 'Mathematics'], [$classJss2, 'Mathematics'], [$classSss1, 'Mathematics'], [$classSss2, 'Mathematics'], [$classJss1, 'Basic Science']],
+            'Daniel Okafor' => [[$classJss1, 'Computer Studies'], [$classJss2, 'Computer Studies'], [$classSss1, 'Computer Studies'], [$classSss2, 'Computer Studies']],
+            'Grace Williams' => [[$classJss1, 'English Language'], [$classJss2, 'English Language'], [$classSss1, 'English Language'], [$classSss2, 'English Language']],
+            'Samuel Ibrahim' => [[$classSss1, 'Chemistry'], [$classSss2, 'Chemistry']],
+            'Linda Eze' => [[$classSss1, 'Biology'], [$classSss2, 'Biology']],
+            'Michael Yusuf' => [[$classSss1, 'Physics'], [$classSss2, 'Physics']],
         ];
 
         foreach ($teacherSubjectMap as $teacherName => $assignments) {

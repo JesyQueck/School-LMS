@@ -26,4 +26,9 @@ class AcademicSession extends Model
     {
         return $this->hasMany(Term::class, 'academic_session_id');
     }
+
+    public function timetables(): HasMany
+    {
+        return $this->hasMany(Timetable::class, 'academic_session_id');
+    }
 }

@@ -30,6 +30,11 @@ class SchoolClass extends Model
         return $this->hasMany(ClassSubject::class, 'class_id');
     }
 
+    public function timetables(): HasMany
+    {
+        return $this->hasManyThrough(Timetable::class, ClassSubject::class, 'class_id', 'class_subject_id');
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class, 'class_id');
