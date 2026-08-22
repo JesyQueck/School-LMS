@@ -12,6 +12,7 @@ class ClassSubject extends Model
         'class_id',
         'subject_id',
         'is_compulsory',
+        'periods_per_week',
     ];
 
     protected $casts = [

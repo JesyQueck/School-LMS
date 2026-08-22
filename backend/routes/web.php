@@ -212,5 +212,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/timetable/{timetable}/edit', [TimetableController::class, 'edit'])->name('timetable.edit');
         Route::put('/timetable/{timetable}', [TimetableController::class, 'update'])->name('timetable.update');
         Route::delete('/timetable/{timetable}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
+        Route::post('/timetable/periods', [TimetableController::class, 'savePeriodConfig'])->name('timetable.periods.store');
+        Route::post('/timetable/generate', [TimetableController::class, 'generate'])->name('timetable.generate');
+        Route::get('/timetable/preview', [TimetableController::class, 'preview'])->name('timetable.preview');
+        Route::post('/timetable/confirm-generate', [TimetableController::class, 'confirmGenerate'])->name('timetable.confirm-generate');
     });
 });

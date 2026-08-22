@@ -11,14 +11,7 @@
 
     @php
         $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        $timetable = \App\Models\Timetable::with(['classSubject.subject', 'classSubject.class'])
-            ->join('class_subjects', 'timetable.class_subject_id', '=', 'class_subjects.id')
-            ->whereIn('class_subjects.id', $subjectAssignmentIds)
-            ->orderBy('timetable.day')
-            ->orderBy('timetable.start_time')
-            ->select('timetable.*')
-            ->get()
-            ->groupBy('day');
+        $timetable = $timetable->groupBy('day');
     @endphp
 
     <div class="space-y-6">
@@ -33,8 +26,8 @@
                             @foreach($timetable[$day] as $period)
                                 <div class="flex items-center gap-4 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
                                     <div class="flex-shrink-0 text-center">
-                                        <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ \Carbon\Carbon::parse($period->start_time)->format('H:i') }}</p>
-                                        <p class="text-xs text-neutral-400 dark:text-neutral-500">{{ \Carbon\Carbon::parse($period->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($period->end_time)->format('H:i') }}</p>
+                                        <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ \Carbon\Carbon::parse($period->start_time)->format('g:i A') }}</p>
+                                        <p class="text-xs text-neutral-400 dark:text-neutral-500">{{ \Carbon\Carbon::parse($period->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($period->end_time)->format('g:i A') }}</p>
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $period->classSubject->subject->name ?? 'N/A' }}</p>

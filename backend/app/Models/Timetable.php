@@ -17,6 +17,16 @@ class Timetable extends Model
         'end_time',
         'term_id',
         'academic_session_id',
+        'is_locked',
+        'is_manual',
+        'period_config_id',
+    ];
+
+    protected $casts = [
+        'is_locked' => 'boolean',
+        'is_manual' => 'boolean',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
     ];
 
     public function classSubject(): BelongsTo
@@ -37,5 +47,10 @@ class Timetable extends Model
     public function academicSession(): BelongsTo
     {
         return $this->belongsTo(AcademicSession::class, 'academic_session_id');
+    }
+
+    public function periodConfig(): BelongsTo
+    {
+        return $this->belongsTo(PeriodConfig::class);
     }
 }

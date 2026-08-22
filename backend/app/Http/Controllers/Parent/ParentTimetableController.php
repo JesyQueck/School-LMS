@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Parent;
 
 use App\Http\Controllers\Controller;
-use App\Models\ClassSubject;
 use App\Models\Student;
+use App\Models\Timetable;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class ParentTimetableController extends Controller
@@ -33,30 +34,40 @@ class ParentTimetableController extends Controller
             return collect();
         }
 
-        $classSubjects = ClassSubject::with(['subject', 'teacherAssignments.teacher.user'])
-            ->where('class_id', $classId)
-            ->get();
+        $periods = Timetable::with([
+            'classSubject.subject',
+            'teacher.user',
+        ])
+            ->whereHas('classSubject', function ($query) use ($classId) {
+                $query->where('class_id', $classId);
+            })
+            ->orderByRaw(
+                "CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 ELSE 6 END"
+            )
+            ->orderBy('start_time')
+            ->get()
+            ->map(function (Timetable $entry, $index) {
+                return [
+                    'period' => $index + 1,
+                    'day' => $entry->day,
+                    'subject' => $entry->classSubject->subject->name ?? 'Unknown Subject',
+                    'teacher' => $entry->teacher && $entry->teacher->user
+                        ? $entry->teacher->user->name
+                        : 'Not assigned',
+                    'start_time' => Carbon::parse($entry->start_time)->format('g:i A'),
+                    'end_time' => Carbon::parse($entry->end_time)->format('g:i A'),
+                ];
+            })
+            ->groupBy('day');
 
-        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        $periods = collect();
-        $dayIndex = 0;
-        $periodNumber = 1;
+        $allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-        foreach ($classSubjects as $index => $cs) {
-            $teacher = $cs->teacherAssignments->first()?->teacher?->user;
-            $periods->push([
-                'day' => $days[$dayIndex % count($days)],
-                'period' => $periodNumber,
-                'subject' => $cs->subject->name ?? 'Unknown Subject',
-                'teacher' => $teacher ? $teacher->name : 'Not assigned',
-            ]);
-
-            $dayIndex++;
-            if ($dayIndex % count($days) === 0) {
-                $periodNumber++;
+        foreach ($allDays as $day) {
+            if (! $periods->has($day)) {
+                $periods->put($day, collect());
             }
         }
 
-        return $periods->sortBy(['day', 'period'])->values();
+        return $periods;
     }
 }

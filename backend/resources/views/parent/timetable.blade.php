@@ -29,34 +29,35 @@
             </div>
         @endif
 
-        @if($periods->count() > 0)
+        @if($periods->isNotEmpty())
             <div class="space-y-4">
                 @foreach($days as $day)
-                    @php $dayClasses = $periods->where('day', $day)->sortBy('period'); @endphp
                     <x-ui.card>
                         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                             <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">{{ $day }}</h3>
                         </div>
                         <div class="p-4">
                             <div class="overflow-x-auto">
-                                <table class="w-full">
+                                <table class="w-full text-sm">
                                     <thead class="bg-neutral-50 dark:bg-neutral-800">
                                         <tr>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase">Period</th>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase">Subject</th>
-                                            <th class="px-4 py-2 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase">Teacher</th>
+                                            <th class="px-4 py-2 text-left font-medium text-neutral-500 dark:text-neutral-400 uppercase">Period</th>
+                                            <th class="px-4 py-2 text-left font-medium text-neutral-500 dark:text-neutral-400 uppercase">Subject</th>
+                                            <th class="px-4 py-2 text-left font-medium text-neutral-500 dark:text-neutral-400 uppercase">Teacher</th>
+                                            <th class="px-4 py-2 text-left font-medium text-neutral-500 dark:text-neutral-400 uppercase">Time</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white dark:bg-dark-surface">
-                                        @forelse($dayClasses as $p)
+                                        @forelse($periods[$day] ?? [] as $p)
                                             <tr class="border-b border-neutral-100 dark:border-dark-border last:border-0">
-                                                <td class="px-4 py-3 text-sm text-neutral-900 dark:text-white">{{ $p['period'] }}</td>
-                                                <td class="px-4 py-3 text-sm font-medium text-neutral-900 dark:text-white">{{ $p['subject'] }}</td>
-                                                <td class="px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400">{{ $p['teacher'] }}</td>
+                                                <td class="px-4 py-3 text-neutral-900 dark:text-white">{{ $p['period'] }}</td>
+                                                <td class="px-4 py-3 font-medium text-neutral-900 dark:text-white">{{ $p['subject'] }}</td>
+                                                <td class="px-4 py-3 text-neutral-500 dark:text-neutral-400">{{ $p['teacher'] }}</td>
+                                                <td class="px-4 py-3 text-neutral-500 dark:text-neutral-400">{{ $p['start_time'] }} - {{ $p['end_time'] }}</td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="3" class="px-4 py-4 text-sm text-neutral-500 dark:text-neutral-400 text-center">No classes scheduled.</td>
+                                                <td colspan="4" class="px-4 py-4 text-neutral-500 dark:text-neutral-400 text-center">No classes scheduled.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -64,7 +65,6 @@
                             </div>
                         </div>
                     </x-ui.card>
-                @endforeach
             </div>
         @else
             <x-ui.empty-state title="No timetable available" description="There are no subjects scheduled for the selected child's class yet." />

@@ -4,20 +4,83 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
+use App\Models\ClassSubject;
+use App\Models\PeriodConfig;
 use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\Term;
 use App\Models\Timetable;
+use App\Services\TimetableGeneratorService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class TimetableController extends Controller
 {
     use AuditsActions;
 
-    public const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    public const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-    public function index(Request $request)
+    private function resolveCurrentTerm(): ?Term
+    {
+        return Term::where('is_current', true)
+            ->with('academicSession')
+            ->first();
+    }
+
+    private function resolveConfig(?Term $currentTerm): ?PeriodConfig
+    {
+        if (! $currentTerm) {
+            return null;
+        }
+
+        return PeriodConfig::firstOrCreate(
+            ['term_id' => $currentTerm->id],
+            [
+                'academic_session_id' => $currentTerm->academic_session_id,
+                'periods_per_day' => 8,
+                'start_day' => 'Monday',
+                'end_day' => 'Friday',
+            ]
+        );
+    }
+
+    private function ensurePeriods(PeriodConfig $config): void
+    {
+        if ($config->periods()->count() > 0) {
+            return;
+        }
+
+        $defaultPeriods = [
+            ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:45', 'is_break' => false],
+            ['period_number' => 2, 'name' => 'Period 2', 'start_time' => '08:45', 'end_time' => '09:30', 'is_break' => false],
+            ['period_number' => 3, 'name' => 'Period 3', 'start_time' => '09:30', 'end_time' => '10:15', 'is_break' => false],
+            ['period_number' => 4, 'name' => 'Period 4', 'start_time' => '10:15', 'end_time' => '11:00', 'is_break' => false],
+            ['period_number' => 5, 'name' => 'Break', 'start_time' => '11:00', 'end_time' => '11:30', 'is_break' => true],
+            ['period_number' => 6, 'name' => 'Period 5', 'start_time' => '11:30', 'end_time' => '12:15', 'is_break' => false],
+            ['period_number' => 7, 'name' => 'Period 6', 'start_time' => '12:15', 'end_time' => '13:00', 'is_break' => false],
+            ['period_number' => 8, 'name' => 'Period 7', 'start_time' => '13:00', 'end_time' => '13:45', 'is_break' => false],
+            ['period_number' => 9, 'name' => 'Period 8', 'start_time' => '13:45', 'end_time' => '14:30', 'is_break' => false],
+        ];
+
+        $slice = $config->periods_per_day + 1;
+        $toInsert = array_slice($defaultPeriods, 0, $slice);
+
+        foreach ($toInsert as $index => $p) {
+            $config->periods()->create([
+                'period_number' => $p['period_number'],
+                'name' => $p['name'],
+                'start_time' => $p['start_time'],
+                'end_time' => $p['end_time'],
+                'is_break' => $p['is_break'],
+                'sort_order' => $index,
+            ]);
+        }
+    }
+
+    private function loadData($config, $currentTerm): array
     {
         $classes = SchoolClass::with('classSubjects.subject')->get();
         $teachers = Teacher::with('user')->get();
@@ -25,81 +88,224 @@ class TimetableController extends Controller
             $q->where('is_current', true);
         })->get();
         $sessions = AcademicSession::where('is_current', true)->get();
+        $subjects = Subject::all();
+        $periodConfigs = PeriodConfig::with('periods')->get();
 
-        $currentTerm = Term::where('is_current', true)
-            ->with('academicSession')
-            ->first();
+        $classSubjects = ClassSubject::with(['class', 'subject', 'teacherAssignments.teacher.user'])->get();
 
-        $sessionId = $request->input('session_id', $currentTerm?->academic_session_id);
-        $termId = $request->input('term_id', $currentTerm?->id);
-        $classId = $request->input('class_id');
-        $teacherId = $request->input('teacher_id');
+        return compact(
+            'classes',
+            'teachers',
+            'terms',
+            'sessions',
+            'subjects',
+            'currentTerm',
+            'config',
+            'periodConfigs',
+            'classSubjects'
+        );
+    }
 
-        $timetableQuery = Timetable::with([
+    public function index(Request $request)
+    {
+        $currentTerm = $this->resolveCurrentTerm();
+        $config = $this->resolveConfig($currentTerm);
+
+        if ($config && $config->periods()->count() === 0) {
+            $this->ensurePeriods($config);
+            $config->load('periods');
+        }
+
+        $classId = $request->query('class_id');
+        $teacherId = $request->query('teacher_id');
+        $subjectId = $request->query('subject_id');
+        $day = $request->query('day');
+        $sessionId = $request->query('session_id');
+        $termId = $request->query('term_id');
+
+        $query = Timetable::with([
             'classSubject.class',
             'classSubject.subject',
             'teacher.user',
             'term',
             'academicSession',
-        ])
-            ->orderByRaw("CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6 WHEN 'Sunday' THEN 7 ELSE 8 END")
-            ->orderBy('start_time');
+        ])->orderByRaw(
+            "CASE day WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 ELSE 6 END"
+        )->orderBy('start_time');
 
-        if ($termId) {
-            $timetableQuery->where('term_id', $termId);
+        $queryId = $termId ?: $currentTerm?->id;
+        if ($queryId) {
+            $query->where('term_id', $queryId);
         }
 
         if ($sessionId) {
-            $timetableQuery->where('academic_session_id', $sessionId);
+            $query->where('academic_session_id', $sessionId);
         }
 
         if ($classId) {
-            $timetableQuery->whereHas('classSubject.class', function ($q) use ($classId) {
+            $query->whereHas('classSubject.class', function ($q) use ($classId) {
                 $q->where('id', $classId);
             });
         }
 
         if ($teacherId) {
-            $timetableQuery->where('teacher_id', $teacherId);
+            $query->where('teacher_id', $teacherId);
         }
 
-        $timetable = $timetableQuery->get();
+        if ($subjectId) {
+            $query->whereHas('classSubject.subject', function ($q) use ($subjectId) {
+                $q->where('id', $subjectId);
+            });
+        }
 
-        return view('admin.timetable.index', compact(
-            'classes',
-            'teachers',
-            'terms',
-            'sessions',
-            'timetable',
-            'currentTerm',
-            'request'
-        ));
+        if ($day) {
+            $query->where('day', $day);
+        }
+
+        $timetable = $query->get();
+
+        $data = $this->loadData($config, $currentTerm);
+        $data['timetable'] = $timetable;
+        $data['request'] = $request;
+        $previewData = session('timetable_preview');
+        if ($previewData) {
+            $previewData['entries'] = collect($previewData['entries'] ?? []);
+            $previewData['warnings'] = collect($previewData['warnings'] ?? []);
+        }
+        $data['previewData'] = $previewData;
+        $data['previewCount'] = $previewData ? $previewData['entries']->count() : 0;
+
+        return view('admin.timetable.index', $data);
     }
 
-    public function create(Request $request)
+    public function savePeriodConfig(Request $request)
     {
-        $classes = SchoolClass::with('classSubjects.subject')->get();
-        $teachers = Teacher::with('user')->get();
-        $terms = Term::whereHas('academicSession', function ($q) {
-            $q->where('is_current', true);
-        })->get();
-        $sessions = AcademicSession::where('is_current', true)->get();
+        $currentTerm = $this->resolveCurrentTerm();
 
-        $currentTerm = Term::where('is_current', true)
-            ->with('academicSession')
-            ->first();
+        if (! $currentTerm) {
+            return redirect()->route('admin.timetable.index')->withErrors('No current term configured. Please set up an academic session and term first.');
+        }
 
-        return view('admin.timetable.create', compact(
-            'classes',
-            'teachers',
-            'terms',
-            'sessions',
-            'currentTerm'
-        ));
+        $validated = $request->validate([
+            'periods_per_day' => ['required', 'integer', 'min:1', 'max:20'],
+            'start_day' => ['required', 'in:'.implode(',', self::DAYS)],
+            'end_day' => ['required', 'in:'.implode(',', self::DAYS)],
+            'periods' => ['required', 'array', 'min:1'],
+            'periods.*.period_number' => ['required', 'integer', 'min:1'],
+            'periods.*.name' => ['nullable', 'string', 'max:255'],
+            'periods.*.start_time' => ['required', 'date_format:H:i'],
+            'periods.*.end_time' => ['required', 'date_format:H:i'],
+            'periods.*.is_break' => ['nullable', 'boolean'],
+        ]);
+
+        $generator = new TimetableGeneratorService(
+            $this->resolveConfig($currentTerm)
+        );
+
+        $periods = $validated['periods'];
+        $errors = $generator->validatePeriods($periods);
+
+        if ($errors->isNotEmpty()) {
+            return redirect()->route('admin.timetable.index')->withErrors($errors->toArray());
+        }
+
+        $config = PeriodConfig::updateOrCreate(
+            ['term_id' => $currentTerm->id],
+            [
+                'academic_session_id' => $currentTerm->academic_session_id,
+                'periods_per_day' => $validated['periods_per_day'],
+                'start_day' => $validated['start_day'],
+                'end_day' => $validated['end_day'],
+            ]
+        );
+
+        DB::transaction(function () use ($config, $periods) {
+            $config->periods()->delete();
+
+            usort($periods, fn ($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
+
+            foreach ($periods as $index => $p) {
+                $config->periods()->create([
+                    'period_number' => $p['period_number'],
+                    'name' => $p['name'] ?? null,
+                    'start_time' => $p['start_time'],
+                    'end_time' => $p['end_time'],
+                    'is_break' => $p['is_break'] ?? false,
+                    'sort_order' => $p['sort_order'] ?? $index,
+                ]);
+            }
+        });
+
+        $this->audit($request, 'period_config.saved', PeriodConfig::class, $config->id, null, $validated);
+
+        return redirect()->route('admin.timetable.index')->with('status', 'Period configuration saved successfully.');
+    }
+
+    public function generate(Request $request)
+    {
+        $currentTerm = $this->resolveCurrentTerm();
+
+        if (! $currentTerm) {
+            return back()->withErrors('No current term configured.');
+        }
+
+        $config = PeriodConfig::where('term_id', $currentTerm->id)->first();
+
+        if (! $config || $config->periods()->count() === 0) {
+            $config = $this->resolveConfig($currentTerm);
+            $this->ensurePeriods($config);
+            $config->load('periods');
+        }
+
+        $generator = new TimetableGeneratorService($config);
+        $result = $generator->generate();
+
+        session()->put('timetable_preview', $result);
+
+        return redirect()->route('admin.timetable.index')->with('status', 'Timetable generated. Review the preview below.');
+    }
+
+    public function preview(Request $request)
+    {
+        $preview = session('timetable_preview');
+        $config = $this->resolveConfig($this->resolveCurrentTerm());
+
+        $data = $this->loadData($config, $this->resolveCurrentTerm());
+        $data['previewData'] = $preview;
+
+        return view('admin.timetable.preview', $data);
+    }
+
+    public function confirmGenerate(Request $request)
+    {
+        $preview = session('timetable_preview');
+
+        if (! $preview) {
+            return redirect()->route('admin.timetable.index')->withErrors('No timetable preview found. Please generate first.');
+        }
+
+        $entries = $preview['entries'] ?? [];
+        $config = $this->resolveConfig($this->resolveCurrentTerm());
+
+        if (! $config) {
+            return redirect()->route('admin.timetable.index')->withErrors('No current term configured.');
+        }
+
+        $generator = new TimetableGeneratorService($config);
+
+        DB::transaction(function () use ($generator, $entries) {
+            $generator->saveGenerated($entries instanceof Collection ? $entries->toArray() : $entries);
+        });
+
+        session()->forget('timetable_preview');
+
+        return redirect()->route('admin.timetable.index')->with('status', 'Timetable generated and saved successfully.');
     }
 
     public function store(Request $request)
     {
+        $currentTerm = $this->resolveCurrentTerm();
+
         $data = $request->validate([
             'class_subject_id' => ['required', 'exists:class_subjects,id'],
             'teacher_id' => ['nullable', 'exists:teachers,id'],
@@ -108,42 +314,51 @@ class TimetableController extends Controller
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'term_id' => ['nullable', 'exists:terms,id'],
             'academic_session_id' => ['nullable', 'exists:academic_sessions,id'],
+            'is_locked' => ['nullable', 'boolean'],
         ]);
 
-        $timetable = Timetable::create($data);
+        $data['term_id'] = $data['term_id'] ?? $currentTerm?->id;
+        $data['academic_session_id'] = $data['academic_session_id'] ?? $currentTerm?->academic_session_id;
+        $data['is_locked'] = $data['is_locked'] ?? false;
+        $data['is_manual'] = true;
 
-        $this->audit($request, 'timetable.created', Timetable::class, $timetable->id, null, $data);
+        $timetable = new Timetable($data);
+
+        $periodConfig = PeriodConfig::firstOrCreate(
+            ['term_id' => $currentTerm->id],
+            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+
+        $generator = new TimetableGeneratorService($periodConfig);
+
+        $conflicts = $generator->validateTimetableEntry($timetable);
+
+        if ($conflicts->isNotEmpty()) {
+            return redirect()->route('admin.timetable.index')->withInput()->withErrors($conflicts->toArray());
+        }
+
+        $timetable->save();
+
+        $this->audit($request, 'timetable.manual_created', Timetable::class, $timetable->id, null, $data);
 
         return redirect()->route('admin.timetable.index')->with('status', 'Timetable entry created successfully.');
     }
 
     public function edit(Timetable $timetable)
     {
-        $classes = SchoolClass::with('classSubjects.subject')->get();
-        $teachers = Teacher::with('user')->get();
-        $terms = Term::whereHas('academicSession', function ($q) {
-            $q->where('is_current', true);
-        })->get();
-        $sessions = AcademicSession::where('is_current', true)->get();
+        $currentTerm = $this->resolveCurrentTerm();
+        $config = $this->resolveConfig($currentTerm);
 
-        $currentTerm = Term::where('is_current', true)
-            ->with('academicSession')
-            ->first();
+        $data = $this->loadData($config, $currentTerm);
+        $data['timetable'] = $timetable->load(['classSubject.class', 'classSubject.subject', 'teacher.user', 'term', 'academicSession', 'periodConfig.periods']);
 
-        $timetable->load(['classSubject.class', 'classSubject.subject', 'teacher.user', 'term', 'academicSession']);
-
-        return view('admin.timetable.edit', compact(
-            'timetable',
-            'classes',
-            'teachers',
-            'terms',
-            'sessions',
-            'currentTerm'
-        ));
+        return view('admin.timetable.edit', $data);
     }
 
     public function update(Request $request, Timetable $timetable)
     {
+        $currentTerm = $this->resolveCurrentTerm();
+
         $data = $request->validate([
             'class_subject_id' => ['required', 'exists:class_subjects,id'],
             'teacher_id' => ['nullable', 'exists:teachers,id'],
@@ -152,9 +367,32 @@ class TimetableController extends Controller
             'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
             'term_id' => ['nullable', 'exists:terms,id'],
             'academic_session_id' => ['nullable', 'exists:academic_sessions,id'],
+            'is_locked' => ['nullable', 'boolean'],
         ]);
 
+        $wasManual = $timetable->exists;
+        $data['is_locked'] = $data['is_locked'] ?? false;
+        if ($wasManual) {
+            $data['is_manual'] = true;
+        }
+
         $oldValue = $timetable->toArray();
+
+        $periodConfig = PeriodConfig::firstOrCreate(
+            ['term_id' => $currentTerm->id],
+            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+
+        $generator = new TimetableGeneratorService($periodConfig);
+
+        $model = clone $timetable;
+        $model->fill($data);
+        $conflicts = $generator->validateTimetableEntry($model);
+
+        if ($conflicts->isNotEmpty()) {
+            return redirect()->route('admin.timetable.index')->withInput()->withErrors($conflicts->toArray());
+        }
+
         $timetable->update($data);
 
         $this->audit($request, 'timetable.updated', Timetable::class, $timetable->id, $oldValue, $timetable->toArray());
