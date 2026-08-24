@@ -482,19 +482,39 @@ class TimetableController extends Controller
 
     public function swap(Request $request)
     {
-        $validated = $request->validate([
+        $isAjax = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        $validator = \Validator::make($request->all(), [
             'entry_a_id' => ['required', 'exists:timetables,id'],
             'entry_b_id' => ['required', 'exists:timetables,id'],
         ]);
+
+        if ($validator->fails()) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid request.',
+                    'errors' => $validator->errors()->toArray(),
+                ], 422);
+            }
+
+            return redirect()->route('admin.timetable.index')->withInput()->withErrors($validator);
+        }
+
+        $validated = $validator->validated();
 
         $entryA = Timetable::findOrFail($validated['entry_a_id']);
         $entryB = Timetable::findOrFail($validated['entry_b_id']);
 
         if ($entryA->id === $entryB->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot swap an entry with itself.',
-            ], 400);
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap an entry with itself.',
+                ], 400);
+            }
+
+            return redirect()->route('admin.timetable.index')->withErrors('Cannot swap an entry with itself.');
         }
 
         $currentTerm = $this->resolveCurrentTerm();
@@ -506,8 +526,6 @@ class TimetableController extends Controller
         ));
 
         $conflicts = $generator->validateSwap($entryA, $entryB);
-
-        $isAjax = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
 
         if ($conflicts->isNotEmpty()) {
             if ($isAjax) {
