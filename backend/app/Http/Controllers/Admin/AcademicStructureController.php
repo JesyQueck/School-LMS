@@ -8,10 +8,13 @@ use App\Models\ClassSubject;
 use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Term;
+use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 
 class AcademicStructureController extends Controller
 {
+    use AuditsActions;
+
     public function index()
     {
         return view('admin.academic.index', [
@@ -75,11 +78,33 @@ class AcademicStructureController extends Controller
             'class_id' => ['required', 'exists:classes,id'],
             'subject_id' => ['required', 'exists:subjects,id'],
             'is_compulsory' => ['nullable', 'boolean'],
+            'periods_per_week' => ['nullable', 'integer', 'min:0', 'max:20'],
         ]);
+
+        $data['is_compulsory'] = $data['is_compulsory'] ?? true;
+        $data['periods_per_week'] = $data['periods_per_week'] ?? 1;
 
         ClassSubject::create($data);
 
         return redirect()->route('admin.academic')->with('status', 'Class subject created.');
+    }
+
+    public function updateClassSubject(Request $request, ClassSubject $classSubject)
+    {
+        $data = $request->validate([
+            'is_compulsory' => ['nullable', 'boolean'],
+            'periods_per_week' => ['nullable', 'integer', 'min:0', 'max:20'],
+        ]);
+
+        $data['is_compulsory'] = $data['is_compulsory'] ?? $classSubject->is_compulsory;
+        $data['periods_per_week'] = $data['periods_per_week'] ?? $classSubject->periods_per_week;
+
+        $oldValue = $classSubject->toArray();
+        $classSubject->update($data);
+
+        $this->audit($request, 'class_subject.updated', ClassSubject::class, $classSubject->id, $oldValue, $classSubject->toArray());
+
+        return redirect()->route('admin.academic')->with('status', 'Class-subject periods per week updated.');
     }
 
     /**

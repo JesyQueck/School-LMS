@@ -39,14 +39,14 @@
             @if($config)
             <form method="POST" action="{{ route('admin.timetable.periods.store') }}" id="period-config-form">
                 @csrf
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Periods per Day</label>
-                        <input type="number" name="periods_per_day" min="1" max="20" value="{{ $config->periods_per_day }}" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <input type="number" name="periods_per_day" min="1" max="20" value="{{ $config->periods_per_day }}" class="w-24 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Start Day</label>
-                        <select name="start_day" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <select name="start_day" class="w-32 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
                             @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $day)
                                 <option value="{{ $day }}" {{ $config->start_day == $day ? 'selected' : '' }}>{{ $day }}</option>
                             @endforeach
@@ -54,11 +54,14 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">End Day</label>
-                        <select name="end_day" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <select name="end_day" class="w-32 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
                             @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $day)
                                 <option value="{{ $day }}" {{ $config->end_day == $day ? 'selected' : '' }}>{{ $day }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm text-sm">Save</button>
                     </div>
                 </div>
                 <div id="periods-list" class="space-y-1 mb-2">
@@ -66,11 +69,10 @@
                         @include('admin.timetable.partials.period-input', ['period' => $period, 'index' => $loop->index, 'showDelete' => false])
                     @endforeach
                 </div>
-                <div class="flex justify-between items-center">
+                <div class="flex justify-between items-center mt-3">
                     <button type="button" id="add-period-btn" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                         + Add Period
                     </button>
-                    <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm text-sm">Save</button>
                 </div>
             </form>
             @endif
@@ -199,10 +201,10 @@
 
         {{-- C. Filters --}}
         <x-ui.card class="p-3">
-            <form method="GET" action="{{ route('admin.timetable.index') }}" class="grid grid-cols-1 sm:grid-cols-8 gap-2 items-end">
+            <form method="GET" action="{{ route('admin.timetable.index') }}" class="grid grid-cols-1 sm:grid-cols-7 gap-2 items-end">
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Session</label>
-                    <select name="session_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="session_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($sessions as $s)
                             <option value="{{ $s->id }}" {{ $request->input('session_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
@@ -211,7 +213,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Term</label>
-                    <select name="term_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="term_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($terms as $t)
                             <option value="{{ $t->id }}" {{ $request->input('term_id', $currentTerm?->id) == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
@@ -220,7 +222,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Class</label>
-                    <select name="class_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="class_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($classes as $c)
                             <option value="{{ $c->id }}" {{ $request->input('class_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -229,7 +231,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Teacher</label>
-                    <select name="teacher_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="teacher_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($teachers as $t)
                             <option value="{{ $t->id }}" {{ $request->input('teacher_id') == $t->id ? 'selected' : '' }}>{{ $t->user?->name ?? 'Unnamed' }}</option>
@@ -238,7 +240,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Subject</label>
-                    <select name="subject_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="subject_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($subjects as $s)
                             <option value="{{ $s->id }}" {{ $request->input('subject_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
@@ -247,16 +249,16 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Day</label>
-                    <select name="day" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="day" class="w-32 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $d)
                             <option value="{{ $d }}" {{ $request->input('day') == $d ? 'selected' : '' }}>{{ $d }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="flex gap-1">
+                <div class="flex gap-1 h-8">
                     <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm h-8 text-sm">Apply</button>
-                    <button type="button" onclick="window.location.href='{{ route('admin.timetable.index') }}'" class="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 h-8 flex items-end">Clear</button>
+                    <button type="button" onclick="window.location.href='{{ route('admin.timetable.index') }}'" class="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 h-8 px-2">Clear</button>
                 </div>
             </form>
         </x-ui.card>
@@ -323,32 +325,48 @@
                                                     $startTime = \Carbon\Carbon::parse($period->start_time)->format('g:i A');
                                                     $endTime = \Carbon\Carbon::parse($period->end_time)->format('g:i A');
                                                 @endphp
-                                                <tr>
-                                                    <td class="px-2 py-1 text-neutral-600 dark:text-neutral-400 border-r">{{ $startTime }} - {{ $endTime }}</td>
-                                                    @foreach($allDays as $d)
-                                                        @php
-                                                            $key = $d . '|' . $periodStart;
-                                                            $slot = $entriesBySlot[$key] ?? null;
-                                                        @endphp
-                                                        <td class="px-1 py-1 text-center border-r last:border-0">
-                                                            @if($slot)
-                                                                @php $isLocked = $slot->is_locked; @endphp
-                                                                <div class="{{ $isLocked ? 'bg-warning-50 dark:bg-warning-900/20' : 'bg-neutral-50 dark:bg-neutral-800/50' }} p-1 rounded text-left group relative">
-                                                                    <div class="font-medium text-neutral-900 dark:text-white text-xs">
-                                                                        {{ $slot->classSubject->subject->name ?? 'N/A' }}
-                                                                    </div>
-                                                                    <div class="text-neutral-500 dark:text-neutral-400 text-xs">
-                                                                        {{ $slot->teacher?->user?->name ?? 'Not assigned' }}
-                                                                    </div>
-                                                                    @if($isLocked)
-                                                                        <span class="text-xs text-warning-600 dark:text-warning-400">Locked</span>
-                                                                    @endif
-                                                                    <div class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 flex gap-1">
-                                                                        <a href="{{ route('admin.timetable.edit', $slot) }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
-                                                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-4-9l-6 6v2h2l6-6 2-2V7a2 2 0 00-2-2h-2z"/></svg>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
+                                                    <tr>
+                                                     <td class="px-2 py-1 text-neutral-600 dark:text-neutral-400 border-r">{{ $startTime }} - {{ $endTime }}</td>
+                                                     @foreach($allDays as $d)
+                                                         @php
+                                                             $key = $d . '|' . $periodStart;
+                                                             $slot = $entriesBySlot[$key] ?? null;
+                                                         @endphp
+                                                         <td class="px-1 py-1 text-center border-r last:border-0 drop-cell"
+                                                             data-day="{{ $d }}"
+                                                             data-period="{{ $period->period_number }}"
+                                                             data-period-start="{{ $periodStart }}">
+                                                             @if($slot)
+                                                                 @php $isLocked = $slot->is_locked; @endphp
+                                                                 <div class="{{ $isLocked ? 'bg-warning-50 dark:bg-warning-900/20' : 'bg-neutral-50 dark:bg-neutral-800/50' }} p-1 rounded text-left group relative {{ $isLocked ? '' : 'draggable-entry' }}"
+                                                                     draggable="{{ $isLocked ? 'false' : 'true' }}"
+                                                                     data-entry-id="{{ $slot->id }}"
+                                                                     data-current-day="{{ $slot->day }}"
+                                                                     data-current-start="{{ $periodStart }}">
+                                                                     <div class="font-medium text-neutral-900 dark:text-white text-xs">
+                                                                         {{ $slot->classSubject->subject->name ?? 'N/A' }}
+                                                                     </div>
+                                                                     <div class="text-neutral-500 dark:text-neutral-400 text-xs">
+                                                                         {{ $slot->teacher?->user?->name ?? 'Not assigned' }}
+                                                                     </div>
+                                                                     @if($isLocked)
+                                                                         <span class="text-xs text-warning-600 dark:text-warning-400">Locked</span>
+                                                                     @endif
+                                                                     <div class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 flex gap-1">
+                                                                         <button type="button"
+                                                                             class="move-entry-btn text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                                                                             data-entry-id="{{ $slot->id }}"
+                                                                             data-current-day="{{ $slot->day }}"
+                                                                             data-current-start="{{ \Carbon\Carbon::parse($slot->start_time)->format('H:i') }}"
+                                                                             data-current-end="{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}"
+                                                                             title="Move to another day/period">
+                                                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12M8 7l3-3 3 3M8 7l3 3 3-3m-9 9h12m-12 0l3-3 3 3m-3-3v6"/></svg>
+                                                                         </button>
+                                                                         <a href="{{ route('admin.timetable.edit', $slot) }}" class="text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300">
+                                                                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-4-9l-6 6v2h2l6-6 2-2V7a2 2 0 00-2-2h-2z"/></svg>
+                                                                         </a>
+                                                                     </div>
+                                                                 </div>
                                                             @else
                                                                 <span class="text-neutral-300 dark:text-neutral-600">—</span>
                                                             @endif
@@ -369,12 +387,43 @@
         {{-- Manual Entry --}}
         <x-ui.card class="p-3">
             <div class="py-1">
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-1.5">Manually move entries between days/periods using the move icon in each grid cell, or add new entries.</p>
                 <a href="{{ route('admin.timetable.create') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1.5 rounded shadow-sm text-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     Add Entry Manually
                 </a>
             </div>
         </x-ui.card>
+    </div>
+
+    {{-- Quick-Move Modal --}}
+    <div id="move-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-dark-surface rounded-lg shadow-xl w-80 m-4 p-4">
+            <h4 class="text-lg font-semibold text-neutral-900 dark:text-white mb-3">Move Entry</h4>
+            <form id="move-form" method="POST">
+                @csrf
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Day</label>
+                    <select name="day" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                        @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $d)
+                            <option value="{{ $d }}">{{ $d }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Start Time</label>
+                    <input type="time" name="start_time" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">End Time</label>
+                    <input type="time" name="end_time" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" id="move-cancel" class="text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 px-3 py-1 text-sm">Cancel</button>
+                    <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm text-sm">Move</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     @push('scripts')
@@ -397,6 +446,120 @@
                     content.classList.add('hidden');
                     icon.style.transform = 'rotate(0deg)';
                 }
+            });
+        });
+
+        var moveModal = document.getElementById('move-modal');
+        var moveForm = document.getElementById('move-form');
+
+        document.querySelectorAll('.move-entry-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var entryId = this.getAttribute('data-entry-id');
+                var currentDay = this.getAttribute('data-current-day');
+                var currentStart = this.getAttribute('data-current-start');
+                var currentEnd = this.getAttribute('data-current-end');
+
+                var formAction = '{{ url('admin/timetable') }}/' + entryId + '/move';
+                moveForm.action = formAction;
+
+                var daySelect = moveForm.querySelector('select[name="day"]');
+                var startTimeInput = moveForm.querySelector('input[name="start_time"]');
+                var endTimeInput = moveForm.querySelector('input[name="end_time"]');
+
+                daySelect.value = currentDay;
+                startTimeInput.value = currentStart;
+                endTimeInput.value = currentEnd;
+
+                moveModal.classList.remove('hidden');
+                moveModal.classList.add('flex');
+                moveModal.classList.add('items-center');
+                moveModal.classList.add('justify-center');
+            });
+        });
+
+        document.getElementById('move-cancel').addEventListener('click', function() {
+            moveModal.classList.remove('flex');
+            moveModal.classList.add('hidden');
+        });
+
+        moveModal.addEventListener('click', function(e) {
+            if (e.target === moveModal) {
+                moveModal.classList.remove('flex');
+                moveModal.classList.add('hidden');
+            }
+        });
+
+        var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        var periodEndMap = @json($config?->periods?->where('is_break', false)->keyBy('start_time')->map(function($p) { return \Carbon\Carbon::parse($p->end_time)->format('H:i'); })->toArray() ?? {});
+
+        document.querySelectorAll('.draggable-entry').forEach(function(el) {
+            el.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    entryId: this.getAttribute('data-entry-id'),
+                    fromDay: this.getAttribute('data-current-day'),
+                    fromPeriod: this.getAttribute('data-current-start')
+                }));
+                this.classList.add('opacity-50');
+            });
+
+            el.addEventListener('dragend', function() {
+                this.classList.remove('opacity-50');
+            });
+        });
+
+        var dropCells = document.querySelectorAll('.drop-cell');
+        var dropHighlightClass = 'ring-2 ring-primary-400 dark:ring-primary-500';
+
+        dropCells.forEach(function(cell) {
+            cell.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (cell.querySelector('.draggable-entry')) {
+                    e.dataTransfer.dropEffect = 'none';
+                    cell.classList.remove(dropHighlightClass);
+                    return;
+                }
+                e.dataTransfer.dropEffect = 'move';
+                cell.classList.add(dropHighlightClass);
+            });
+
+            cell.addEventListener('dragleave', function() {
+                cell.classList.remove(dropHighlightClass);
+            });
+
+            cell.addEventListener('drop', function(e) {
+                e.preventDefault();
+                cell.classList.remove(dropHighlightClass);
+
+                var data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                var toDay = cell.getAttribute('data-day');
+                var toPeriodStart = cell.getAttribute('data-period-start');
+
+                if (data.fromDay === toDay && data.fromPeriod === toPeriodStart) {
+                    return;
+                }
+
+                var endTime = periodEndMap[toPeriodStart] || '';
+
+                fetch('{{ url('admin/timetable') }}/' + data.entryId + '/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: 'day=' + encodeURIComponent(toDay) +
+                          '&start_time=' + encodeURIComponent(toPeriodStart) +
+                          '&end_time=' + encodeURIComponent(endTime)
+                })
+                .then(function(resp) {
+                    if (resp.ok) {
+                        window.location.reload();
+                    } else {
+                        return resp.text().then(function(t) { alert('Move failed: ' + t); });
+                    }
+                })
+                .catch(function(err) { alert('Error: ' + err.message); });
             });
         });
 

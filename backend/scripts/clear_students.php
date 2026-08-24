@@ -1,37 +1,47 @@
 <?php
 
-$baseDir = dirname(__DIR__);
-require $baseDir.'/vendor/autoload.php';
-$app = require $baseDir.'/bootstrap/app.php';
-$kernel = $app->make(Kernel::class);
-$kernel->bootstrap();
+/**
+ * Cleanup Script: Clear all student records and parent profiles.
+ *
+ * This removes students, parent profiles, and any user records
+ * that are exclusively for students and parents (no cross-references).
+ * Also clears student-related data (contacts, documents, emergency contacts).
+ * Run with: php scripts/clear_students.php
+ */
+
+require __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 
 use App\Models\ImportCredential;
 use App\Models\ParentProfile;
 use App\Models\Student;
+use App\Models\StudentContact;
+use App\Models\StudentDocument;
+use App\Models\StudentEmergencyContact;
 use App\Models\User;
-use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
-DB::statement('SET FOREIGN_KEY_CHECKS=0');
+DB::transaction(function () {
+    $studentUserIds = Student::where('user_id', '!=', null)->pluck('user_id')->toArray();
+    $parentUserIds = ParentProfile::where('user_id', '!=', null)->pluck('user_id')->toArray();
+    $allUserIds = array_unique(array_merge($studentUserIds, $parentUserIds));
 
-Student::truncate();
-ParentProfile::truncate();
-User::whereIn('role', ['student', 'parent'])->delete();
-ImportCredential::where('role', 'student')->orWhere('role', 'parent')->delete();
-DB::statement('SET FOREIGN_KEY_CHECKS=1');
+    StudentContact::whereIn('student_id', Student::pluck('id'))->delete();
+    StudentEmergencyContact::whereIn('student_id', Student::pluck('id'))->delete();
+    StudentDocument::whereIn('student_id', Student::pluck('id'))->delete();
 
-echo "Students cleared, Parents cleared, student/parent users deleted\n";
-echo 'Remaining users: '.User::count().PHP_EOL;
-echo 'Remaining credentials: '.ImportCredential::count().PHP_EOL;
+    $studentCount = Student::count();
+    $parentCount = ParentProfile::count();
 
-$classes = DB::table('classes')->count();
-$sessions = DB::table('academic_sessions')->count();
-echo "Classes: {$classes}, Sessions: {$sessions}\n";
+    Student::query()->delete();
+    ParentProfile::query()->delete();
 
-$firstClass = DB::table('classes')->first();
-$firstSession = DB::table('academic_sessions')->first();
-echo "First class: {$firstClass->name}, First session: {$firstSession->name}\n";
+    User::whereIn('id', $allUserIds)->whereIn('role', ['student', 'parent'])->delete();
 
-$subjects = DB::table('subjects')->count();
-echo "Subjects: {$subjects}\n";
+    ImportCredential::whereIn('role', ['student', 'parent'])->delete();
+
+    echo "Deleted {$studentCount} student(s) and {$parentCount} parent(s).\n";
+    echo "Cleaned up associated user records, contacts, documents, and credentials.\n";
+    echo "Done. You can now re-import students via the admin UI.\n";
+});

@@ -907,4 +907,116 @@ class TimetableManagementTest extends TestCase
         $this->assertCount(1, $timetable);
         $this->assertEquals('Mathematics', $timetable->first()->classSubject->subject->name);
     }
+
+    public function test_timetable_move_entry(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $timetable = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.move', $timetable), [
+            'day' => 'Tuesday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable->id,
+            'day' => 'Tuesday',
+            'start_time' => '08:00',
+        ]);
+    }
+
+    public function test_timetable_move_entry_validation(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $timetable = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.move', $timetable), [
+            'day' => 'Monday',
+            'start_time' => '09:00',
+            'end_time' => '08:00',
+        ]);
+
+        $response->assertSessionHasErrors(['end_time']);
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+        ]);
+    }
+
+    public function test_timetable_move_entry_conflict(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $timetable1 = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'term_id' => $this->term->id,
+        ]);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+        $otherSubject = Subject::create(['name' => 'English']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $otherSubject->id,
+        ]);
+
+        $timetable2 = Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.move', $timetable1), [
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+        ]);
+
+        $response->assertSessionHasErrors();
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable1->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+        ]);
+    }
 }

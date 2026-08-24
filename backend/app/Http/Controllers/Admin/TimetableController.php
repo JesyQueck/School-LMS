@@ -302,6 +302,16 @@ class TimetableController extends Controller
         return redirect()->route('admin.timetable.index')->with('status', 'Timetable generated and saved successfully.');
     }
 
+    public function create()
+    {
+        $currentTerm = $this->resolveCurrentTerm();
+        $config = $this->resolveConfig($currentTerm);
+
+        $data = $this->loadData($config, $currentTerm);
+
+        return view('admin.timetable.create', $data);
+    }
+
     public function store(Request $request)
     {
         $currentTerm = $this->resolveCurrentTerm();
@@ -407,5 +417,48 @@ class TimetableController extends Controller
         $timetable->delete();
 
         return redirect()->route('admin.timetable.index')->with('status', 'Timetable entry removed successfully.');
+    }
+
+    public function move(Request $request, Timetable $timetable)
+    {
+        $request->validate([
+            'day' => ['required', 'in:'.implode(',', self::DAYS)],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+        ]);
+
+        $currentTerm = $this->resolveCurrentTerm();
+        $config = $this->resolveConfig($currentTerm);
+        $periodConfig = $config;
+
+        $generator = new TimetableGeneratorService($periodConfig ?? PeriodConfig::firstOrCreate(
+            ['term_id' => $currentTerm->id],
+            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        ));
+
+        $oldValue = $timetable->toArray();
+
+        $model = clone $timetable;
+        $model->fill([
+            'day' => $request->input('day'),
+            'start_time' => $request->input('start_time'),
+            'end_time' => $request->input('end_time'),
+        ]);
+
+        $conflicts = $generator->validateTimetableEntry($model);
+
+        if ($conflicts->isNotEmpty()) {
+            return redirect()->route('admin.timetable.index')->withInput()->withErrors($conflicts->toArray());
+        }
+
+        $timetable->update([
+            'day' => $request->input('day'),
+            'start_time' => $request->input('start_time'),
+            'end_time' => $request->input('end_time'),
+        ]);
+
+        $this->audit($request, 'timetable.moved', Timetable::class, $timetable->id, $oldValue, $timetable->toArray());
+
+        return redirect()->route('admin.timetable.index')->with('status', 'Entry moved to '.$request->input('day').' '.$request->input('start_time').'.');
     }
 }

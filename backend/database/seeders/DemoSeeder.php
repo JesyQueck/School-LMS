@@ -84,6 +84,17 @@ class DemoSeeder extends Seeder
             'Physics' => [$classSss1, $classSss2],
         ];
 
+        $periodsPerWeek = [
+            'English Language' => 4,
+            'Mathematics' => 4,
+            'Basic Science' => 3,
+            'Social Studies' => 3,
+            'Computer Studies' => 2,
+            'Biology' => 3,
+            'Chemistry' => 3,
+            'Physics' => 3,
+        ];
+
         $classSubjects = [];
 
         foreach ($classSubjectMap as $subjectName => $classes) {
@@ -91,7 +102,7 @@ class DemoSeeder extends Seeder
                 $key = "{$subjectName}-{$class->name}";
                 $classSubjects[$key] = ClassSubject::updateOrCreate(
                     ['class_id' => $class->id, 'subject_id' => $subjects[$subjectName]->id],
-                    ['is_compulsory' => true]
+                    ['is_compulsory' => true, 'periods_per_week' => $periodsPerWeek[$subjectName] ?? 1]
                 );
             }
         }

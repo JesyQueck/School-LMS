@@ -29,10 +29,10 @@ class Subject extends Model
         $toDetach = array_diff($currentClassIds, $classIds);
 
         foreach ($toAttach as $classId) {
-            ClassSubject::firstOrCreate([
-                'class_id' => $classId,
-                'subject_id' => $this->id,
-            ]);
+            ClassSubject::firstOrCreate(
+                ['class_id' => $classId, 'subject_id' => $this->id],
+                ['periods_per_week' => 1]
+            );
         }
 
         if (! empty($toDetach)) {

@@ -157,6 +157,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/academic/sessions/{session}', [AcademicStructureController::class, 'updateSession'])->name('academic.sessions.update');
         Route::post('/academic/terms', [AcademicStructureController::class, 'createTerm'])->name('academic.terms.store');
         Route::post('/academic/class-subjects', [AcademicStructureController::class, 'createClassSubject'])->name('academic.class_subjects.store');
+        Route::put('/academic/class-subjects/{classSubject}', [AcademicStructureController::class, 'updateClassSubject'])->name('academic.class_subjects.update');
         Route::delete('/academic/class-subjects/{classSubject}', [AcademicStructureController::class, 'destroyClassSubject'])->name('academic.class_subjects.destroy');
         Route::post('/academic/sessions/{session}/current', [AcademicStructureController::class, 'makeSessionCurrent'])->name('academic.sessions.current');
         Route::post('/academic/terms/{term}/current', [AcademicStructureController::class, 'makeTermCurrent'])->name('academic.terms.current');
@@ -216,5 +217,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/timetable/generate', [TimetableController::class, 'generate'])->name('timetable.generate');
         Route::get('/timetable/preview', [TimetableController::class, 'preview'])->name('timetable.preview');
         Route::post('/timetable/confirm-generate', [TimetableController::class, 'confirmGenerate'])->name('timetable.confirm-generate');
+        Route::post('/timetable/{timetable}/move', [TimetableController::class, 'move'])->name('timetable.move');
     });
 });

@@ -162,6 +162,59 @@
                     <p class="p-6 text-sm text-neutral-500 dark:text-neutral-400">No sessions yet.</p>
                 @endforelse
             </div>
+         </x-ui.card>
+
+        {{-- Class Subjects --}}
+        <x-ui.card>
+            <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Class Subjects</h3>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Set how many periods per week each subject gets for each class. Used by the timetable generator.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+                    <thead class="bg-neutral-50 dark:bg-dark-surface">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Class</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Subject</th>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Compulsory</th>
+                            <th class="px-6 py-3 text-center text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Periods/Week</th>
+                            <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                        @forelse($classSubjects as $cs)
+                            <tr>
+                                <td class="px-6 py-4 text-sm text-neutral-900 dark:text-neutral-200">{{ $cs->class->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 text-sm text-neutral-900 dark:text-neutral-200">{{ $cs->subject->name ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $cs->is_compulsory ? 'Yes' : 'No' }}</td>
+                                <td class="px-6 py-4">
+                                    <form method="POST" action="{{ route('admin.academic.class_subjects.update', $cs) }}" class="flex justify-center">
+                                        @csrf
+                                        @method('PUT')
+                                        <input type="number" name="periods_per_week" min="0" max="20" value="{{ $cs->periods_per_week }}"
+                                            class="w-16 text-center text-sm rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                            onchange="this.form.submit()">
+                                    </form>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex justify-end">
+                                        <form method="POST" action="{{ route('admin.academic.class_subjects.destroy', $cs) }}"
+                                            onsubmit="return confirm('Remove this class-subject association?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-sm text-danger-600 hover:text-danger-700 dark:text-danger-400 dark:hover:text-danger-300">Remove</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No class subjects configured.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </x-ui.card>
     </div>
 </x-layouts.app>
