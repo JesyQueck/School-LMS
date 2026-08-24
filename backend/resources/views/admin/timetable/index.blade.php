@@ -39,14 +39,14 @@
             @if($config)
             <form method="POST" action="{{ route('admin.timetable.periods.store') }}" id="period-config-form">
                 @csrf
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3">
+                <div class="flex flex-wrap gap-3 items-end mb-3">
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Periods per Day</label>
-                        <input type="number" name="periods_per_day" min="1" max="20" value="{{ $config->periods_per_day }}" class="w-24 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <input type="number" name="periods_per_day" min="1" max="20" value="{{ $config->periods_per_day }}" class="w-20 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Start Day</label>
-                        <select name="start_day" class="w-32 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <select name="start_day" class="w-28 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
                             @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $day)
                                 <option value="{{ $day }}" {{ $config->start_day == $day ? 'selected' : '' }}>{{ $day }}</option>
                             @endforeach
@@ -54,7 +54,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">End Day</label>
-                        <select name="end_day" class="w-32 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <select name="end_day" class="w-28 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500">
                             @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $day)
                                 <option value="{{ $day }}" {{ $config->end_day == $day ? 'selected' : '' }}>{{ $day }}</option>
                             @endforeach
@@ -64,12 +64,12 @@
                         <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm text-sm">Save</button>
                     </div>
                 </div>
-                <div id="periods-list" class="space-y-1 mb-2">
+                <div id="periods-list" class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-2">
                     @foreach($config->periods->sortBy('sort_order') as $period)
                         @include('admin.timetable.partials.period-input', ['period' => $period, 'index' => $loop->index, 'showDelete' => false])
                     @endforeach
                 </div>
-                <div class="flex justify-between items-center mt-3">
+                <div class="mt-2">
                     <button type="button" id="add-period-btn" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
                         + Add Period
                     </button>
@@ -201,7 +201,7 @@
 
         {{-- C. Filters --}}
         <x-ui.card class="p-3">
-            <form method="GET" action="{{ route('admin.timetable.index') }}" class="grid grid-cols-1 sm:grid-cols-7 gap-2 items-end">
+            <form method="GET" action="{{ route('admin.timetable.index') }}" class="flex flex-wrap gap-3 items-end">
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Session</label>
                     <select name="session_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
@@ -231,7 +231,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Teacher</label>
-                    <select name="teacher_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="teacher_id" class="w-40 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($teachers as $t)
                             <option value="{{ $t->id }}" {{ $request->input('teacher_id') == $t->id ? 'selected' : '' }}>{{ $t->user?->name ?? 'Unnamed' }}</option>
@@ -240,7 +240,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Subject</label>
-                    <select name="subject_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="subject_id" class="w-40 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($subjects as $s)
                             <option value="{{ $s->id }}" {{ $request->input('subject_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
@@ -273,6 +273,10 @@
                     $allDays = App\Http\Controllers\Admin\TimetableController::DAYS;
                     $activePeriods = $config?->periods?->where('is_break', false)->sortBy('sort_order') ?? collect();
                     $filteredClasses = $request->input('class_id') ? $classes->where('id', $request->input('class_id')) : $classes;
+
+                    $periodEndMap = $activePeriods->keyBy(fn($p) => \Carbon\Carbon::parse($p->start_time)->format('H:i'))
+                        ->map(fn($p) => \Carbon\Carbon::parse($p->end_time)->format('H:i'))
+                        ->toArray();
                 @endphp
 
                 @if($timetable->isEmpty())
@@ -342,7 +346,8 @@
                                                                      draggable="{{ $isLocked ? 'false' : 'true' }}"
                                                                      data-entry-id="{{ $slot->id }}"
                                                                      data-current-day="{{ $slot->day }}"
-                                                                     data-current-start="{{ $periodStart }}">
+                                                                      data-current-start="{{ $periodStart }}"
+                                                                      data-current-end="{{ \Carbon\Carbon::parse($slot->end_time)->format('H:i') }}">
                                                                      <div class="font-medium text-neutral-900 dark:text-white text-xs">
                                                                          {{ $slot->classSubject->subject->name ?? 'N/A' }}
                                                                      </div>
@@ -491,14 +496,46 @@
         });
 
         var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-        var periodEndMap = @json($config?->periods?->where('is_break', false)->keyBy('start_time')->map(function($p) { return \Carbon\Carbon::parse($p->end_time)->format('H:i'); })->toArray() ?? {});
+        var periodEndMap = @json($periodEndMap ?? []);
+        var swapUrl = '{{ url('admin/timetable/swap') }}';
+        var moveUrl = '{{ url('admin/timetable') }}/';
+
+        function doMove(entryId, toDay, toPeriodStart, toEndTime) {
+            return fetch(moveUrl + entryId + '/move', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: 'day=' + encodeURIComponent(toDay) +
+                      '&start_time=' + encodeURIComponent(toPeriodStart) +
+                      '&end_time=' + encodeURIComponent(toEndTime)
+            });
+        }
+
+        function doSwap(entryAId, entryBId) {
+            return fetch(swapUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: 'entry_a_id=' + encodeURIComponent(entryAId) +
+                      '&entry_b_id=' + encodeURIComponent(entryBId)
+            });
+        }
 
         document.querySelectorAll('.draggable-entry').forEach(function(el) {
             el.addEventListener('dragstart', function(e) {
+                var entryId = this.getAttribute('data-entry-id');
+                var day = this.getAttribute('data-current-day');
+                var start = this.getAttribute('data-current-start');
                 e.dataTransfer.setData('text/plain', JSON.stringify({
-                    entryId: this.getAttribute('data-entry-id'),
-                    fromDay: this.getAttribute('data-current-day'),
-                    fromPeriod: this.getAttribute('data-current-start')
+                    entryId: entryId,
+                    fromDay: day,
+                    fromPeriod: start
                 }));
                 this.classList.add('opacity-50');
             });
@@ -509,57 +546,63 @@
         });
 
         var dropCells = document.querySelectorAll('.drop-cell');
-        var dropHighlightClass = 'ring-2 ring-primary-400 dark:ring-primary-500';
+        var highlightClasses = ['ring-2', 'ring-primary-400', 'dark:ring-primary-500'];
 
         dropCells.forEach(function(cell) {
             cell.addEventListener('dragover', function(e) {
                 e.preventDefault();
-                if (cell.querySelector('.draggable-entry')) {
-                    e.dataTransfer.dropEffect = 'none';
-                    cell.classList.remove(dropHighlightClass);
-                    return;
-                }
-                e.dataTransfer.dropEffect = 'move';
-                cell.classList.add(dropHighlightClass);
+                cell.classList.add(...highlightClasses);
             });
 
             cell.addEventListener('dragleave', function() {
-                cell.classList.remove(dropHighlightClass);
+                cell.classList.remove(...highlightClasses);
             });
 
             cell.addEventListener('drop', function(e) {
                 e.preventDefault();
-                cell.classList.remove(dropHighlightClass);
+                cell.classList.remove(...highlightClasses);
 
                 var data = JSON.parse(e.dataTransfer.getData('text/plain'));
                 var toDay = cell.getAttribute('data-day');
                 var toPeriodStart = cell.getAttribute('data-period-start');
+                var toEndTime = periodEndMap[toPeriodStart] || '';
 
                 if (data.fromDay === toDay && data.fromPeriod === toPeriodStart) {
                     return;
                 }
 
-                var endTime = periodEndMap[toPeriodStart] || '';
+                var targetEntry = cell.querySelector('.draggable-entry');
 
-                fetch('{{ url('admin/timetable') }}/' + data.entryId + '/move', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    body: 'day=' + encodeURIComponent(toDay) +
-                          '&start_time=' + encodeURIComponent(toPeriodStart) +
-                          '&end_time=' + encodeURIComponent(endTime)
-                })
-                .then(function(resp) {
-                    if (resp.ok) {
-                        window.location.reload();
-                    } else {
-                        return resp.text().then(function(t) { alert('Move failed: ' + t); });
-                    }
-                })
-                .catch(function(err) { alert('Error: ' + err.message); });
+                if (targetEntry) {
+                    var targetId = targetEntry.getAttribute('data-entry-id');
+
+                    doSwap(data.entryId, targetId)
+                        .then(function(resp) {
+                            return resp.json();
+                        })
+                        .then(function(r) {
+                            if (r && r.success) {
+                                window.location.reload();
+                            } else {
+                                var msg = (r && r.errors && r.errors.length) ? r.errors.join(' ') : (r && r.message ? r.message : 'Unknown error');
+                                alert('Swap failed: ' + msg);
+                            }
+                        })
+                        .catch(function(err) { alert('Swap error: ' + err.message); });
+                } else {
+                    doMove(data.entryId, toDay, toPeriodStart, toEndTime)
+                        .then(function(resp) {
+                            return resp.json();
+                        })
+                        .then(function(r) {
+                            if (r && r.success) {
+                                window.location.reload();
+                            } else {
+                                alert('Move failed: ' + (r && r.message ? r.message : 'Unknown error'));
+                            }
+                        })
+                        .catch(function(err) { alert('Error: ' + err.message); });
+                }
             });
         });
 
@@ -575,21 +618,22 @@
                 periodCounter++;
                 const container = document.getElementById('periods-list');
                 const div = document.createElement('div');
-                div.className = 'grid grid-cols-5 gap-2 items-end p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg';
+                div.className = 'grid grid-cols-5 gap-1.5 items-end py-1';
                 div.innerHTML = `
                     <div class="col-span-2">
-                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Name</label>
-                        <input type="text" name="periods[${periodCounter}][name]" placeholder="e.g. Period 9" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">Name</label>
+                        <input type="text" name="periods[${periodCounter}][name]" placeholder="e.g. Period 9" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
                     </div>
                     <input type="hidden" name="periods[${periodCounter}][period_number]" value="${periodCounter}">
                     <input type="hidden" name="periods[${periodCounter}][sort_order]" value="${periodCounter}">
+                    <input type="hidden" name="periods[${periodCounter}][is_break]" value="0">
                     <div>
-                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Start</label>
-                        <input type="time" name="periods[${periodCounter}][start_time]" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">Start</label>
+                        <input type="time" name="periods[${periodCounter}][start_time]" class="w-24 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
                     </div>
                     <div>
-                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">End</label>
-                        <input type="time" name="periods[${periodCounter}][end_time]" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">End</label>
+                        <input type="time" name="periods[${periodCounter}][end_time]" class="w-24 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
                     </div>
                     <div class="flex items-end">
                         <label class="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">

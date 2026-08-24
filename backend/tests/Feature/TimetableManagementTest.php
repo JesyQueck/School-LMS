@@ -1019,4 +1019,284 @@ class TimetableManagementTest extends TestCase
             'start_time' => '08:00',
         ]);
     }
+
+    public function test_timetable_move_entry_ajax_response(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $timetable = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.move', $timetable), [
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+            'end_time' => '10:50',
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true])
+            ->assertJsonStructure(['success', 'message']);
+
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+        ]);
+    }
+
+    public function test_timetable_move_entry_conflict_ajax_response(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+        $otherSubject = Subject::create(['name' => 'English']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $otherSubject->id,
+        ]);
+
+        $timetable1 = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'term_id' => $this->term->id,
+        ]);
+
+        $timetable2 = Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.move', $timetable1), [
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(409)
+            ->assertJson(['success' => false])
+            ->assertJsonStructure(['success', 'message', 'errors']);
+
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable1->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+        ]);
+    }
+
+    public function test_timetable_move_entry_swap_same_teacher(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+        $otherSubject = Subject::create(['name' => 'English']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $otherSubject->id,
+        ]);
+
+        $timetable1 = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+            'term_id' => $this->term->id,
+        ]);
+
+        $timetable2 = Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+            'end_time' => '10:50',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.swap'), [
+            'entry_a_id' => $timetable1->id,
+            'entry_b_id' => $timetable2->id,
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable1->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+            'end_time' => '10:50',
+        ]);
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable2->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+        ]);
+    }
+
+    public function test_timetable_swap_is_atomic_on_conflict(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 2']);
+        $otherSubject = Subject::create(['name' => 'English']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $otherSubject->id,
+        ]);
+
+        $timetable1 = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+            'term_id' => $this->term->id,
+        ]);
+
+        // Entry 3 is at Monday 08:00 with same teacher — a real conflict (not part of the swap)
+        $timetable3 = Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+            'term_id' => $this->term->id,
+        ]);
+
+        $timetable2 = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+            'end_time' => '10:50',
+            'term_id' => $this->term->id,
+        ]);
+
+        // Swap 1 and 2: entry 2 would move to Monday 08:00 which conflicts with entry 3
+        $response = $this->post(route('admin.timetable.swap'), [
+            'entry_a_id' => $timetable1->id,
+            'entry_b_id' => $timetable2->id,
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(409)
+            ->assertJson(['success' => false])
+            ->assertJsonStructure(['success', 'message', 'errors']);
+
+        // Verify neither entry changed
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable1->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+        ]);
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable2->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+        ]);
+    }
+
+    public function test_timetable_swap_different_teachers(): void
+    {
+        $config = PeriodConfig::firstOrCreate(
+            ['term_id' => $this->term->id],
+            ['academic_session_id' => $this->session->id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        );
+        $generator = new TimetableGeneratorService($config);
+        $this->ensureDefaultPeriods($generator);
+
+        $otherTeacherUser = User::factory()->create(['role' => 'teacher', 'name' => 'Jane Smith']);
+        $otherTeacher = Teacher::create([
+            'user_id' => $otherTeacherUser->id,
+            'employee_id' => 'T-9999',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $otherClass = SchoolClass::create(['name' => 'JSS 3']);
+        $otherSubject = Subject::create(['name' => 'Science']);
+        $otherClassSubject = ClassSubject::create([
+            'class_id' => $otherClass->id,
+            'subject_id' => $otherSubject->id,
+        ]);
+
+        $timetable1 = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+            'term_id' => $this->term->id,
+        ]);
+
+        $timetable2 = Timetable::create([
+            'class_subject_id' => $otherClassSubject->id,
+            'teacher_id' => $otherTeacher->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+            'end_time' => '10:50',
+            'term_id' => $this->term->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.swap'), [
+            'entry_a_id' => $timetable1->id,
+            'entry_b_id' => $timetable2->id,
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable1->id,
+            'day' => 'Tuesday',
+            'start_time' => '10:10',
+        ]);
+        $this->assertDatabaseHas('timetables', [
+            'id' => $timetable2->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+        ]);
+    }
 }

@@ -210,7 +210,7 @@ class TimetableGeneratorService
         return $errors;
     }
 
-    public function validateTimetableEntry(Timetable $timetable): Collection
+    public function validateTimetableEntry(Timetable $timetable, $excludeId = null): Collection
     {
         $conflicts = collect();
 
@@ -227,6 +227,10 @@ class TimetableGeneratorService
 
             if ($timetable->exists) {
                 $conflicting->where('id', '!=', $timetable->id);
+            }
+
+            if ($excludeId) {
+                $conflicting->where('id', '!=', $excludeId);
             }
 
             $hasConflict = $conflicting->where(function ($q) use ($startTime, $endTime) {
@@ -251,6 +255,10 @@ class TimetableGeneratorService
                 $conflicting->where('id', '!=', $timetable->id);
             }
 
+            if ($excludeId) {
+                $conflicting->where('id', '!=', $excludeId);
+            }
+
             $hasConflict = $conflicting->where(function ($q) use ($startTime, $endTime) {
                 $q->whereBetween('start_time', [$startTime, $endTime])
                     ->orWhereBetween('end_time', [$startTime, $endTime]);
@@ -260,6 +268,25 @@ class TimetableGeneratorService
                 $conflicts[] = 'This class already has a lesson at this time.';
             }
         }
+
+        return $conflicts;
+    }
+
+    public function validateSwap(Timetable $entryA, Timetable $entryB): Collection
+    {
+        $conflicts = collect();
+
+        $originalA = ['day' => $entryA->day, 'start_time' => Carbon::parse($entryA->start_time)->format('H:i'), 'end_time' => Carbon::parse($entryA->end_time)->format('H:i')];
+        $originalB = ['day' => $entryB->day, 'start_time' => Carbon::parse($entryB->start_time)->format('H:i'), 'end_time' => Carbon::parse($entryB->end_time)->format('H:i')];
+
+        $modelA = clone $entryA;
+        $modelA->fill($originalB);
+
+        $modelB = clone $entryB;
+        $modelB->fill($originalA);
+
+        $conflicts = $conflicts->merge($this->validateTimetableEntry($modelA, $entryB->id));
+        $conflicts = $conflicts->merge($this->validateTimetableEntry($modelB, $entryA->id));
 
         return $conflicts;
     }

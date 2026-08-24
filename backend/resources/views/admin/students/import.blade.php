@@ -62,22 +62,22 @@
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Review the data before importing students.</p>
                 </div>
                 <div class="p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-neutral-50 dark:bg-dark-surface rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $totalRows }}</div>
-                            <div class="text-sm text-neutral-500 dark:text-neutral-400">Total Rows</div>
+                    <div class="flex flex-wrap gap-3 mb-6">
+                        <div class="flex-1 min-w-[120px] bg-neutral-50 dark:bg-dark-surface rounded-lg p-3 text-center">
+                            <div class="text-xl font-bold text-neutral-900 dark:text-white">{{ $totalRows }}</div>
+                            <div class="text-xs text-neutral-500 dark:text-neutral-400">Total Rows</div>
                         </div>
-                        <div class="bg-success-50 dark:bg-success-900/20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-success-700 dark:text-success-300">{{ $validCount }}</div>
-                            <div class="text-sm text-neutral-500 dark:text-neutral-400">Valid Rows</div>
+                        <div class="flex-1 min-w-[120px] bg-success-50 dark:bg-success-900/20 rounded-lg p-3 text-center">
+                            <div class="text-xl font-bold text-success-700 dark:text-success-300">{{ $validCount }}</div>
+                            <div class="text-xs text-neutral-500 dark:text-neutral-400">Valid Rows</div>
                         </div>
-                        <div class="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-danger-700 dark:text-danger-300">{{ $invalidRows->count() }}</div>
-                            <div class="text-sm text-neutral-500 dark:text-neutral-400">Invalid Rows</div>
+                        <div class="flex-1 min-w-[120px] bg-danger-50 dark:bg-danger-900/20 rounded-lg p-3 text-center">
+                            <div class="text-xl font-bold text-danger-700 dark:text-danger-300">{{ $invalidRows->count() }}</div>
+                            <div class="text-xs text-neutral-500 dark:text-neutral-400">Invalid Rows</div>
                         </div>
-                        <div class="bg-warning-50 dark:bg-warning-900/20 rounded-lg p-4 text-center">
-                            <div class="text-2xl font-bold text-warning-700 dark:text-warning-300">{{ $parentsToCreate }}</div>
-                            <div class="text-sm text-neutral-500 dark:text-neutral-400">Parents to Create</div>
+                        <div class="flex-1 min-w-[120px] bg-warning-50 dark:bg-warning-900/20 rounded-lg p-3 text-center">
+                            <div class="text-xl font-bold text-warning-700 dark:text-warning-300">{{ $parentsToCreate }}</div>
+                            <div class="text-xs text-neutral-500 dark:text-neutral-400">Parents to Create</div>
                         </div>
                     </div>
 

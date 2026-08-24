@@ -218,5 +218,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/timetable/preview', [TimetableController::class, 'preview'])->name('timetable.preview');
         Route::post('/timetable/confirm-generate', [TimetableController::class, 'confirmGenerate'])->name('timetable.confirm-generate');
         Route::post('/timetable/{timetable}/move', [TimetableController::class, 'move'])->name('timetable.move');
+        Route::post('/timetable/swap', [TimetableController::class, 'swap'])->name('timetable.swap');
     });
 });

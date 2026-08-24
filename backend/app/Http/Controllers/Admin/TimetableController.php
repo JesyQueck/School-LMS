@@ -13,6 +13,7 @@ use App\Models\Term;
 use App\Models\Timetable;
 use App\Services\TimetableGeneratorService;
 use App\Traits\AuditsActions;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -447,7 +448,17 @@ class TimetableController extends Controller
 
         $conflicts = $generator->validateTimetableEntry($model);
 
+        $isAjax = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
         if ($conflicts->isNotEmpty()) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot move: schedule conflict.',
+                    'errors' => $conflicts->toArray(),
+                ], 409);
+            }
+
             return redirect()->route('admin.timetable.index')->withInput()->withErrors($conflicts->toArray());
         }
 
@@ -459,6 +470,84 @@ class TimetableController extends Controller
 
         $this->audit($request, 'timetable.moved', Timetable::class, $timetable->id, $oldValue, $timetable->toArray());
 
+        if ($isAjax) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Entry moved to '.$request->input('day').' '.$request->input('start_time').'.',
+            ]);
+        }
+
         return redirect()->route('admin.timetable.index')->with('status', 'Entry moved to '.$request->input('day').' '.$request->input('start_time').'.');
+    }
+
+    public function swap(Request $request)
+    {
+        $validated = $request->validate([
+            'entry_a_id' => ['required', 'exists:timetables,id'],
+            'entry_b_id' => ['required', 'exists:timetables,id'],
+        ]);
+
+        $entryA = Timetable::findOrFail($validated['entry_a_id']);
+        $entryB = Timetable::findOrFail($validated['entry_b_id']);
+
+        if ($entryA->id === $entryB->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot swap an entry with itself.',
+            ], 400);
+        }
+
+        $currentTerm = $this->resolveCurrentTerm();
+        $config = $this->resolveConfig($currentTerm);
+
+        $generator = new TimetableGeneratorService($config ?? PeriodConfig::firstOrCreate(
+            ['term_id' => $currentTerm->id],
+            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+        ));
+
+        $conflicts = $generator->validateSwap($entryA, $entryB);
+
+        $isAjax = $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
+
+        if ($conflicts->isNotEmpty()) {
+            if ($isAjax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot swap: schedule conflict.',
+                    'errors' => $conflicts->toArray(),
+                ], 409);
+            }
+
+            return redirect()->route('admin.timetable.index')->withInput()->withErrors($conflicts->toArray());
+        }
+
+        \DB::transaction(function () use ($request, $entryA, $entryB) {
+            $oldA = $entryA->toArray();
+            $oldB = $entryB->toArray();
+
+            $entryA->update([
+                'day' => $entryB->day,
+                'start_time' => Carbon::parse($entryB->start_time)->format('H:i'),
+                'end_time' => Carbon::parse($entryB->end_time)->format('H:i'),
+            ]);
+
+            $entryB->update([
+                'day' => $oldA['day'],
+                'start_time' => Carbon::parse($oldA['start_time'])->format('H:i'),
+                'end_time' => Carbon::parse($oldA['end_time'])->format('H:i'),
+            ]);
+
+            $this->audit($request, 'timetable.swapped', Timetable::class, $entryA->id, $oldA, $entryA->toArray());
+            $this->audit($request, 'timetable.swapped', Timetable::class, $entryB->id, $oldB, $entryB->toArray());
+        });
+
+        if ($isAjax) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Entries swapped successfully.',
+            ]);
+        }
+
+        return redirect()->route('admin.timetable.index')->with('status', 'Entries swapped successfully.');
     }
 }
