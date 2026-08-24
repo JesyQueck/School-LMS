@@ -58,14 +58,7 @@ class FinanceManagementTest extends TestCase
 
         $feeType = FeeType::where('name', 'Tuition Fee')->firstOrFail();
 
-        $studentFeeResponse = $this->post('/admin/finance/student-fees', [
-            'class_id' => $class->id,
-            'fee_type_id' => $feeType->id,
-            'term_id' => $term->id,
-            'amount_expected' => '1500.00',
-        ]);
-
-        $studentFeeResponse->assertRedirect('/admin/finance');
+        // Student fees are auto-created when fee type is created
         $this->assertDatabaseHas('student_fees', ['student_id' => $student->id, 'fee_type_id' => $feeType->id]);
 
         $studentFee = StudentFee::where('student_id', $student->id)->firstOrFail();
@@ -223,32 +216,18 @@ class FinanceManagementTest extends TestCase
         ]);
 
         $class = SchoolClass::create(['name' => 'JSS 5']);
-        $studentUser = User::factory()->create();
-        $student = Student::create([
-            'user_id' => $studentUser->id,
-            'class_id' => $class->id,
-            'admission_no' => 'ADM105',
-        ]);
 
-        $feeType = FeeType::create([
+        $response = $this->post('/admin/finance/fee-types', [
             'name' => 'Tuition Fee',
-            'amount' => 1500.00,
+            'amount' => '-500.00',
             'term_id' => $term->id,
             'class_id' => $class->id,
         ]);
 
-        $studentFeeResponse = $this->post('/admin/finance/student-fees', [
-            'class_id' => $class->id,
-            'fee_type_id' => $feeType->id,
-            'term_id' => $term->id,
-            'amount_expected' => '-500.00',
-        ]);
-
-        $studentFeeResponse->assertSessionHasErrors('amount_expected');
-        $this->assertDatabaseMissing('student_fees', [
-            'student_id' => $student->id,
-            'fee_type_id' => $feeType->id,
-            'amount_expected' => -500.00,
+        $response->assertSessionHasErrors('amount');
+        $this->assertDatabaseMissing('fee_types', [
+            'name' => 'Tuition Fee',
+            'amount' => -500.00,
         ]);
     }
 

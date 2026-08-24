@@ -181,8 +181,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
         Route::post('/finance/fee-types', [FinanceController::class, 'createFeeType'])->name('finance.fee-types.store');
-        Route::post('/finance/student-fees', [FinanceController::class, 'createStudentFee'])->name('finance.student-fees.store');
-        Route::post('/finance/payments', [FinanceController::class, 'createPayment'])->name('finance.payments.store');
+        Route::post('/finance/payments', [FinanceController::class, 'createStudentFeePayment'])->name('finance.payments.store');
         Route::get('/finance/student-fees/{studentFee}', [FinanceController::class, 'showStudentFee'])->name('finance.student-fees.show');
         Route::get('/finance/payments/{payment}/receipt', [FinanceController::class, 'paymentReceipt'])->name('finance.payments.receipt');
 

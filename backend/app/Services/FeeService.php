@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\FeeType;
 use App\Models\Payment;
+use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\User;
 use Illuminate\Database\QueryException;
@@ -112,6 +115,27 @@ class FeeService
         return 'RCPT-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
     }
 
+    public function createStudentFeesForFeeType(FeeType $feeType): void
+    {
+        if ($feeType->class_id) {
+            $students = Student::where('class_id', $feeType->class_id)->get();
+        } else {
+            $students = Student::all();
+        }
+
+        DB::transaction(function () use ($feeType, $students) {
+            foreach ($students as $student) {
+                StudentFee::firstOrCreate(
+                    ['student_id' => $student->id, 'fee_type_id' => $feeType->id, 'term_id' => $feeType->term_id],
+                    [
+                        'amount_expected' => $feeType->amount,
+                        'status' => 'unpaid',
+                    ]
+                );
+            }
+        });
+    }
+
     /**
      * School-wide finance summary.
      *
@@ -136,5 +160,47 @@ class FeeService
             'partial' => $partial,
             'unpaid' => $unpaid,
         ];
+    }
+
+    /**
+     * Per-class finance breakdown.
+     *
+     * @return array<int, array{class:string, expected:float, collected:float, outstanding:float, collection_rate:float, paid:int, partial:int, unpaid:int, total:int}>
+     */
+    public function classSummary(): array
+    {
+        return SchoolClass::withCount('students')->get()->map(function (SchoolClass $class) {
+            $studentIds = Student::where('class_id', $class->id)->pluck('id');
+
+            $fees = StudentFee::whereIn('student_id', $studentIds);
+
+            $expected = (float) $fees->sum('amount_expected');
+            $collected = (float) Payment::whereIn('student_fee_id', $fees->pluck('id'))->sum('amount_paid');
+
+            $paidCount = 0;
+            $partialCount = 0;
+            $unpaidCount = 0;
+
+            foreach ($fees->get() as $fee) {
+                $status = $this->recomputeStatus($fee);
+                match ($status) {
+                    'paid' => $paidCount++,
+                    'partial' => $partialCount++,
+                    default => $unpaidCount++,
+                };
+            }
+
+            return [
+                'class' => $class->name,
+                'expected' => $expected,
+                'collected' => $collected,
+                'outstanding' => max(0, $expected - $collected),
+                'collection_rate' => $expected > 0 ? round(($collected / $expected) * 100, 1) : 0,
+                'paid' => $paidCount,
+                'partial' => $partialCount,
+                'unpaid' => $unpaidCount,
+                'total' => $class->students_count,
+            ];
+        })->values()->toArray();
     }
 }

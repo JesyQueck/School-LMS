@@ -22,6 +22,41 @@
         <x-ui.stat-card label="Collection Rate" :value="$finance['collection_rate'] . '%'" icon="wallet" compact />
     </div>
 
+    {{-- Per-Class Breakdown --}}
+    <x-ui.card class="mb-6">
+        <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
+            <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Per-Class Breakdown</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+                <thead class="bg-neutral-50 dark:bg-dark-surface">
+                    <tr>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Class</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Students</th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Expected</th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Collected</th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Outstanding</th>
+                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Rate</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                    @forelse($classSummary as $cs)
+                        <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                            <td class="px-3 py-2 text-sm font-medium text-neutral-900 dark:text-white">{{ $cs['class'] }}</td>
+                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $cs['total'] }}</td>
+                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['expected'], 2) }}</td>
+                            <td class="px-3 py-2 text-sm text-success-600 dark:text-success-400 text-right">₦{{ number_format($cs['collected'], 2) }}</td>
+                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['outstanding'], 2) }}</td>
+                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 text-right">{{ $cs['collection_rate'] }}%</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="px-3 py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">No classes found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-ui.card>
+
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         <div class="lg:col-span-6">
             <x-ui.card>
@@ -65,41 +100,41 @@
         <div class="lg:col-span-6">
             <x-ui.card>
                 <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Assign Fee to Class</h3>
+                    <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Record Payment</h3>
+                    <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Select a student fee obligation and enter the payment details.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.student-fees.store') }}" class="p-3 space-y-3">
+                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 space-y-3">
                     @csrf
                     <div>
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class <span class="text-danger-500">*</span></label>
-                        <select name="class_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
-                            @foreach($classes as $class)
-                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Fee <span class="text-danger-500">*</span></label>
+                        <select name="student_fee_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                            @foreach($unpaidFees as $fee)
+                                <option value="{{ $fee->id }}">{{ $fee->student->full_name }} - {{ $fee->feeType->name ?? 'Fee' }} (₦{{ number_format($fee->amount_expected, 2) }})</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Fee Type <span class="text-danger-500">*</span></label>
-                            <select name="fee_type_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
-                                @foreach($feeTypes as $feeType)
-                                    <option value="{{ $feeType->id }}">{{ $feeType->name }} (₦{{ number_format($feeType->amount, 2) }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Term <span class="text-danger-500">*</span></label>
-                            <select name="term_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
-                                @foreach($terms as $term)
-                                    <option value="{{ $term->id }}">{{ $term->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount Paid (₦) <span class="text-danger-500">*</span></label>
+                        <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount Expected (₦) <span class="text-danger-500">*</span></label>
-                        <input name="amount_expected" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Payment Method</label>
+                        <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                            <option value="cash">Cash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="card">Card</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
                     </div>
-                    <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Assign Fee</button>
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Payment Date <span class="text-danger-500">*</span></label>
+                        <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Reference</label>
+                        <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    </div>
+                    <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Record Payment</button>
                 </form>
             </x-ui.card>
         </div>
@@ -190,6 +225,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="px-4 py-3">
+            {{ $studentFees->links() }}
+        </div>
     </x-ui.card>
 
     {{-- Payments --}}
@@ -208,7 +246,6 @@
                         <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Method</th>
                         <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Date</th>
                         <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Recorded By</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Receipt</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
@@ -221,15 +258,15 @@
                             <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ ucfirst($payment->payment_method ?? 'N/A') }}</td>
                             <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->payment_date?->format('d M Y') }}</td>
                             <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->recordedBy->name ?? 'System' }}</td>
-                            <td class="px-3 py-2 text-sm">
-                                <a href="{{ route('admin.finance.payments.receipt', $payment) }}" class="text-primary-600 dark:text-primary-400 hover:underline">View</a>
-                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="px-3 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No payments recorded.</td></tr>
+                        <tr><td colspan="7" class="px-3 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No payments recorded.</td></tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="px-4 py-3">
+            {{ $payments->links() }}
         </div>
     </x-ui.card>
 </x-layouts.app>

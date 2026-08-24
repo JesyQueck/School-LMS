@@ -4,19 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFeeTypeRequest;
-use App\Http\Requests\StorePaymentRequest;
-use App\Http\Requests\StoreStudentFeeRequest;
+use App\Http\Requests\StoreStudentFeePaymentRequest;
 use App\Models\FeeType;
 use App\Models\Payment;
 use App\Models\SchoolClass;
-use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Term;
 use App\Services\FeeService;
 use App\Traits\AuditsActions;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class FinanceController extends Controller
 {
@@ -56,10 +53,15 @@ class FinanceController extends Controller
 
         return view('admin.finance.index', [
             'finance' => $this->feeService->financeSummary(),
+            'classSummary' => $this->feeService->classSummary(),
             'feeTypes' => FeeType::with(['term', 'class'])->get(),
             'studentFees' => $studentFees,
             'payments' => $payments,
-            'students' => Student::with('schoolClass')->get(),
+            'unpaidFees' => StudentFee::whereIn('status', ['unpaid', 'partial'])
+                ->with(['student', 'feeType'])
+                ->latest()
+                ->limit(10)
+                ->get(),
             'terms' => Term::all(),
             'classes' => SchoolClass::all(),
             'filters' => $request->only(['class_id', 'term_id', 'status', 'search']),
@@ -84,39 +86,18 @@ class FinanceController extends Controller
 
         $feeType = FeeType::create($data);
 
+        $this->feeService->createStudentFeesForFeeType($feeType);
+
         $this->audit($request, 'fee_type.created', FeeType::class, $feeType->id, null, $data);
 
-        return redirect()->route('admin.finance')->with('status', 'Fee type created.');
+        return redirect()->route('admin.finance')->with('status', 'Fee type created. Student fees generated for '.($feeType->class ? $feeType->class->name : 'all classes').'.');
     }
 
-    public function createStudentFee(StoreStudentFeeRequest $request)
+    public function createStudentFeePayment(StoreStudentFeePaymentRequest $request)
     {
         $data = $request->validated();
 
-        $class = SchoolClass::findOrFail($data['class_id']);
-
-        DB::transaction(function () use ($class, $data, $request) {
-            $class->students()->each(function ($student) use ($data, $request) {
-                $studentFee = StudentFee::create([
-                    'student_id' => $student->id,
-                    'fee_type_id' => $data['fee_type_id'],
-                    'term_id' => $data['term_id'],
-                    'amount_expected' => $data['amount_expected'],
-                    'status' => $this->feeService->recomputeStatus(StudentFee::make(['amount_expected' => $data['amount_expected']])),
-                ]);
-
-                $this->audit($request, 'student_fee.created', StudentFee::class, $studentFee->id, null, $studentFee->toArray());
-            });
-        });
-
-        return redirect()->route('admin.finance')->with('status', 'Fee assigned to all students in '.$class->name.'.');
-    }
-
-    public function createPayment(StorePaymentRequest $request)
-    {
-        $data = $request->validated();
-
-        $studentFee = StudentFee::findOrFail($data['student_fee_id']);
+        $studentFee = StudentFee::with('student')->findOrFail($data['student_fee_id']);
 
         try {
             $payment = $this->feeService->recordPayment($studentFee, $data, $request->user());
@@ -126,7 +107,7 @@ class FinanceController extends Controller
 
         $this->audit($request, 'payment.created', Payment::class, $payment->id, null, $data);
 
-        return redirect()->route('admin.finance')->with('status', 'Payment recorded.');
+        return redirect()->route('admin.finance')->with('status', 'Payment recorded for '.$studentFee->student->full_name.'.');
     }
 
     public function paymentReceipt(Request $request, Payment $payment)
