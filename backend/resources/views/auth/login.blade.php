@@ -3,9 +3,6 @@
         <div class="max-w-md w-full">
             <div class="bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium-lg p-8">
                 <div class="text-center mb-8">
-                    <div class="mx-auto mb-6">
-                        <img src="{{ asset('images/Logo.webp') }}" alt="{{ config('school.name', 'Greenfield Academy') }}" class="h-24 w-auto object-contain">
-                    </div>
                     <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Sign in to your account</h2>
                     <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Welcome back to {{ config('school.name', config('app.name', 'Greenfield Academy')) }}</p>
                 </div>
