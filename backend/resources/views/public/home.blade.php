@@ -478,6 +478,36 @@
         </div>
     </section>
 
+    </section>
+
+    @if($announcements?->isNotEmpty())
+    <section class="bg-neutral-50 dark:bg-dark-bg py-20 lg:py-32">
+        <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
+            <div class="text-center mx-auto mb-12 sm:mb-16 max-w-2xl">
+                <span class="inline-flex items-center gap-2 rounded-full bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-800/40 px-3.5 py-1.5 text-xs font-bold text-primary-700 dark:text-primary-300 mb-5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-primary-500"></span>
+                    Latest News
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight leading-[1.15] mb-4">
+                    Announcements
+                </h2>
+                <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                    Stay informed with the latest school announcements.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($announcements as $announcement)
+                <div class="bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border p-6 shadow-premium">
+                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-2">{{ $announcement->title }}</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-3">{{ $announcement->created_at->diffForHumans() }}</p>
+                    <p class="text-sm text-neutral-600 dark:text-neutral-400">{{ $announcement->body }}</p>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
     {{-- ============================================ --}}
     {{-- 13. PREMIUM FOOTER (via footer component)    --}}
     {{-- ============================================ --}}

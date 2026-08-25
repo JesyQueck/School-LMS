@@ -1,7 +1,7 @@
 <x-layouts.app title="Finance Management">
     <div class="mb-6">
         <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin" active>Finance</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="/admin/dashboard" active>Finance</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Finance Management</h1>
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage fee types, student fees, and payment records.</p>

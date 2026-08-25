@@ -30,6 +30,7 @@ class AnnouncementsController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:10000'],
             'target_role' => ['required', 'in:all,student,teacher,parent'],
+            'show_on_website' => ['boolean'],
         ]);
 
         $announcement = Announcement::create(array_merge($data, [

@@ -50,6 +50,18 @@
                         <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <div class="flex items-start pt-2">
+                    <div class="flex items-center h-5">
+                        <input id="show_on_website" name="show_on_website" type="checkbox" value="1" {{ old('show_on_website') ? 'checked' : '' }} class="h-4 w-4 rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500 dark:bg-dark-surface dark:checked-bg-primary-600">
+                    </div>
+                    <div class="ml-2">
+                        <label for="show_on_website" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                            Show on public website
+                        </label>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400">Also display this announcement on the public-facing school website, regardless of target audience.</p>
+                    </div>
+                </div>
             </div>
         </x-ui.card>
 

@@ -9,6 +9,10 @@ class PublicController extends Controller
     public function home()
     {
         $announcements = Announcement::forRole('all')
+            ->where(function ($q) {
+                $q->where('target_role', 'all')
+                    ->orWhere('show_on_website', true);
+            })
             ->with('createdBy')
             ->latest()
             ->limit(3)
@@ -34,7 +38,10 @@ class PublicController extends Controller
 
     public function announcements()
     {
-        $announcements = Announcement::forRole('all')
+        $announcements = Announcement::where(function ($q) {
+            $q->where('target_role', 'all')
+                ->orWhere('show_on_website', true);
+        })
             ->with('createdBy')
             ->latest()
             ->paginate(15);

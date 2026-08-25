@@ -31,6 +31,7 @@
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Title</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Target</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Public</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Created By</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Date</th>
                     </tr>
@@ -40,12 +41,19 @@
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                             <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $announcement->title }}</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ ucfirst($announcement->target_role) }}</td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">
+                                @if($announcement->show_on_website)
+                                    <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2 py-0.5 text-xs font-medium text-success-800 dark:text-success-200">Yes</span>
+                                @else
+                                    <span class="text-neutral-400 dark:text-neutral-600">No</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $announcement->createdBy->name ?? 'N/A' }}</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $announcement->created_at?->format('M d, Y') ?? 'N/A' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center">
+                                    <td colspan="5" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
                                     <svg class="h-12 w-12 text-neutral-400 dark:text-neutral-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.231V1a1 1 0 011.707-.707l2.5 2.5a1 1 0 01-1.414 1.414L14 3.414V9m-3 3h8a1 1 0 110 2H7a1 1 0 01-1-1V9.414l-1.293-1.293A1 1 0 017 7v5z"/></svg>
                                     <p class="text-sm text-neutral-500 dark:text-neutral-400">No announcements found.</p>

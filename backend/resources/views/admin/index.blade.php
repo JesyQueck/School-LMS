@@ -16,16 +16,16 @@
 
     {{-- School Statistics --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="user" />
+        <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="users" />
         <x-ui.stat-card label="Teachers" :value="number_format($totalTeachers)" icon="graduation-cap" />
         <x-ui.stat-card label="Classes" :value="number_format($totalClasses)" icon="school" />
         <x-ui.stat-card label="Parents" :value="number_format($totalParents)" icon="users" />
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-start">
         {{-- Academic Overview --}}
-        <div class="lg:col-span-8">
-            <x-ui.card>
+        <div class="lg:col-span-8 h-full">
+            <x-ui.card class="h-full flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Academic Overview</h3>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Current academic setup and teacher workload.</p>
@@ -41,10 +41,10 @@
                     </div>
                     <div>
                         <p class="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Teachers Assigned</p>
-                        <p class="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{{ $teachersAssigned }}/{{ $totalTeachersForAssignment }}</p>
+                        <p class="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{{ $teachersAssigned }}/{{ max(1, $totalTeachersForAssignment) }}</p>
                     </div>
                 </div>
-                <div class="px-6 pb-6">
+                <div class="px-6 pb-6 mt-auto">
                     <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Results</p>
                     <div class="space-y-3">
                         <div>
@@ -71,7 +71,7 @@
                                 <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsPending }}</span>
                             </div>
                             <div class="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-warning-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsPending / $resultsSubmitted) * 100) : 0 }}%"></div>
+                                <div class="h-full rounded-full bg-warning-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsPending / max(1, $resultsSubmitted)) * 100) : 0 }}%"></div>
                             </div>
                         </div>
                     </div>
@@ -80,12 +80,12 @@
         </div>
 
         {{-- Finance Overview --}}
-        <div class="lg:col-span-4">
-            <x-ui.card>
+        <div class="lg:col-span-4 h-full">
+            <x-ui.card class="h-full flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Finance Overview</h3>
                 </div>
-                <div class="p-6 space-y-2 text-sm">
+                <div class="p-6 space-y-2 text-sm flex-1">
                     <div class="flex justify-between">
                         <span class="text-neutral-500 dark:text-neutral-400">Expected Fees</span>
                         <span class="font-medium text-neutral-900 dark:text-white">₦{{ number_format($finance['expected'], 2) }}</span>
@@ -130,15 +130,15 @@
     </div>
 
     {{-- Recent Activity --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-8">
-            <x-ui.card>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div class="lg:col-span-8 h-full">
+            <x-ui.card class="h-full flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Recent Activity</h3>
                     <a href="{{ route('admin.audit-logs.index') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Audit Logs</a>
                 </div>
-                <div class="p-6">
-                    @forelse($recentActivity->take(4) as $activity)
+                <div class="p-6 flex-1">
+                    @forelse($recentActivity->take(3) as $activity)
                         <div class="flex items-start gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
                             <div class="h-2 w-2 mt-2 rounded-full bg-primary-500 shrink-0"></div>
                             <div class="flex-1 min-w-0">
@@ -156,12 +156,12 @@
         </div>
 
         {{-- Quick Links --}}
-        <div class="lg:col-span-4">
-            <x-ui.card>
+        <div class="lg:col-span-4 h-full">
+            <x-ui.card class="h-full flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Quick Actions</h3>
                 </div>
-                <div class="p-6 grid grid-cols-1 gap-3">
+                <div class="p-6 grid grid-cols-1 gap-3 flex-1">
                     <a href="{{ route('admin.students') }}" class="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-colors">
                         <div class="h-8 w-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></div>
                         <div><p class="text-sm font-medium text-neutral-900 dark:text-white">Students</p><p class="text-xs text-neutral-500 dark:text-neutral-400">Manage records</p></div>

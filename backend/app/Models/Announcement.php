@@ -13,6 +13,11 @@ class Announcement extends Model
         'body',
         'created_by',
         'target_role',
+        'show_on_website',
+    ];
+
+    protected $casts = [
+        'show_on_website' => 'boolean',
     ];
 
     public function createdBy(): BelongsTo
@@ -27,5 +32,10 @@ class Announcement extends Model
     public function scopeForRole(Builder $query, string $role): Builder
     {
         return $query->whereIn('target_role', ['all', $role]);
+    }
+
+    public function scopeForWebsite(Builder $query): Builder
+    {
+        return $query->where('show_on_website', true);
     }
 }

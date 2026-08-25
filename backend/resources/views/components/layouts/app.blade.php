@@ -33,7 +33,7 @@
                     @php $role = auth()->user()->role; @endphp
 
                     @if($role === 'admin')
-                        <x-layout.sidebar-item href="/admin" icon="layout-dashboard" label="Dashboard" />
+                        <x-layout.sidebar-item href="{{ route('admin.dashboard') }}" icon="layout-dashboard" label="Dashboard" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
                         <x-layout.sidebar-item href="/admin/classes" icon="school" label="Classes" />
@@ -44,7 +44,7 @@
                         <x-layout.sidebar-item href="/admin/timetable" icon="calendar-check" label="Timetable" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
-                        <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />
+                        <x-layout.sidebar-item href="/admin/students" icon="user" label="Students" />
                         <x-layout.sidebar-item href="/admin/teachers" icon="graduation-cap" label="Teachers" />
                         <x-layout.sidebar-item href="/admin/accounts" icon="user-check" label="Accounts" />
 

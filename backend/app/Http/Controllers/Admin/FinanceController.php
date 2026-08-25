@@ -157,12 +157,13 @@ class FinanceController extends Controller
         $classId = $request->input('class_id');
         $session = $request->input('academic_session_id');
 
-        $studentFees = StudentFee::with(['student.schoolClass', 'feeType', 'term'])
+        $studentFees = StudentFee::with(['student.schoolClass', 'feeType', 'term', 'payments'])
             ->when($termId, fn ($q) => $q->where('term_id', $termId))
             ->when($classId, fn ($q) => $q->whereHas('student', fn ($s) => $s->where('class_id', $classId)))
             ->when($session, function ($q) use ($session) {
                 $q->whereHas('term', fn ($t) => $t->where('academic_session_id', $session));
             })
+            ->orderBy('student_id')
             ->get();
 
         $reportData = $studentFees->map(function ($fee) {
@@ -173,14 +174,38 @@ class FinanceController extends Controller
                 'student_name' => $fee->student->full_name,
                 'admission_no' => $fee->student->admission_no,
                 'class' => $fee->student->schoolClass->name ?? 'N/A',
+                'class_id' => $fee->student->schoolClass->id ?? null,
                 'fee_type' => $fee->feeType->name,
                 'term' => $fee->term->name ?? 'N/A',
-                'expected' => $expected,
-                'paid' => $paid,
-                'outstanding' => max(0, $expected - $paid),
+                'expected' => (float) $expected,
+                'expected_formatted' => '₦'.number_format($expected, 2),
+                'paid' => (float) $paid,
+                'paid_formatted' => '₦'.number_format($paid, 2),
+                'outstanding' => max(0, (float) $expected - (float) $paid),
+                'outstanding_formatted' => '₦'.number_format(max(0, $expected - $paid), 2),
                 'status' => $this->feeService->recomputeStatus($fee),
             ];
         });
+
+        $classSummaries = $reportData->groupBy('class')->map(function ($group, $className) {
+            $expected = $group->sum('expected');
+            $collected = $group->sum('paid');
+            $outstanding = $group->sum('outstanding');
+
+            return [
+                'class' => $className,
+                'students' => $group->count(),
+                'fees' => $group->count(),
+                'expected' => $expected,
+                'expected_formatted' => '₦'.number_format($expected, 2),
+                'collected' => $collected,
+                'collected_formatted' => '₦'.number_format($collected, 2),
+                'outstanding' => $outstanding,
+                'outstanding_formatted' => '₦'.number_format($outstanding, 2),
+                'collection_rate' => $expected > 0 ? round(($collected / $expected) * 100, 1) : 0,
+                'records' => $group,
+            ];
+        })->values();
 
         $summary = [
             'expected' => $reportData->sum('expected'),
@@ -189,7 +214,7 @@ class FinanceController extends Controller
             'total_fees' => $reportData->count(),
         ];
 
-        $pdf = Pdf::loadView('admin.finance.financial-report', compact('reportData', 'summary', 'termId', 'classId'));
+        $pdf = Pdf::loadView('admin.finance.financial-report', compact('classSummaries', 'summary', 'termId', 'classId'));
 
         return $pdf->download('financial-report-'.now()->format('Y-m-d').'.pdf');
     }

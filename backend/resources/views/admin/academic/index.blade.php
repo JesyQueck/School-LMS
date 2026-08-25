@@ -1,7 +1,7 @@
 <x-layouts.app title="Academic Structure">
     <div class="mb-6">
         <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item active>Academic</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Academic Structure</h1>

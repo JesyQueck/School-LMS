@@ -1,6 +1,6 @@
 <x-layouts.app title="Timetable">
     <x-ui.breadcrumbs>
-        <x-ui.breadcrumb-item href="/admin">Admin</x-ui.breadcrumb-item>
+        <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
         <x-ui.breadcrumb-item active>Timetable</x-ui.breadcrumb-item>
     </x-ui.breadcrumbs>
 
@@ -505,13 +505,13 @@
 
         function showFeedback(message, type) {
             var variants = {
-                'error': 'border-l-4 border-danger-200 dark:border-danger-800 text-danger-800 dark:text-danger-200 bg-danger-50 dark:bg-danger-950/40',
-                'success': 'border-l-4 border-success-200 dark:border-success-800 text-success-800 dark:text-success-200 bg-success-50 dark:bg-success-950/40',
-                'info': 'border-l-4 border-info-200 dark:border-info-800 text-info-800 dark:text-info-200 bg-info-50 dark:bg-info-950/40',
+                'error': { 'border': 'border-l-4 border-danger-200 dark:border-danger-800', 'text': 'text-danger-800 dark:text-danger-200', 'bg': 'bg-danger-50 dark:bg-danger-950/40', 'color': 'text-danger-600 dark:text-danger-400' },
+                'success': { 'border': 'border-l-4 border-success-200 dark:border-success-800', 'text': 'text-success-800 dark:text-success-200', 'bg': 'bg-success-50 dark:bg-success-950/40', 'color': 'text-success-600 dark:text-success-400' },
+                'info': { 'border': 'border-l-4 border-info-200 dark:border-info-800', 'text': 'text-info-800 dark:text-info-200', 'bg': 'bg-info-50 dark:bg-info-950/40', 'color': 'text-info-600 dark:text-info-400' },
             };
-            var cls = variants[type || 'error'] || variants['error'];
-            feedbackEl.className = 'mb-6 rounded-xl px-4 py-3 flex items-center gap-3 shadow-md ' + cls;
-            feedbackEl.innerHTML = message;
+            var v = variants[type || 'error'] || variants['error'];
+            feedbackEl.className = 'mb-6 rounded-xl px-4 py-3 ' + v.bg + ' ' + v.border + ' ' + v.text + ' flex items-center gap-3 shadow-md';
+            feedbackEl.innerHTML = '<svg class="h-5 w-5 flex-shrink-0 ' + v.color + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="flex-1 text-sm font-semibold">' + message + '</span>';
             feedbackEl.classList.remove('hidden');
         }
 

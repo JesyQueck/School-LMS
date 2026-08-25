@@ -1,6 +1,6 @@
 <x-layouts.app title="Edit Timetable Entry">
     <x-ui.breadcrumbs>
-        <x-ui.breadcrumb-item href="/admin">Admin</x-ui.breadcrumb-item>
+        <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
         <x-ui.breadcrumb-item href="{{ route('admin.timetable.index') }}">Timetable</x-ui.breadcrumb-item>
         <x-ui.breadcrumb-item active>Edit Entry</x-ui.breadcrumb-item>
     </x-ui.breadcrumbs>
