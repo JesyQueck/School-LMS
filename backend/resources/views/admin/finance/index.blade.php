@@ -117,7 +117,7 @@
                 <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 flex-1 flex flex-col">
                     @csrf
                     <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Fee <span class="text-danger-500">*</span></label>
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Identity <span class="text-danger-500">*</span></label>
                         <div class="relative">
                             <input type="text" name="student_search" placeholder="Type student name or admission no..."
                                 class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm focus:ring-1 focus:ring-primary-500"
@@ -322,17 +322,14 @@
             var hiddenInput = document.getElementById('selected_fee_id');
             var baseUrl = '{{ route("admin.finance") }}';
 
-            var typingTimer;
             searchInput.addEventListener('input', function() {
-                clearTimeout(typingTimer);
                 var query = this.value.trim();
                 if (!query) {
                     dropdown.classList.add('hidden');
                     dropdown.innerHTML = '';
                     return;
                 }
-                typingTimer = setTimeout(function() {
-                    fetch(baseUrl + '/search-students?q=' + encodeURIComponent(query))
+                fetch(baseUrl + '/search-students?q=' + encodeURIComponent(query))
                         .then(function(r) { return r.json(); })
                         .then(function(results) {
                             dropdown.innerHTML = '';
@@ -357,7 +354,6 @@
                         .catch(function() {
                             dropdown.classList.add('hidden');
                         });
-                }, 300);
             });
 
             document.addEventListener('click', function(e) {
@@ -370,7 +366,7 @@
                 if (!hiddenInput.value) {
                     e.preventDefault();
                     searchInput.focus();
-                    alert('Please select a student fee from the search results.');
+                    alert('Please select a student from the search results.');
                 }
             });
         });
