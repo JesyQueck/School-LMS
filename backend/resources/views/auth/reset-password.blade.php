@@ -1,10 +1,9 @@
 <x-layouts.guest title="Reset Password">
     <div class="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="mx-auto h-14 w-14 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-lg mb-4">
-                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                </div>
+            <div class="mx-auto mb-6">
+                <img src="{{ asset('images/Logo.webp') }}" alt="{{ config('school.name', 'Greenfield Academy') }}" class="h-24 w-auto object-contain">
+            </div>
                 <h2 class="text-3xl font-bold text-neutral-900 dark:text-white">Reset your password</h2>
                 <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Enter your new password below.</p>
             </div>

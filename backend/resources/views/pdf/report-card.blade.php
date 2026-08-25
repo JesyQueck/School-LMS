@@ -119,9 +119,7 @@
     <table class="layout school-header-table">
         <tr>
             <td class="school-logo-cell">
-                <div class="school-logo">
-                    <span class="school-logo-text">{{ substr($school->name ?? config('school.name', 'GHS'), 0, 3) }}</span>
-                </div>
+                <img src="{{ public_path('images/Logo.webp') }}" alt="Logo" style="height: 64px; width: auto;">
             </td>
             <td class="school-center-cell">
                 <h1 class="school-name">{{ $school->name ?? config('school.name', 'Greenfield High School') }}</h1>

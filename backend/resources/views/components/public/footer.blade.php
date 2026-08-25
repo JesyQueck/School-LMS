@@ -45,7 +45,7 @@
             {{-- Brand column --}}
             <div class="lg:col-span-4">
                 <div class="flex items-center gap-2.5 mb-5">
-                    <div class="h-10 w-10 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-sm shadow-lg">GA</div>
+                    <img src="{{ asset('images/Logo.webp') }}" alt="{{ $schoolName }}" class="h-12 w-auto object-contain">
                     <span class="text-lg font-bold text-white tracking-tight">{{ $schoolName }}</span>
                 </div>
                 <p class="text-sm leading-relaxed text-neutral-400 max-w-sm mb-6">{{ $schoolDescription }}</p>

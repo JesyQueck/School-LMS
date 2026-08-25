@@ -9,7 +9,6 @@
         .line { border-top: 1px solid #e5e5e5; margin: 16px 0; }
         .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
         .label { color: #666; }
-        .brand { font-size: 22px; font-weight: 700; }
         .sub { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; }
         table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 11px; }
         th { background: #f5f5f5; padding: 6px; text-align: left; border: 1px solid #ddd; font-weight: 600; }
@@ -30,7 +29,7 @@
 </head>
 <body>
     <div class="center">
-        <div class="brand">GREENFIELD ACADEMY</div>
+        <img src="{{ public_path('images/Logo.webp') }}" alt="Greenfield Academy" style="height: 64px; width: auto; display: block; margin: 0 auto 4px;">
         <div class="sub">Financial Report</div>
     </div>
     <div class="line"></div>

@@ -27,11 +27,8 @@
         <div class="flex items-center justify-between h-20">
             {{-- Logo --}}
             <a href="/" class="flex items-center gap-2.5 shrink-0 group">
-                <div class="h-10 w-10 rounded-xl bg-linear-to-br from-primary-600 to-primary-700 flex items-center justify-center text-white font-bold text-sm shadow-premium transition-all duration-300 group-hover:scale-105 group-hover:shadow-premium-lg">GA</div>
-                <div class="flex flex-col leading-none">
-                    <span class="text-[15px] font-bold text-neutral-900 dark:text-white tracking-tight">Greenfield Academy</span>
-                    <span class="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 tracking-wide uppercase mt-0.5">Est. 1995</span>
-                </div>
+                <img src="{{ asset('images/Logo.webp') }}" alt="{{ config('school.name', 'Greenfield Academy') }}" class="h-12 w-auto object-contain">
+                <span class="text-[15px] font-bold text-neutral-900 dark:text-white tracking-tight">{{ config('school.name', 'Greenfield Academy') }}</span>
             </a>
 
             {{-- Desktop nav --}}

@@ -9,14 +9,13 @@
         .line { border-top: 1px solid #e5e5e5; margin: 16px 0; }
         .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
         .label { color: #666; }
-        .brand { font-size: 22px; font-weight: 700; }
         .sub { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; }
         .amount { font-size: 28px; font-weight: 700; color: #047857; }
     </style>
 </head>
 <body>
     <div class="center">
-        <div class="brand">GREENFIELD ACADEMY</div>
+        <img src="{{ public_path('images/Logo.webp') }}" alt="Greenfield Academy" style="height: 64px; width: auto; display: block; margin: 0 auto 4px;">
         <div class="sub">Official Payment Receipt</div>
     </div>
     <div class="line"></div>

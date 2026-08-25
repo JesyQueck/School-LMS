@@ -2,12 +2,11 @@
     <div class="min-h-[calc(100vh-64px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full">
             <div class="bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium-lg p-8">
-                <div class="text-center mb-8">
-                    <div class="mx-auto h-14 w-14 rounded-xl bg-linear-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xl font-bold shadow-lg mb-4">
-                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Change Password</h2>
-                    <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Set your new password to complete your account setup.</p>
+                <div class="mx-auto mb-6">
+                    <img src="{{ asset('images/Logo.webp') }}" alt="{{ config('school.name', 'Greenfield Academy') }}" class="h-24 w-auto object-contain">
+                </div>
+                    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white mt-4">Change Password</h2>
+                <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Set your new password to complete your account setup.</p>
                 </div>
 
                 @if(session('status'))
