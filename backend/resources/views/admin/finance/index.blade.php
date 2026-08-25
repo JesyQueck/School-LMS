@@ -64,13 +64,13 @@
                     <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Create Fee Type</h3>
                     <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Define a new fee type. Student fees are auto-generated for all students in the selected class.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.fee-types.store') }}" class="p-3 space-y-3 flex-1 flex flex-col">
+                <form method="POST" action="{{ route('admin.finance.fee-types.store') }}" class="p-3 flex-1 flex flex-col">
                     @csrf
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Fee Name <span class="text-danger-500">*</span></label>
                         <input name="name" type="text" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount (₦) <span class="text-danger-500">*</span></label>
                             <input name="amount" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
@@ -84,7 +84,7 @@
                             </select>
                         </div>
                     </div>
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class</label>
                         <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                             <option value="">All Classes</option>
@@ -93,9 +93,13 @@
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                    <div class="mb-3">
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Due Date</label>
+                        <input name="due_date" type="date" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    </div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
-                        <textarea name="description" rows="3" placeholder="Optional note about this fee" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm resize-none"></textarea>
+                        <input name="description" type="text" placeholder="Optional note" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>
                     <div class="mt-auto">
                         <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Save Fee Type</button>
@@ -110,9 +114,9 @@
                     <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Record Payment</h3>
                     <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Select a student fee obligation and enter the payment details.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 space-y-3 flex-1 flex flex-col">
+                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 flex-1 flex flex-col">
                     @csrf
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Fee <span class="text-danger-500">*</span></label>
                         <div class="relative">
                             <input type="text" name="student_search" placeholder="Type student name or admission no..."
@@ -122,11 +126,11 @@
                             <div id="student_fee_dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border rounded-lg shadow-lg max-h-48 overflow-y-auto hidden"></div>
                         </div>
                     </div>
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount Paid (₦) <span class="text-danger-500">*</span></label>
                         <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Payment Method</label>
                         <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                             <option value="cash">Cash</option>
@@ -135,11 +139,11 @@
                             <option value="cheque">Cheque</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Payment Date <span class="text-danger-500">*</span></label>
                         <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>
-                    <div>
+                    <div class="mb-3">
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Reference</label>
                         <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>

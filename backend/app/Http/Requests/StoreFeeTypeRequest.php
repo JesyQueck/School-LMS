@@ -18,6 +18,7 @@ class StoreFeeTypeRequest extends FormRequest
             'amount' => ['required', 'numeric', 'gte:0'],
             'term_id' => ['required', 'exists:terms,id'],
             'class_id' => ['nullable', 'exists:classes,id'],
+            'due_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string'],
         ];
     }

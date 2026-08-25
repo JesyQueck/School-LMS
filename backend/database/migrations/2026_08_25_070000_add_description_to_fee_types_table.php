@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::table('fee_types', function (Blueprint $table) {
             $table->text('description')->nullable()->after('class_id');
+            $table->date('due_date')->nullable()->after('description');
         });
     }
 
     public function down(): void
     {
         Schema::table('fee_types', function (Blueprint $table) {
+            $table->dropColumn('due_date');
             $table->dropColumn('description');
         });
     }

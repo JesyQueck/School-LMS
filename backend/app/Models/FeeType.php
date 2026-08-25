@@ -14,10 +14,12 @@ class FeeType extends Model
         'term_id',
         'class_id',
         'description',
+        'due_date',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'due_date' => 'date',
     ];
 
     public function term(): BelongsTo
