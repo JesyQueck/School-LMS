@@ -44,7 +44,7 @@
                         <x-layout.sidebar-item href="/admin/timetable" icon="calendar-check" label="Timetable" />
 
                         <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
-                        <x-layout.sidebar-item href="/admin/students" icon="user" label="Students" />
+                        <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />
                         <x-layout.sidebar-item href="/admin/teachers" icon="graduation-cap" label="Teachers" />
                         <x-layout.sidebar-item href="/admin/accounts" icon="user-check" label="Accounts" />
 

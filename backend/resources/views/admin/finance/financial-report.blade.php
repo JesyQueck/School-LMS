@@ -54,7 +54,7 @@
         </div>
     </div>
 
-    @foreach($classSummaries as $classSummary)
+    @forelse($classSummaries as $classSummary)
         <div class="class-section">
             <div class="class-header">
                 <div class="class-title">{{ $classSummary['class'] }}</div>
