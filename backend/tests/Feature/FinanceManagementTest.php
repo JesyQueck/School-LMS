@@ -260,15 +260,17 @@ class FinanceManagementTest extends TestCase
             'class_id' => $class->id,
         ]);
 
-        $duplicateResponse = $this->post('/admin/finance/fee-types', [
+        // Same name on a DIFFERENT class should be allowed
+        $class2 = SchoolClass::create(['name' => 'JSS 7']);
+
+        $this->post('/admin/finance/fee-types', [
             'name' => 'Tuition Fee',
             'amount' => '1000.00',
             'term_id' => $term->id,
-            'class_id' => $class->id,
+            'class_id' => $class2->id,
         ]);
 
-        $duplicateResponse->assertSessionHasErrors('name');
-        $this->assertDatabaseCount('fee_types', 1);
+        $this->assertDatabaseCount('fee_types', 2);
     }
 
     public function test_fee_type_same_name_different_term_is_allowed(): void

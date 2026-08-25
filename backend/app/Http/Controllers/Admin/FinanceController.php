@@ -36,7 +36,7 @@ class FinanceController extends Controller
                     ->orWhere('admission_no', 'like', "%{$search}%"));
             })
             ->latest()
-            ->paginate(20)
+            ->paginate(10)
             ->appends($request->only(['class_id', 'term_id', 'status', 'search']));
 
         if ($request->filled('status')) {
@@ -48,7 +48,7 @@ class FinanceController extends Controller
 
         $payments = Payment::with(['studentFee.student', 'studentFee.feeType', 'recordedBy'])
             ->latest('payment_date')
-            ->paginate(20)
+            ->paginate(10)
             ->appends($request->only(['class_id', 'term_id', 'status', 'search']));
 
         return view('admin.finance.index', [
