@@ -57,13 +57,14 @@
         </div>
     </x-ui.card>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-stretch">
         <div class="lg:col-span-6">
-            <x-ui.card>
+            <x-ui.card class="h-full flex flex-col" padding="false">
                 <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Create Fee Type</h3>
+                    <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Define a new fee type. Student fees are auto-generated for all students in the selected class.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.fee-types.store') }}" class="p-3 space-y-3">
+                <form method="POST" action="{{ route('admin.finance.fee-types.store') }}" class="p-3 space-y-3 flex-1 flex flex-col">
                     @csrf
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Fee Name <span class="text-danger-500">*</span></label>
@@ -92,18 +93,24 @@
                             @endforeach
                         </select>
                     </div>
-                    <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Save Fee Type</button>
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
+                        <textarea name="description" rows="3" placeholder="Optional note about this fee" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm resize-none"></textarea>
+                    </div>
+                    <div class="mt-auto">
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Save Fee Type</button>
+                    </div>
                 </form>
             </x-ui.card>
         </div>
 
         <div class="lg:col-span-6">
-            <x-ui.card>
+            <x-ui.card class="h-full flex flex-col" padding="false">
                 <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Record Payment</h3>
                     <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Select a student fee obligation and enter the payment details.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 space-y-3">
+                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 space-y-3 flex-1 flex flex-col">
                     @csrf
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Fee <span class="text-danger-500">*</span></label>
@@ -136,7 +143,9 @@
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Reference</label>
                         <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
                     </div>
-                    <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Record Payment</button>
+                    <div class="mt-auto">
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Record Payment</button>
+                    </div>
                 </form>
             </x-ui.card>
         </div>
