@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateStudentRequest;
 use App\Http\Requests\UpdateTeacherRequest;
 use App\Mail\EnrollmentNotification;
 use App\Models\AcademicSession;
+use App\Models\AuditLog;
 use App\Models\ImportCredential;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
