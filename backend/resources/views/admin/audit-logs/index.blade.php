@@ -8,6 +8,13 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">A complete record of actions performed in the system.</p>
     </div>
 
+    @if(session('status'))
+        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
+    @endif
+    @if($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+    @endif
+
     <x-ui.card>
         <form method="GET" class="p-4 grid grid-cols-1 sm:grid-cols-4 gap-3 border-b border-neutral-200 dark:border-dark-border">
             <div>

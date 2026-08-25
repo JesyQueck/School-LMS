@@ -107,11 +107,13 @@
                     @csrf
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Fee <span class="text-danger-500">*</span></label>
-                        <select name="student_fee_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
-                            @foreach($unpaidFees as $fee)
-                                <option value="{{ $fee->id }}">{{ $fee->student->full_name }} - {{ $fee->feeType->name ?? 'Fee' }} (₦{{ number_format($fee->amount_expected, 2) }})</option>
-                            @endforeach
-                        </select>
+                        <div class="relative">
+                            <input type="text" name="student_search" placeholder="Type student name or admission no..."
+                                class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm focus:ring-1 focus:ring-primary-500"
+                                autocomplete="off">
+                            <input type="hidden" name="student_fee_id" id="selected_fee_id">
+                            <div id="student_fee_dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border rounded-lg shadow-lg max-h-48 overflow-y-auto hidden"></div>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount Paid (₦) <span class="text-danger-500">*</span></label>
@@ -232,8 +234,35 @@
 
     {{-- Payments --}}
     <x-ui.card>
-        <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
-            <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Payments</h3>
+        <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Payments</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                <form method="GET" action="{{ route('admin.finance.report.export') }}" class="flex items-end gap-2">
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term</label>
+                        <select name="term_id" class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+                            <option value="">All</option>
+                            @foreach($terms as $term)
+                                <option value="{{ $term->id }}">{{ $term->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
+                        <select name="class_id" class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+                            <option value="">All</option>
+                            @foreach($classes as $class)
+                                <option value="{{ $class->id }}">{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="bg-success-600 hover:bg-success-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm text-sm">
+                        Download Report
+                    </button>
+                </form>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -269,4 +298,68 @@
             {{ $payments->links() }}
         </div>
     </x-ui.card>
-</x-layouts.app>
+
+    @push('scripts')
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var searchInput = document.querySelector('input[name="student_search"]');
+            if (!searchInput) return;
+
+            var dropdown = document.getElementById('student_fee_dropdown');
+            var hiddenInput = document.getElementById('selected_fee_id');
+            var baseUrl = '{{ route("admin.finance") }}';
+
+            var typingTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(typingTimer);
+                var query = this.value.trim();
+                if (!query) {
+                    dropdown.classList.add('hidden');
+                    dropdown.innerHTML = '';
+                    return;
+                }
+                typingTimer = setTimeout(function() {
+                    fetch(baseUrl + '/search-students?q=' + encodeURIComponent(query))
+                        .then(function(r) { return r.json(); })
+                        .then(function(results) {
+                            dropdown.innerHTML = '';
+                            if (results.length === 0) {
+                                dropdown.innerHTML = '<div class="px-3 py-2 text-sm text-neutral-500">No matching fees found</div>';
+                            } else {
+                                results.forEach(function(item) {
+                                    var div = document.createElement('div');
+                                    div.className = 'px-3 py-2 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800';
+                                    div.innerHTML = '<div class="font-medium text-sm text-neutral-900 dark:text-white">' + item.student_name + '</div>' +
+                                        '<div class="text-xs text-neutral-500 dark:text-neutral-400">' + item.fee_type + ' - ' + item.class + ' (₦' + item.amount_expected + ')</div>';
+                                    div.onclick = function() {
+                                        searchInput.value = item.label;
+                                        hiddenInput.value = item.id;
+                                        dropdown.classList.add('hidden');
+                                    };
+                                    dropdown.appendChild(div);
+                                });
+                            }
+                            dropdown.classList.remove('hidden');
+                        })
+                        .catch(function() {
+                            dropdown.classList.add('hidden');
+                        });
+                }, 300);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (e.target !== searchInput && !searchInput.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            searchInput.closest('form').addEventListener('submit', function(e) {
+                if (!hiddenInput.value) {
+                    e.preventDefault();
+                    searchInput.focus();
+                    alert('Please select a student fee from the search results.');
+                }
+            });
+        });
+        </script>
+    @endpush</x-layouts.app>

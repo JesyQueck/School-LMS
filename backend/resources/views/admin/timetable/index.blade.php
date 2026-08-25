@@ -505,15 +505,14 @@
 
         function showFeedback(message, type) {
             var variants = {
-                'error': 'bg-danger-50 dark:bg-danger-950/40 border-l-4 border-danger-200 dark:border-danger-800 text-danger-800 dark:text-danger-300',
-                'success': 'bg-success-50 dark:bg-success-950/40 border-l-4 border-success-200 dark:border-success-800 text-success-800 dark:text-success-300',
-                'info': 'bg-info-50 dark:bg-info-950/40 border-l-4 border-info-200 dark:border-info-800 text-info-800 dark:text-info-300',
+                'error': 'border-l-4 border-danger-200 dark:border-danger-800 text-danger-800 dark:text-danger-200 bg-danger-50 dark:bg-danger-950/40',
+                'success': 'border-l-4 border-success-200 dark:border-success-800 text-success-800 dark:text-success-200 bg-success-50 dark:bg-success-950/40',
+                'info': 'border-l-4 border-info-200 dark:border-info-800 text-info-800 dark:text-info-200 bg-info-50 dark:bg-info-950/40',
             };
             var cls = variants[type || 'error'] || variants['error'];
-            feedbackEl.className = 'mb-6 rounded-xl px-4 py-3 flex items-start gap-3 shadow-sm ' + cls;
+            feedbackEl.className = 'mb-6 rounded-xl px-4 py-3 flex items-center gap-3 shadow-md ' + cls;
             feedbackEl.innerHTML = message;
             feedbackEl.classList.remove('hidden');
-            setTimeout(function() { feedbackEl.classList.add('hidden'); }, 5000);
         }
 
         function doMove(entryId, toDay, toPeriodStart, toEndTime) {
@@ -598,7 +597,8 @@
                         })
                         .then(function(r) {
                             if (r && r.success) {
-                                window.location.reload();
+                                showFeedback(r.message || 'Entries swapped successfully.', 'success');
+                                setTimeout(function() { window.location.reload(); }, 800);
                             } else {
                                 var msg = (r && r.errors && r.errors.length) ? r.errors.join(' ') : (r && r.message ? r.message : 'Unknown error');
                                 showFeedback('Swap failed: ' + msg, 'error');
@@ -612,7 +612,8 @@
                         })
                         .then(function(r) {
                             if (r && r.success) {
-                                window.location.reload();
+                                showFeedback(r.message || 'Entry moved successfully.', 'success');
+                                setTimeout(function() { window.location.reload(); }, 800);
                             } else {
                                 showFeedback('Move failed: ' + (r && r.message ? r.message : 'Unknown error'), 'error');
                             }

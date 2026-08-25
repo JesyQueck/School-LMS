@@ -13,6 +13,7 @@ use App\Models\Term;
 use App\Services\FeeService;
 use App\Traits\AuditsActions;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class FinanceController extends Controller
@@ -121,5 +122,75 @@ class FinanceController extends Controller
         }
 
         return view('admin.finance.receipt', compact('payment'));
+    }
+
+    public function searchStudentFees(Request $request): JsonResponse
+    {
+        $results = StudentFee::with(['student.schoolClass', 'feeType'])
+            ->whereIn('status', ['unpaid', 'partial'])
+            ->when($request->filled('q'), function ($q) use ($request) {
+                $search = $request->input('q');
+                $q->whereHas('student', function ($s) use ($search) {
+                    $s->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('admission_no', 'like', "%{$search}%");
+                });
+            })
+            ->limit(20)
+            ->get()
+            ->map(fn ($fee) => [
+                'id' => $fee->id,
+                'label' => $fee->student->full_name.' - '.$fee->feeType->name.' ('.$fee->student->admission_no.')',
+                'student_name' => $fee->student->full_name,
+                'fee_type' => $fee->feeType->name,
+                'amount_expected' => number_format($fee->amount_expected, 2),
+                'class' => $fee->student->schoolClass->name ?? 'N/A',
+                'admission_no' => $fee->student->admission_no,
+            ]);
+
+        return response()->json($results);
+    }
+
+    public function exportFinancialReport(Request $request)
+    {
+        $termId = $request->input('term_id');
+        $classId = $request->input('class_id');
+        $session = $request->input('academic_session_id');
+
+        $studentFees = StudentFee::with(['student.schoolClass', 'feeType', 'term'])
+            ->when($termId, fn ($q) => $q->where('term_id', $termId))
+            ->when($classId, fn ($q) => $q->whereHas('student', fn ($s) => $s->where('class_id', $classId)))
+            ->when($session, function ($q) use ($session) {
+                $q->whereHas('term', fn ($t) => $t->where('academic_session_id', $session));
+            })
+            ->get();
+
+        $reportData = $studentFees->map(function ($fee) {
+            $paid = $fee->payments->sum('amount_paid');
+            $expected = $fee->amount_expected;
+
+            return [
+                'student_name' => $fee->student->full_name,
+                'admission_no' => $fee->student->admission_no,
+                'class' => $fee->student->schoolClass->name ?? 'N/A',
+                'fee_type' => $fee->feeType->name,
+                'term' => $fee->term->name ?? 'N/A',
+                'expected' => $expected,
+                'paid' => $paid,
+                'outstanding' => max(0, $expected - $paid),
+                'status' => $this->feeService->recomputeStatus($fee),
+            ];
+        });
+
+        $summary = [
+            'expected' => $reportData->sum('expected'),
+            'collected' => $reportData->sum('paid'),
+            'outstanding' => $reportData->sum('outstanding'),
+            'total_fees' => $reportData->count(),
+        ];
+
+        $pdf = Pdf::loadView('admin.finance.financial-report', compact('reportData', 'summary', 'termId', 'classId'));
+
+        return $pdf->download('financial-report-'.now()->format('Y-m-d').'.pdf');
     }
 }

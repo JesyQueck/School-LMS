@@ -11,6 +11,9 @@
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
     @endif
+    @if($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+    @endif
 
     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">

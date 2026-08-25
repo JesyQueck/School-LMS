@@ -11,6 +11,9 @@
             {{ session('status') }}
         </x-ui.alert>
     @endif
+    @if($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+    @endif
 
     <div class="space-y-6">
         @foreach($classes as $class)

@@ -30,6 +30,13 @@
             </div>
         </div>
 
+        @if(session('status'))
+            <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
+        @endif
+        @if($errors->any())
+            <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+        @endif
+
         <div class="flex flex-wrap gap-2 mt-4">
             <a href="{{ route('admin.accounts.index') }}" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors @if(!$currentRole) bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 @else bg-neutral-50 dark:bg-dark-surface text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-dark-border hover:bg-neutral-100 dark:hover:bg-neutral-800 @endif">
                 All

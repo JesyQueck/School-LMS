@@ -8,6 +8,13 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Assign teachers to classes and subjects.</p>
     </div>
 
+    @if(session('status'))
+        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
+    @endif
+    @if($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+    @endif
+
     <div class="mb-6 flex gap-3">
         <button type="button" onclick="document.getElementById('subject-assignment-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
