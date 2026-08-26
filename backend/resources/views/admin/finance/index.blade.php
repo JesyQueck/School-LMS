@@ -251,30 +251,30 @@
             <div>
                 <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Payments</h3>
             </div>
-            <div class="flex items-center gap-2">
-                <form method="GET" action="{{ route('admin.finance.report.export') }}" class="flex items-end gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
+                <form id="report-form" method="GET" action="{{ route('admin.finance.report.export') }}" class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:flex-1">
                     <div>
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term</label>
-                        <select name="term_id" class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+                        <select name="term_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
                             <option value="">All</option>
                             @foreach($terms as $term)
                                 <option value="{{ $term->id }}">{{ $term->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
-                        <select name="class_id" class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+                        <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
                             <option value="">All</option>
                             @foreach($classes as $class)
                                 <option value="{{ $class->id }}">{{ $class->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <button type="submit" class="bg-success-600 hover:bg-success-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm text-sm">
-                        Download Report
-                    </button>
                 </form>
+                <button type="button" onclick="document.getElementById('report-form').requestSubmit()" class="w-full sm:w-auto bg-success-600 hover:bg-success-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm text-sm">
+                    Download Report
+                </button>
             </div>
         </div>
         <div class="overflow-x-auto">
