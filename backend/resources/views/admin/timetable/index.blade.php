@@ -669,27 +669,30 @@
                 periodCounter++;
                 const container = document.getElementById('periods-list');
                 const div = document.createElement('div');
-                div.className = 'grid grid-cols-5 gap-1.5 items-end py-1';
-                div.innerHTML = `                    <div class="col-span-2">
+                div.className = 'grid grid-cols-1 gap-1.5 py-1';
+                div.innerHTML = `
+                    <div>
                         <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">Name</label>
-                        <input type="text" name="periods[${periodCounter}][name]" placeholder="e.g. Period 9" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
+                        <input type="text" name="periods[${periodCounter}][name]" placeholder="e.g. Period ${periodCounter}" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
                     </div>
                     <input type="hidden" name="periods[${periodCounter}][period_number]" value="${periodCounter}">
                     <input type="hidden" name="periods[${periodCounter}][sort_order]" value="${periodCounter}">
                     <input type="hidden" name="periods[${periodCounter}][is_break]" value="0">
-                    <div>
-                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">Start</label>
-                        <input type="time" name="periods[${periodCounter}][start_time]" class="w-24 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">End</label>
-                        <input type="time" name="periods[${periodCounter}][end_time]" class="w-24 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
-                    </div>
-                    <div class="flex items-end">
-                        <label class="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
-                            <input type="checkbox" name="periods[${periodCounter}][is_break]" value="1" class="rounded border-neutral-300 dark:border-dark-border">
-                            Break
-                        </label>
+                    <div class="grid grid-cols-3 gap-1.5 items-end">
+                        <div>
+                            <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">Start</label>
+                            <input type="time" name="periods[${periodCounter}][start_time]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">End</label>
+                            <input type="time" name="periods[${periodCounter}][end_time]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
+                        </div>
+                        <div class="flex items-end pb-0.5">
+                            <label class="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
+                                <input type="checkbox" name="periods[${periodCounter}][is_break]" value="1" class="rounded border-neutral-300 dark:border-dark-border">
+                                Break
+                            </label>
+                        </div>
                     </div>
                 `;
                 container.appendChild(div);
