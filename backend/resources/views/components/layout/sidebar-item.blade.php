@@ -62,28 +62,30 @@
 @php
     $baseClasses = 'flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-300 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-700 focus:ring-white transition-colors duration-150';
     $activeClasses = 'bg-white/8 border-l-4 border-l-white text-white font-semibold';
-    $emphasisClasses = $emphasis
-        ? 'border border-neutral-600 dark:border-neutral-500 hover:border-neutral-500 dark:hover:border-neutral-400 hover:bg-white/5 group'
-        : '';
+    if ($emphasis) {
+        $emphasisClasses = 'border border-danger-500/50 hover:border-danger-400 hover:bg-danger-500/10 hover:text-danger-300 focus:ring-danger-400';
+    } else {
+        $emphasisClasses = '';
+    }
 @endphp
 
 @if($method === 'POST')
     <form method="POST" action="{{ route('logout') }}" class="w-full">
         @csrf
         <button type="submit" class="{{ $baseClasses }} {{ $emphasisClasses }} {{ $isActive ? $activeClasses : '' }}" @if($isActive) aria-current="page" @endif>
-            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 flex-shrink-0 {{ $emphasis ? 'text-danger-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? '' }}"/>
             </svg>
-            <span>{{ $label }}</span>
+            <span class="{{ $emphasis ? 'text-danger-300' : '' }}">{{ $label }}</span>
         </button>
     </form>
 @else
     <a href="{{ $href }}"
        class="{{ $baseClasses }} {{ $emphasisClasses }} {{ $isActive ? $activeClasses : '' }}"
        @if($isActive) aria-current="page" @endif>
-        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="h-5 w-5 flex-shrink-0 {{ $emphasis ? 'text-danger-400' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? '' }}"/>
         </svg>
-        <span>{{ $label }}</span>
+        <span class="{{ $emphasis ? 'text-danger-300' : '' }}">{{ $label }}</span>
     </a>
 @endif
