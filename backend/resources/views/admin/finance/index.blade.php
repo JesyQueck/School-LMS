@@ -197,11 +197,11 @@
                 <a href="{{ route('admin.finance') }}" class="text-sm text-neutral-500 dark:text-neutral-400 hover:underline">Reset</a>
             </div>
         </form>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto mt-3">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
                 <thead class="bg-neutral-50 dark:bg-dark-surface">
                     <tr>
-                         <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Student</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Student</th>
                          <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Class</th>
                          <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Fee</th>
                          <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Total</th>
@@ -277,7 +277,7 @@
                 </button>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto mt-3">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
                 <thead class="bg-neutral-50 dark:bg-dark-surface">
                     <tr>
