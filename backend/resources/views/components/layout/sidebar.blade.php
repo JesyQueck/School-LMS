@@ -62,7 +62,7 @@
                 'items' => [
                     $item('Students', route('admin.students'), 'users'),
                     $item('Teachers', route('admin.teachers'), 'graduation-cap'),
-                    $item('Classes', route('admin.classes'), 'school'),
+                    $item('Classes', route('admin.classes'), 'layout-grid'),
                     $item('Academic Structure', route('admin.academic'), 'calendar'),
                     $item('Subjects', route('admin.subjects.index'), 'book-open'),
                     $item('Timetable', route('admin.timetable.index'), 'calendar-check'),
