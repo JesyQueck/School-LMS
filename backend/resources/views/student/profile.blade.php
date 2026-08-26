@@ -12,10 +12,8 @@
         <div class="lg:col-span-1">
             <x-ui.card>
                 <div class="p-6 text-center">
-                    <div class="h-24 w-24 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center mx-auto mb-4">
-                        <span class="text-3xl font-medium">{{ substr($student->full_name ?? 'S', 0, 1) }}</span>
-                    </div>
-                    <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $student->full_name ?? '---' }}</h2>
+                    <x-profile-photo-uploader :editable="false" />
+                    <h2 class="mt-4 text-xl font-bold text-neutral-900 dark:text-white">{{ $student->full_name ?? '---' }}</h2>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $student->schoolClass->name ?? 'N/A' }}</p>
                     <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">{{ $student->admission_no ?? 'N/A' }}</p>
                 </div>

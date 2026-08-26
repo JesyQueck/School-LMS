@@ -34,6 +34,7 @@
         'log-out' => 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
         'users-2' => 'M17 21v-2m4 4v-2m0 0h-4m4 0H9l-5 5V5h2l2 3v-2a4 4 0 118 0 4 4 0 011 0z',
         'user' => 'M12 12a2 2 0 114 0 2 2 0 01-4 0zm0 0C16.93 12 21 7.933 21 2.5V2a1 1 0 00-1-1H4a1 1 0 00-1 1v.5C3 7.933 7.07 12 12 12z',
+        'camera' => 'M3 7a2 2 0 012-2h6l2 2h5a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm7 3a3 3 0 11-6 0 3 3 0 016 0z',
         'user-check' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM4 15v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4 0h-4m4 0v-4',
         'calculator' => 'M9 2a1 1 0 011 1v12a1 1 0 01-2 0V3a1 1 0 011-1zm6 0a1 1 0 011 1v12a1 1 0 01-2 0V3a1 1 0 011-1z M5 20a2 2 0 012-2h8a2 2 0 012 2v1H5v1zm7-9a1 1 0 11-2 0 1 1 0 012 0z',
         'bar-chart-3' => 'M3 3v18h18M9 12h6M9 9h6M9 6h6',
@@ -48,31 +49,37 @@
 
     $path = ltrim(parse_url($href, PHP_URL_PATH), '/');
     if ($active !== null) {
-        $isActive = $active;
+        $isActive = (bool) $active;
     } else {
         $isActive = request()->is($path);
-        if (!$isActive && strpos($path, '/') !== false) {
+        if (! $isActive && strpos($path, '/') !== false) {
             $isActive = request()->is($path.'/*');
         }
     }
 @endphp
 
+@php
+    $baseClasses = 'flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-200 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-700 focus:ring-white transition-colors duration-150';
+    $activeClasses = 'bg-white/8 border-l-4 border-l-white text-white font-semibold';
+@endphp
+
 @if($method === 'POST')
     <form method="POST" action="{{ route('logout') }}" class="w-full">
         @csrf
-        <button type="submit" class="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ $isActive ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white' }}">
-            <svg class="h-5 w-5 flex-shrink-0 transition-transform duration-200 {{ $isActive ? 'scale-110' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }}"/>
+        <button type="submit" class="{{ $baseClasses }} {{ $isActive ? $activeClasses : '' }}" @if($isActive) aria-current="page" @endif>
+            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? '' }}"/>
             </svg>
-            <span class="font-semibold">{{ $label }}</span>
+            <span>{{ $label }}</span>
         </button>
     </form>
 @else
     <a href="{{ $href }}"
-       class="flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 {{ $isActive ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white' }}">
-        <svg class="h-5 w-5 flex-shrink-0 transition-transform duration-200 {{ $isActive ? 'scale-110' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' }}"/>
+       class="{{ $baseClasses }} {{ $isActive ? $activeClasses : '' }}"
+       @if($isActive) aria-current="page" @endif>
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? '' }}"/>
         </svg>
-        <span class="font-semibold">{{ $label }}</span>
+        <span>{{ $label }}</span>
     </a>
 @endif

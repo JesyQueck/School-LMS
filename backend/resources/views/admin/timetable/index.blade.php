@@ -23,7 +23,7 @@
         </x-ui.alert>
     @endif
 
-    <div id="timetable-feedback" class="mb-6 hidden"></div>
+    <div id="timetable-feedback" class="fixed top-20 left-0 right-0 z-50 hidden"></div>
 
     <div class="space-y-4">
         {{-- A. Configuration Area --}}
@@ -66,7 +66,7 @@
                         <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm text-sm">Save</button>
                     </div>
                 </div>
-                <div id="periods-list" class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-2">
+                <div id="periods-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
                     @foreach($config->periods->sortBy('sort_order') as $period)
                         @include('admin.timetable.partials.period-input', ['period' => $period, 'index' => $loop->index, 'showDelete' => false])
                     @endforeach
@@ -268,7 +268,10 @@
         {{-- D. Weekly Schedule by Class --}}
         <x-ui.card class="p-3">
             <div class="py-2 border-b border-neutral-200 dark:border-dark-border mb-2">
-                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Weekly Schedule by Class</h3>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Weekly Schedule by Class</h3>
+                    <button type="button" id="refresh-timetable" class="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 font-medium">Refresh</button>
+                </div>
             </div>
             <div class="p-2" id="class-grids">
                 @php
@@ -507,12 +510,24 @@
             var variants = {
                 'error': { 'border': 'border-l-4 border-danger-200 dark:border-danger-800', 'text': 'text-danger-800 dark:text-danger-200', 'bg': 'bg-danger-50 dark:bg-danger-950/40', 'color': 'text-danger-600 dark:text-danger-400' },
                 'success': { 'border': 'border-l-4 border-success-200 dark:border-success-800', 'text': 'text-success-800 dark:text-success-200', 'bg': 'bg-success-50 dark:bg-success-950/40', 'color': 'text-success-600 dark:text-success-400' },
-                'info': { 'border': 'border-l-4 border-info-200 dark:border-info-800', 'text': 'text-info-800 dark:text-info-200', 'bg': 'bg-info-50 dark:bg-info-950/40', 'color': 'text-info-600 dark:text-info-400' },
+                'info': { 'border': 'border-l-4 border-info-200 dark:border-info-800', 'text': 'text-info-800 dark:text-info-200', 'bg': 'bg-info-50 dark:info-950/40', 'color': 'text-info-600 dark:text-info-400' },
             };
             var v = variants[type || 'error'] || variants['error'];
-            feedbackEl.className = 'mb-6 rounded-xl px-4 py-3 ' + v.bg + ' ' + v.border + ' ' + v.text + ' flex items-center gap-3 shadow-md';
+            feedbackEl.className = 'fixed top-20 left-0 right-0 z-50 mx-auto max-w-2xl rounded-xl px-4 py-3 ' + v.bg + ' ' + v.border + ' ' + v.text + ' flex items-center gap-3 shadow-md';
             feedbackEl.innerHTML = '<svg class="h-5 w-5 flex-shrink-0 ' + v.color + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="flex-1 text-sm font-semibold">' + message + '</span>';
             feedbackEl.classList.remove('hidden');
+
+            clearTimeout(feedbackEl._hideTimer);
+            feedbackEl._hideTimer = setTimeout(function() {
+                feedbackEl.classList.add('hidden');
+            }, 5000);
+        }
+
+        var refreshBtn = document.getElementById('refresh-timetable');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                window.location.reload();
+            });
         }
 
         function doMove(entryId, toDay, toPeriodStart, toEndTime) {
@@ -592,19 +607,28 @@
                     var targetId = targetEntry.getAttribute('data-entry-id');
 
                     doSwap(data.entryId, targetId)
-                        .then(function(resp) {
-                            return resp.json();
-                        })
-                        .then(function(r) {
-                            if (r && r.success) {
-                                showFeedback(r.message || 'Entries swapped successfully.', 'success');
-                                setTimeout(function() { window.location.reload(); }, 800);
-                            } else {
-                                var msg = (r && r.errors && r.errors.length) ? r.errors.join(' ') : (r && r.message ? r.message : 'Unknown error');
-                                showFeedback('Swap failed: ' + msg, 'error');
-                            }
-                        })
-                        .catch(function(err) { showFeedback('Swap error: ' + err.message, 'error'); });
+                            .then(function(resp) {
+                                return resp.json();
+                            })
+                            .then(function(r) {
+                                if (r && r.success) {
+                                    showFeedback(r.message || 'Entries swapped successfully.', 'success');
+                                    var sourceEl = document.querySelector('.draggable-entry[data-entry-id="' + data.entryId + '"]');
+                                    var targetEl = document.querySelector('.draggable-entry[data-entry-id="' + targetId + '"]');
+                                    if (sourceEl && targetEl && sourceEl.parentNode !== targetEl.parentNode) {
+                                        var srcParent = sourceEl.parentNode;
+                                        var tgtParent = targetEl.parentNode;
+                                        srcParent.innerHTML = '';
+                                        tgtParent.innerHTML = '';
+                                        srcParent.appendChild(targetEl.cloneNode(true));
+                                        tgtParent.appendChild(sourceEl.cloneNode(true));
+                                    }
+                                } else {
+                                    var msg = (r && r.errors && r.errors.length) ? r.errors.join(' ') : (r && r.message ? r.message : 'Unknown error');
+                                    showFeedback('Swap failed: ' + msg, 'error');
+                                }
+                            })
+                            .catch(function(err) { showFeedback('Swap error: ' + err.message, 'error'); });
                 } else {
                     doMove(data.entryId, toDay, toPeriodStart, toEndTime)
                         .then(function(resp) {
@@ -613,7 +637,17 @@
                         .then(function(r) {
                             if (r && r.success) {
                                 showFeedback(r.message || 'Entry moved successfully.', 'success');
-                                setTimeout(function() { window.location.reload(); }, 800);
+                                var movedEl = document.querySelector('.draggable-entry[data-entry-id="' + data.entryId + '"]');
+                                if (movedEl) {
+                                    var targetCell = document.querySelector('.drop-cell[data-day="' + toDay + '"][data-period-start="' + toPeriodStart + '"]');
+                                    if (targetCell) {
+                                        movedEl.setAttribute('data-current-day', toDay);
+                                        movedEl.setAttribute('data-current-start', toPeriodStart);
+                                        movedEl.setAttribute('data-current-end', r.end_time || toEndTime);
+                                        targetCell.innerHTML = '';
+                                        targetCell.appendChild(movedEl);
+                                    }
+                                }
                             } else {
                                 showFeedback('Move failed: ' + (r && r.message ? r.message : 'Unknown error'), 'error');
                             }
@@ -636,8 +670,7 @@
                 const container = document.getElementById('periods-list');
                 const div = document.createElement('div');
                 div.className = 'grid grid-cols-5 gap-1.5 items-end py-1';
-                div.innerHTML = `
-                    <div class="col-span-2">
+                div.innerHTML = `                    <div class="col-span-2">
                         <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-0.5">Name</label>
                         <input type="text" name="periods[${periodCounter}][name]" placeholder="e.g. Period 9" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1.5 py-0.5 text-xs">
                     </div>

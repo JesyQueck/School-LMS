@@ -14,10 +14,6 @@ class NeedsPasswordChangeMiddleware
             return redirect('/login');
         }
 
-        if (! $request->user()->needs_password_change) {
-            return redirect()->intended('/');
-        }
-
         return $next($request);
     }
 }

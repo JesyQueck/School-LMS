@@ -1,19 +1,230 @@
-<div class="flex-1 flex flex-col overflow-y-auto">
-    <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface">
-        <div class="flex items-center gap-3">
-            <img src="{{ asset('images/Logo.webp') }}" alt="{{ config('school.name', 'Greenfield Academy') }}" class="h-12 w-auto object-contain">
-            <div>
-                <div class="text-lg font-bold text-neutral-900 dark:text-white">{{ config('school.name', 'Greenfield Academy') }}</div>
-                @if(auth()->check())
-                    <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ auth()->user()->name }}</span>
-                @endif
+@props(['title' => null])
+
+@php
+    $user = auth()->user();
+    $role = $user?->role;
+
+    $roleLabels = [
+        'admin' => 'System Administrator',
+        'teacher' => 'Teacher',
+        'student' => 'Student',
+        'parent' => 'Parent',
+    ];
+    $roleLabel = $user ? ($roleLabels[$role] ?? ucfirst((string) $role)) : 'User';
+
+    $schoolName = config('school.name', config('app.name', 'Greenfield Academy'));
+
+    $pathIsActive = function (string $href): bool {
+        $path = ltrim(parse_url($href, PHP_URL_PATH), '/');
+        if ($path === '') {
+            return false;
+        }
+        if (request()->is($path) || request()->is($path.'/*')) {
+            return true;
+        }
+        if (strpos($path, '/') !== false) {
+            return request()->is($path.'/*');
+        }
+        return false;
+    };
+
+    $item = function (string $label, string $href, string $icon = 'circle', string $method = 'GET') use ($pathIsActive) {
+        $itemPath = ltrim(parse_url($href, PHP_URL_PATH), '/');
+        $active = $pathIsActive($href);
+        return [
+            'label' => $label,
+            'href' => $href,
+            'icon' => $icon,
+            'method' => $method,
+            'active' => $active,
+            'path' => $itemPath,
+        ];
+    };
+
+    $sectionIsActive = function (array $items) {
+        return collect($items)->contains(fn ($it) => $it['active']);
+    };
+
+    $sections = [];
+    $settingsItems = [];
+    $logoutItem = $item('Logout', route('logout'), 'log-out', 'POST');
+
+    if ($role === 'admin') {
+        $sections = [
+            [
+                'label' => 'MAIN',
+                'items' => [
+                    $item('Dashboard', route('admin.dashboard'), 'layout-dashboard'),
+                ],
+            ],
+            [
+                'label' => 'ACADEMIC',
+                'items' => [
+                    $item('Students', route('admin.students'), 'users'),
+                    $item('Teachers', route('admin.teachers'), 'graduation-cap'),
+                    $item('Classes', route('admin.classes'), 'school'),
+                    $item('Academic Structure', route('admin.academic'), 'calendar'),
+                    $item('Subjects', route('admin.subjects.index'), 'book-open'),
+                    $item('Timetable', route('admin.timetable.index'), 'calendar-check'),
+                ],
+            ],
+            [
+                'label' => 'ACADEMICS',
+                'items' => [
+                    $item('Results', route('admin.results'), 'clipboard-list'),
+                    $item('Report Cards', route('admin.report-cards.index'), 'file-text'),
+                ],
+            ],
+            [
+                'label' => 'FINANCE',
+                'items' => [
+                    $item('Fees / Payments', route('admin.finance'), 'wallet'),
+                ],
+            ],
+            [
+                'label' => 'COMMUNICATION',
+                'items' => [
+                    $item('Announcements', route('admin.announcements'), 'megaphone'),
+                ],
+            ],
+            [
+                'label' => 'SYSTEM',
+                'items' => [
+                    $item('Accounts', route('admin.accounts.index'), 'user-check'),
+                    $item('Audit Logs', route('admin.audit-logs.index'), 'clipboard'),
+                ],
+            ],
+        ];
+    } elseif ($role === 'teacher') {
+        $sections = [
+            [
+                'label' => 'MAIN',
+                'items' => [
+                    $item('Dashboard', route('teacher.dashboard'), 'layout-dashboard'),
+                ],
+            ],
+            [
+                'label' => 'TEACHING',
+                'items' => [
+                    $item('My Classes', route('teacher.classes.index'), 'school'),
+                    $item('Attendance', route('teacher.attendance'), 'calendar'),
+                    $item('Results', route('teacher.results'), 'clipboard-list'),
+                    $item('Report Cards', route('teacher.report-cards.index'), 'file-text'),
+                    $item('Timetable', route('teacher.timetable'), 'calendar-check'),
+                ],
+            ],
+            [
+                'label' => 'COMMUNICATION',
+                'items' => [
+                    $item('Announcements', route('teacher.announcements'), 'megaphone'),
+                ],
+            ],
+        ];
+
+    } elseif ($role === 'student') {
+        $sections = [
+            [
+                'label' => 'MAIN',
+                'items' => [
+                    $item('Dashboard', route('student.dashboard'), 'layout-dashboard'),
+                ],
+            ],
+            [
+                'label' => 'ACADEMICS',
+                'items' => [
+                    $item('Timetable', route('student.timetable'), 'calendar'),
+                    $item('Attendance', route('student.attendance'), 'calendar-check'),
+                    $item('Report Cards', route('student.report-cards'), 'file-text'),
+                ],
+            ],
+            [
+                'label' => 'FINANCE',
+                'items' => [
+                    $item('Fees', route('student.fees'), 'wallet'),
+                ],
+            ],
+        ];
+
+    } elseif ($role === 'parent') {
+        $sections = [
+            [
+                'label' => 'MAIN',
+                'items' => [
+                    $item('Dashboard', route('parent.dashboard'), 'layout-dashboard'),
+                ],
+            ],
+            [
+                'label' => 'CHILDREN',
+                'items' => [
+                    $item('Children', route('parent.dashboard'), 'users'),
+                    $item('Timetable', route('parent.timetable'), 'calendar'),
+                ],
+            ],
+        ];
+
+    } else {
+        $sections = [];
+        $settingsItems = [];
+    }
+
+    if (in_array($role, ['admin', 'teacher', 'student', 'parent'])) {
+        $settingsItems = [
+            $item('Profile Photo', route('settings.profile'), 'camera'),
+            $item('Change Password', route('password.change'), 'settings'),
+        ];
+    }
+
+    if (! empty($settingsItems)) {
+        $sections[] = ['label' => 'SETTINGS', 'items' => $settingsItems];
+    }
+
+    $logoPath = config('school.logo');
+    $logoExists = $logoPath && file_exists(public_path($logoPath));
+    $schoolInitial = strtoupper(collect(explode(' ', $schoolName))->first()[0] ?? 'S');
+@endphp
+
+<div class="flex flex-col h-full text-neutral-100">
+    {{-- Branding --}}
+    <div class="flex items-center justify-center gap-3 px-4 py-4 border-b border-white/10 bg-primary-900">
+        @if ($logoExists)
+            <img src="{{ asset($logoPath) }}" alt="{{ $schoolName }}" class="h-8 w-auto">
+        @else
+            <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-white/15 text-sm font-semibold text-white">
+                {{ $schoolInitial }}
             </div>
-        </div>
-        <label for="sidebar-menu-checkbox" class="lg:hidden cursor-pointer text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </label>
+        @endif
+
+        <span class="text-lg font-semibold tracking-tight text-white">{{ $schoolName }}</span>
     </div>
-    <nav class="flex-1 p-4">
-        {{ $slot }}
+
+    {{-- User profile --}}
+    <div class="px-4 py-3">
+        <x-layout.sidebar-user :user="$user" />
+    </div>
+
+    {{-- Navigation --}}
+    <nav class="flex-1 overflow-y-auto" aria-label="Main navigation">
+        @foreach ($sections as $section)
+            <x-layout.sidebar-section :label="$section['label']" :active="$sectionIsActive($section['items'])">
+                @foreach ($section['items'] as $it)
+                    <x-layout.sidebar-item
+                        :href="$it['href']"
+                        :icon="$it['icon']"
+                        :label="$it['label']"
+                        :active="$it['active']"
+                        method="{{ $it['method'] }}" />
+                @endforeach
+            </x-layout.sidebar-section>
+        @endforeach
     </nav>
+
+    {{-- Bottom actions --}}
+    <div class="p-2 border-t border-white/10 bg-primary-900">
+        <x-layout.sidebar-item
+            :href="$logoutItem['href']"
+            :icon="$logoutItem['icon']"
+            :label="$logoutItem['label']"
+            :active="$logoutItem['active']"
+            method="{{ $logoutItem['method'] }}" />
+    </div>
 </div>

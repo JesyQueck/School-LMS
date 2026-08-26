@@ -74,11 +74,30 @@ window.Alpine.start();
 document.addEventListener('DOMContentLoaded', () => {
     const checkbox = document.getElementById('sidebar-menu-checkbox');
     const backdrop = document.getElementById('sidebar-backdrop');
+    const sidebar = document.getElementById('sidebar');
 
     if (checkbox && backdrop) {
         // Close sidebar when clicking the backdrop
         backdrop.addEventListener('click', () => {
             checkbox.checked = false;
+        });
+    }
+
+    if (checkbox && sidebar) {
+        // Close the mobile sidebar when a navigation link is selected
+        sidebar.addEventListener('click', (event) => {
+            const link = event.target.closest('a[href]');
+
+            if (link) {
+                checkbox.checked = false;
+            }
+        });
+
+        // Close the mobile sidebar with the Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && checkbox.checked) {
+                checkbox.checked = false;
+            }
         });
     }
 });

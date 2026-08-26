@@ -2,7 +2,7 @@
 
 return [
     'name' => env('SCHOOL_NAME', 'Greenfield Academy'),
-    'logo' => env('SCHOOL_LOGO', 'images/logo.svg'),
+    'logo' => env('SCHOOL_LOGO', 'images/Logo.webp'),
     'address' => env('SCHOOL_ADDRESS', '123 Education Lane, Victoria Island, Lagos'),
     'phone' => env('SCHOOL_PHONE', '+234 800 000 0000'),
     'email' => env('SCHOOL_EMAIL', 'info@greenfieldacademy.edu'),

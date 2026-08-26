@@ -474,6 +474,7 @@ class TimetableController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Entry moved to '.$request->input('day').' '.$request->input('start_time').'.',
+                'end_time' => Carbon::parse($request->input('end_time'))->format('H:i'),
             ]);
         }
 

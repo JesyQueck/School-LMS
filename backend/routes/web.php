@@ -23,7 +23,9 @@ use App\Http\Controllers\Parent\FeesController as ParentFeesController;
 use App\Http\Controllers\Parent\ParentReportCardController;
 use App\Http\Controllers\Parent\ParentTimetableController;
 use App\Http\Controllers\Parent\ResultsController as ParentResultsController;
+use App\Http\Controllers\ProfilePhotoController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Student\AnnouncementsController as StudentAnnouncementsController;
 use App\Http\Controllers\Student\AttendanceController as StudentAttendanceController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
@@ -65,6 +67,11 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/settings', [SettingController::class, 'profile'])->name('settings.profile');
+
+    Route::post('/profile/photo', [ProfilePhotoController::class, 'update'])->name('profile.photo.update');
+    Route::delete('/profile/photo', [ProfilePhotoController::class, 'destroy'])->name('profile.photo.destroy');
+
     Route::get('/admin/dashboard', [DashboardController::class, 'admin'])->name('admin.dashboard')->middleware('role:admin');
 
     Route::middleware('role:teacher')->prefix('teacher')->name('teacher.')->group(function () {
@@ -141,6 +148,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/students', [SchoolAdminController::class, 'createStudent'])->name('students.store');
         Route::get('/students/{student}/edit', [SchoolAdminController::class, 'editStudent'])->name('students.edit');
         Route::put('/students/{student}', [SchoolAdminController::class, 'updateStudent'])->name('students.update');
+
+        Route::post('/students/{student}/photo', [ProfilePhotoController::class, 'updateForStudent'])->name('students.photo.update');
+        Route::delete('/students/{student}/photo', [ProfilePhotoController::class, 'destroyForStudent'])->name('students.photo.destroy');
 
         Route::get('/students/import', [SchoolAdminController::class, 'showImportForm'])->name('students.import');
         Route::get('/students/import/template', [SchoolAdminController::class, 'downloadTemplate'])->name('students.import.template');

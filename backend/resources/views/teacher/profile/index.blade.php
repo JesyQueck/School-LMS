@@ -13,9 +13,7 @@
         {{-- Profile Card --}}
         <x-ui.card>
             <div class="p-6 text-center">
-                <div class="h-20 w-20 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center font-medium text-2xl mx-auto mb-4">
-                    {{ substr($teacher->user->name ?? 'T', 0, 1) }}
-                </div>
+                 <x-profile-photo-uploader :editable="false" />
                 <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $teacher->user->name ?? 'Teacher' }}</h2>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Employee ID: {{ $teacher->employee_id ?? 'N/A' }}</p>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $teacher->user->email ?? 'N/A' }}</p>

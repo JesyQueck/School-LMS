@@ -25,75 +25,10 @@
         <!-- Sidebar -->
         <aside
             id="sidebar"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-surface border-r border-neutral-200 dark:border-dark-border transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:relative"
-            aria-label="Sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-72 bg-primary-700 border-r border-white/10 transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:relative lg:w-72"
+            aria-label="Main navigation"
         >
-            <x-layout.sidebar :title="config('school.name', config('app.name', 'Greenfield Academy'))">
-                @if(auth()->check())
-                    @php $role = auth()->user()->role; @endphp
-
-                    @if($role === 'admin')
-                        <x-layout.sidebar-item href="{{ route('admin.dashboard') }}" icon="layout-dashboard" label="Dashboard" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
-                        <x-layout.sidebar-item href="/admin/classes" icon="school" label="Classes" />
-                        <x-layout.sidebar-item href="/admin/academic" icon="calendar" label="Academic Structure" />
-                        <x-layout.sidebar-item href="/admin/subjects" icon="book-open" label="Subjects" />
-                        <x-layout.sidebar-item href="/admin/assignments" icon="user-check" label="Teacher Assignments" />
-                        <x-layout.sidebar-item href="/admin/report-cards" icon="file-text" label="Report Cards" />
-                        <x-layout.sidebar-item href="/admin/timetable" icon="calendar-check" label="Timetable" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">People</div>
-                        <x-layout.sidebar-item href="/admin/students" icon="users" label="Students" />
-                        <x-layout.sidebar-item href="/admin/teachers" icon="graduation-cap" label="Teachers" />
-                        <x-layout.sidebar-item href="/admin/accounts" icon="user-check" label="Accounts" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Finance</div>
-                        <x-layout.sidebar-item href="/admin/finance" icon="wallet" label="Finance" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Communication</div>
-                        <x-layout.sidebar-item href="/admin/announcements" icon="megaphone" label="Announcements" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">System</div>
-                        <x-layout.sidebar-item href="/admin/audit-logs" icon="clipboard" label="Audit Logs" />
-                        <x-layout.sidebar-item href="/admin/accounts" icon="settings" label="Settings" />
-
-                        <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
-                    @elseif($role === 'teacher')
-                        <x-teacher-nav />
-                    @elseif($role === 'parent')
-                        <x-layout.sidebar-item href="/parent/dashboard" icon="layout-dashboard" label="Dashboard" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">My Children</div>
-                        <x-layout.sidebar-item href="/parent/dashboard" icon="user" label="All Children" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
-                        <x-layout.sidebar-item href="/parent/timetable" icon="calendar-check" label="Timetable" />
-                        <x-layout.sidebar-item href="/parent/announcements" icon="megaphone" label="Announcements" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Account</div>
-                        <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
-                    @elseif($role === 'student')
-                        <x-layout.sidebar-item href="/student/dashboard" icon="layout-dashboard" label="Dashboard" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Academic</div>
-                        <x-layout.sidebar-item href="/student/report-cards" icon="file-text" label="Report Cards" />
-                        <x-layout.sidebar-item href="/student/timetable" icon="calendar-check" label="Timetable" />
-                        <x-layout.sidebar-item href="/student/attendance" icon="calendar" label="Attendance" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Finance</div>
-                        <x-layout.sidebar-item href="/student/fees" icon="wallet" label="My Fees" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Communication</div>
-                        <x-layout.sidebar-item href="/student/announcements" icon="megaphone" label="Announcements" />
-
-                        <div class="px-3 pt-4 pb-1 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">Account</div>
-                        <x-layout.sidebar-item href="/student/profile" icon="user" label="My Profile" />
-                        <x-layout.sidebar-item href="/change-password" icon="settings" label="Change Password" />
-                        <x-layout.sidebar-item href="/logout" icon="log-out" label="Logout" method="POST" />
-                    @endif
-                @endif
-            </x-layout.sidebar>
+            <x-layout.sidebar />
         </aside>
 
         <!-- Main content wrapper -->
@@ -105,12 +40,9 @@
             <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 {{ $slot }}
             </main>
-
-            <x-layout.footer>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">&copy; {{ date('Y') }} {{ config('school.name', config('app.name', 'Greenfield Academy')) }}. All rights reserved.</p>
-            </x-layout.footer>
         </div>
     </div>
+
     @stack('scripts')
 </body>
 </html>

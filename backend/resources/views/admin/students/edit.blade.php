@@ -10,6 +10,16 @@
     </div>
 
     <x-ui.card>
+        <div class="p-6 text-center">
+            <h3 class="text-lg font-medium text-neutral-900 dark:text-white mb-3">Profile Photo</h3>
+            <x-profile-photo-uploader :user="$student->user"
+                :form-action="route('admin.students.photo.update', $student)"
+                :destroy-action="route('admin.students.photo.destroy', $student)" />
+            <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Set or remove this student's profile photo.</p>
+        </div>
+    </x-ui.card>
+
+    <x-ui.card>
         <form method="POST" action="{{ route('admin.students.update', $student) }}" class="p-6 space-y-6">
             @csrf
             @method('PUT')

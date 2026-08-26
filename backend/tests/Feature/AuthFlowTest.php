@@ -595,6 +595,22 @@ class AuthFlowTest extends TestCase
         $response->assertViewIs('auth.password-change');
     }
 
+    public function test_password_change_page_is_accessible_to_users_not_requiring_change(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'admin',
+            'needs_password_change' => false,
+            'password' => Hash::make('OldPass123!'),
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get('/change-password');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('auth.password-change');
+    }
+
     public function test_password_change_redirect_does_not_reference_nonexistent_route(): void
     {
         $user = $this->createUserForPasswordChange('admin');
