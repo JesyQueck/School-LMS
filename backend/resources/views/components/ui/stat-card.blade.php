@@ -42,8 +42,8 @@
             @endif
         </div>
         @if($icon)
-            <div class="{{ $compact ? 'h-8 w-8 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' : 'h-14 w-14 rounded-xl bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' }}">
-                <svg class="{{ $compact ? 'h-4 w-4' : 'h-7 w-7' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
+             <div class="{{ $compact ? 'h-8 w-8 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' : 'h-12 w-12 rounded-xl bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' }}">
+                <svg class="{{ $compact ? 'h-4 w-4' : 'h-6 w-6' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
             </div>
         @endif
     </div>
