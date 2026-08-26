@@ -68,6 +68,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingController::class, 'profile'])->name('settings.profile');
+    Route::patch('/settings', [SettingController::class, 'updateProfile'])->name('settings.profile.update');
 
     Route::post('/profile/photo', [ProfilePhotoController::class, 'update'])->name('profile.photo.update');
     Route::delete('/profile/photo', [ProfilePhotoController::class, 'destroy'])->name('profile.photo.destroy');

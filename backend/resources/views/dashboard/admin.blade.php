@@ -7,7 +7,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <x-ui.stat-card label="Total Students" value="1,234" :trend="['direction' => 'up', 'value' => '12% from last month']" icon="users" />
         <x-ui.stat-card label="Total Teachers" value="48" :trend="['direction' => 'up', 'value' => '3 new this term']" icon="graduation-cap" />
-        <x-ui.stat-card label="Total Classes" value="36" :trend="['direction' => 'neutral', 'value' => 'No change']" icon="school" />
+        <x-ui.stat-card label="Total Classes" value="36" :trend="['direction' => 'neutral', 'value' => 'No change']" icon="layout-grid" />
         <x-ui.stat-card label="Attendance Rate" value="94.5%" :trend="['direction' => 'up', 'value' => '2.1% from last week']" icon="calendar-check" />
     </div>
 

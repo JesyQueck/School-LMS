@@ -58,7 +58,7 @@
                 ],
             ],
             [
-                'label' => 'ACADEMIC',
+                'label' => 'ACADEMICS',
                 'items' => [
                     $item('Students', route('admin.students'), 'users'),
                     $item('Teachers', route('admin.teachers'), 'graduation-cap'),
@@ -66,12 +66,6 @@
                     $item('Academic Structure', route('admin.academic'), 'calendar'),
                     $item('Subjects', route('admin.subjects.index'), 'book-open'),
                     $item('Timetable', route('admin.timetable.index'), 'calendar-check'),
-                ],
-            ],
-            [
-                'label' => 'ACADEMICS',
-                'items' => [
-                    $item('Results', route('admin.results'), 'clipboard-list'),
                     $item('Report Cards', route('admin.report-cards.index'), 'file-text'),
                 ],
             ],
@@ -169,7 +163,7 @@
 
     if (in_array($role, ['admin', 'teacher', 'student', 'parent'])) {
         $settingsItems = [
-            $item('Profile Photo', route('settings.profile'), 'camera'),
+            $item('Profile', route('settings.profile'), 'camera'),
             $item('Change Password', route('password.change'), 'settings'),
         ];
     }

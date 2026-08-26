@@ -36,7 +36,7 @@ class AuthenticatedLayoutTest extends TestCase
 
         $response->assertOk();
         // Admin-only navigation items
-        foreach (['Dashboard', 'Students', 'Teachers', 'Classes', 'Academic Structure', 'Subjects', 'Results', 'Report Cards', 'Timetable', 'Fees / Payments', 'Announcements', 'Accounts', 'Audit Logs', 'Profile Photo', 'Change Password', 'Logout'] as $label) {
+        foreach (['Dashboard', 'Students', 'Teachers', 'Classes', 'Academic Structure', 'Subjects', 'Report Cards', 'Timetable', 'Fees / Payments', 'Announcements', 'Accounts', 'Audit Logs', 'Profile', 'Change Password', 'Logout'] as $label) {
             $response->assertSee($label);
         }
         // Teacher-only and parent-only sections must not leak into the admin layout
@@ -57,7 +57,7 @@ class AuthenticatedLayoutTest extends TestCase
         $response = $this->get('/teacher/dashboard');
 
         $response->assertOk();
-        foreach (['Dashboard', 'My Classes', 'Attendance', 'Results', 'Report Cards', 'Timetable', 'Profile Photo', 'Change Password', 'Logout'] as $label) {
+        foreach (['Dashboard', 'My Classes', 'Attendance', 'Results', 'Report Cards', 'Timetable', 'Profile', 'Change Password', 'Logout'] as $label) {
             $response->assertSee($label);
         }
         // Admin-only sections must not leak into the teacher layout
@@ -83,7 +83,7 @@ class AuthenticatedLayoutTest extends TestCase
         $response = $this->get('/student/dashboard');
 
         $response->assertOk();
-        foreach (['Dashboard', 'Timetable', 'Attendance', 'Report Cards', 'Fees', 'Profile Photo', 'Change Password', 'Logout'] as $label) {
+        foreach (['Dashboard', 'Timetable', 'Attendance', 'Report Cards', 'Fees', 'Profile', 'Change Password', 'Logout'] as $label) {
             $response->assertSee($label);
         }
         // Admin/teacher/parent-only sections must not leak into the student layout
@@ -118,7 +118,7 @@ class AuthenticatedLayoutTest extends TestCase
         $response = $this->get('/parent/dashboard');
 
         $response->assertOk();
-        foreach (['Dashboard', 'Children', 'Timetable', 'Profile Photo', 'Change Password', 'Logout'] as $label) {
+        foreach (['Dashboard', 'Children', 'Timetable', 'Profile', 'Change Password', 'Logout'] as $label) {
             $response->assertSee($label);
         }
         // Admin-only sections must not leak into the parent layout
@@ -227,7 +227,7 @@ class AuthenticatedLayoutTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Choose photo');
-        $response->assertSee('Profile Photo');
+        $response->assertSee('Profile');
     }
 
     public function test_settings_page_is_read_only_for_students(): void

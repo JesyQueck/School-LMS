@@ -5,7 +5,7 @@
     $user = $user ?? auth()->user();
     $formAction = $formAction ?? route('profile.photo.update');
     $destroyAction = $destroyAction ?? route('profile.photo.destroy');
-    $photoUrl = $user && $user->profile_photo
+    $photoUrl = ($user && $user->profile_photo)
         ? (Str::startsWith($user->profile_photo, ['http://', 'https://'])
             ? $user->profile_photo
             : asset('storage/' . $user->profile_photo))
@@ -13,17 +13,18 @@
 @endphp
 
 <div class="flex items-center gap-4">
-    @if ($photoUrl)
-        <img src="{{ $photoUrl }}" alt="{{ $user->name ?? 'Profile' }}"
-             class="{{ $size }} flex-shrink-0 rounded-full object-cover ring-2 ring-neutral-200 dark:ring-neutral-700">
-    @else
-        @php
-            $initial = $user ? Str::upper(Str::substr($user->name ?? 'U', 0, 1)) : 'U';
-        @endphp
-        <div class="flex {{ $size }} flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30 text-xl font-medium text-primary-700 dark:text-primary-300 ring-2 ring-neutral-200 dark:ring-neutral-700">
-            {{ $initial }}
-        </div>
-    @endif
+    <div class="{{ $size }} flex-shrink-0 rounded-full overflow-hidden ring-2 ring-neutral-200 dark:ring-neutral-700">
+        @if ($photoUrl)
+            <img src="{{ $photoUrl }}" alt="{{ $user->name ?? 'Profile' }}" class="h-full w-full object-cover">
+        @else
+            @php
+                $initial = $user ? Str::upper(Str::substr($user->name ?? 'U', 0, 1)) : 'U';
+            @endphp
+            <div class="flex h-full w-full items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30 text-2xl font-medium text-primary-700 dark:text-primary-300">
+                {{ $initial }}
+            </div>
+        @endif
+    </div>
 
     @if ($editable)
         <div class="flex flex-col gap-1.5">

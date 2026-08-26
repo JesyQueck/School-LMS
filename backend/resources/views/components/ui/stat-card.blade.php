@@ -25,6 +25,7 @@
         'log-out' => 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
         'bell' => 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
         'award' => 'M12 2l4 5.5H20a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2v-9a2 2 0 012-2h6L12 2z M12 14v6m0-6v6',
+        'layout-grid' => 'M3.75 3.375c0-1.036.814-1.875 1.875-1.875h4.5c1.036 0 1.875.814 1.875 1.875v4.5A1.875 1.875 0 019.375 9.75h-4.5A1.875 1.875 0 013.75 7.875v-4.5zM12 9.375c0-1.036.814-1.875 1.875-1.875h4.5c1.036 0 1.875.814 1.875 1.875v4.5a1.875 1.875 0 01-1.875 1.875h-4.5a1.875 1.875 0 01-1.875-1.875v-4.5zM3.75 15.75c0-1.036.814-1.875 1.875-1.875h4.5c1.036 0 1.875.814 1.875 1.875v4.5a1.875 1.875 0 01-1.875 1.875h-4.5a1.875 1.875 0 01-1.875-1.875v-4.5zM12 15.75c0-1.036.814-1.875 1.875-1.875h4.5c1.036 0 1.875.814 1.875 1.875v4.5a1.875 1.875 0 01-1.875 1.875h-4.5a1.875 1.875 0 01-1.875-1.875v-4.5z',
     ];
 @endphp
 
@@ -41,7 +42,7 @@
             @endif
         </div>
         @if($icon)
-            <div class="{{ $compact ? 'h-8 w-8 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center' : 'h-14 w-14 rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center' }}">
+            <div class="{{ $compact ? 'h-8 w-8 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' : 'h-14 w-14 rounded-xl bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' }}">
                 <svg class="{{ $compact ? 'h-4 w-4' : 'h-7 w-7' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
             </div>
         @endif
