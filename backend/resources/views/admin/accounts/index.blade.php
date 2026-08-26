@@ -8,14 +8,8 @@
             <div>
                 <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">All Accounts</h1>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                    @php
-                        $counts = $users->groupBy('role')->map->count();
-                    @endphp
                     Manage user accounts.
-                    @foreach($roles as $r)
-                        <span class="mx-1 opacity-50">|</span>
-                        {{ ucfirst($r) }}: <strong>{{ $counts[$r] ?? 0 }}</strong>
-                    @endforeach
+                    {{ $users->total() }} total accounts.
                 </p>
             </div>
             <div class="flex items-center gap-2">
@@ -103,8 +97,14 @@
                             </td>
                         </tr>
                     @endforelse
-                </tbody>
+                                </tbody>
             </table>
         </div>
+
+        @if ($users->hasPages())
+            <div class="px-6 py-4 border-t border-neutral-200 dark:border-dark-border">
+                {{ $users->links() }}
+            </div>
+        @endif
     </x-ui.card>
 </x-layouts.app>

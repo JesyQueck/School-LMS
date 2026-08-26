@@ -90,7 +90,7 @@ class SchoolAdminController extends Controller
     public function teachers()
     {
         return view('admin.teachers.index', [
-            'teachers' => Teacher::with('user')->get(),
+            'teachers' => Teacher::with('user')->paginate(15),
             'users' => User::where('role', 'teacher')->where('needs_password_change', true)->get(),
         ]);
     }
@@ -98,7 +98,7 @@ class SchoolAdminController extends Controller
     public function students()
     {
         return view('admin.students.index', [
-            'students' => Student::with(['user', 'schoolClass'])->get(),
+            'students' => Student::with(['user', 'schoolClass'])->paginate(15),
             'classes' => SchoolClass::all(),
             'users' => User::where('role', 'student')->where('needs_password_change', true)->get(),
         ]);

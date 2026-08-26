@@ -36,7 +36,7 @@
     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
             <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">All Students</h3>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $students->count() }} student{{ $students->count() !== 1 ? 's' : '' }} enrolled.</p>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $students->total() }} student{{ $students->total() !== 1 ? 's' : '' }} enrolled.</p>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -73,8 +73,14 @@
                             </td>
                         </tr>
                     @endforelse
-                </tbody>
+                                </tbody>
             </table>
         </div>
+
+        @if ($students->hasPages())
+            <div class="px-6 py-4 border-t border-neutral-200 dark:border-dark-border">
+                {{ $students->links() }}
+            </div>
+        @endif
     </x-ui.card>
 </x-layouts.app>

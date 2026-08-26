@@ -31,7 +31,8 @@ class AccountController extends Controller
         $users = User::with(['teacher', 'student', 'parentProfile'])
             ->when(in_array($role, $validRoles), fn ($q) => $q->where('role', $role))
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return view('admin.accounts.index', [
             'users' => $users,

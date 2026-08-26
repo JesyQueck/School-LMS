@@ -33,7 +33,7 @@
     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
             <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">All Teachers</h3>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $teachers->count() }} teacher{{ $teachers->count() !== 1 ? 's' : '' }} registered.</p>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $teachers->total() }} teacher{{ $teachers->total() !== 1 ? 's' : '' }} registered.</p>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -82,8 +82,13 @@
                 </tbody>
             </table>
         </div>
-    </x-ui.card>
 
+        @if ($teachers->hasPages())
+            <div class="px-6 py-4 border-t border-neutral-200 dark:border-dark-border">
+                {{ $teachers->links() }}
+            </div>
+        @endif
+    </x-ui.card>
     <!-- Add Teacher Modal -->
     <div id="add-teacher-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border shadow-premium-lg w-full max-w-md">
