@@ -252,7 +252,7 @@
                 <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Payments</h3>
             </div>
             <div class="flex flex-col sm:flex-row sm:items-end gap-3 w-full">
-                <form id="report-form" method="GET" action="{{ route('admin.finance.report.export') }}" class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:flex-1">
+                <form id="report-form" method="GET" action="{{ route('admin.finance.report.export') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:flex-1">
                     <div>
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term</label>
                         <select name="term_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
