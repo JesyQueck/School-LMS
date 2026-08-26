@@ -1,6 +1,6 @@
 @props(['title' => 'Dashboard', 'actions' => null])
 
-<header class="h-16 bg-primary-700 text-white border-b border-white/10 flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
+<header class="h-16 bg-primary-800 text-white border-b border-white/20 shadow-lg flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
     <div class="flex items-center gap-4">
         <label for="sidebar-menu-checkbox"
                class="lg:hidden cursor-pointer rounded-xl p-1.5 text-white hover:bg-white/10 focus-visible-ring transition-colors duration-200"

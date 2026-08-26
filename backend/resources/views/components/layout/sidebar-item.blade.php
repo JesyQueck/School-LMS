@@ -4,6 +4,7 @@
     'label' => 'Menu Item',
     'active' => null,
     'method' => 'GET',
+    'emphasis' => false,
 ])
 
 @php
@@ -59,14 +60,17 @@
 @endphp
 
 @php
-    $baseClasses = 'flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-200 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-700 focus:ring-white transition-colors duration-150';
+    $baseClasses = 'flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-300 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-700 focus:ring-white transition-colors duration-150';
     $activeClasses = 'bg-white/8 border-l-4 border-l-white text-white font-semibold';
+    $emphasisClasses = $emphasis
+        ? 'border border-neutral-600 dark:border-neutral-500 hover:border-neutral-500 dark:hover:border-neutral-400 hover:bg-white/5 group'
+        : '';
 @endphp
 
 @if($method === 'POST')
     <form method="POST" action="{{ route('logout') }}" class="w-full">
         @csrf
-        <button type="submit" class="{{ $baseClasses }} {{ $isActive ? $activeClasses : '' }}" @if($isActive) aria-current="page" @endif>
+        <button type="submit" class="{{ $baseClasses }} {{ $emphasisClasses }} {{ $isActive ? $activeClasses : '' }}" @if($isActive) aria-current="page" @endif>
             <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? '' }}"/>
             </svg>
@@ -75,7 +79,7 @@
     </form>
 @else
     <a href="{{ $href }}"
-       class="{{ $baseClasses }} {{ $isActive ? $activeClasses : '' }}"
+       class="{{ $baseClasses }} {{ $emphasisClasses }} {{ $isActive ? $activeClasses : '' }}"
        @if($isActive) aria-current="page" @endif>
         <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? '' }}"/>

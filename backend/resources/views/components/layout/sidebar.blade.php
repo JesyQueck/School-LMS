@@ -219,6 +219,7 @@
             :icon="$logoutItem['icon']"
             :label="$logoutItem['label']"
             :active="$logoutItem['active']"
+            :emphasis="true"
             method="{{ $logoutItem['method'] }}" />
     </div>
 </div>
