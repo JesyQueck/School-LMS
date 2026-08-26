@@ -179,16 +179,28 @@
 
 <div class="flex flex-col h-full text-neutral-100">
     {{-- Branding --}}
-    <div class="flex items-center justify-center gap-3 px-4 py-4 border-b border-white/10 bg-primary-800">
-        @if ($logoExists)
-            <img src="{{ asset($logoPath) }}" alt="{{ $schoolName }}" class="h-14 w-auto max-w-[160px] object-contain" width="160" height="56">
-        @else
-            <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl font-semibold text-white">
-                {{ $schoolInitial }}
-            </div>
-        @endif
+    <div class="flex items-center justify-between gap-3 px-4 py-4 border-b border-white/10 bg-primary-800">
+        <div class="flex items-center gap-3">
+            @if ($logoExists)
+                <img src="{{ asset($logoPath) }}" alt="{{ $schoolName }}" class="h-14 w-auto max-w-[160px] object-contain" width="160" height="56">
+            @else
+                <div class="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl font-semibold text-white">
+                    {{ $schoolInitial }}
+                </div>
+            @endif
 
-        <span class="text-lg font-semibold tracking-tight text-white">{{ $schoolName }}</span>
+            <span class="text-lg font-semibold tracking-tight text-white">{{ $schoolName }}</span>
+        </div>
+
+        <label for="sidebar-menu-checkbox"
+               class="lg:hidden cursor-pointer rounded-xl p-1.5 text-white hover:bg-white/10 focus-visible-ring transition-colors duration-200 shrink-0"
+               aria-label="Close menu">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </label>
     </div>
 
     {{-- User profile --}}

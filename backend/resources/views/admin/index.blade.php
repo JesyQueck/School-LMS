@@ -15,7 +15,7 @@
     @endif
 
     {{-- School Statistics --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="users" />
         <x-ui.stat-card label="Teachers" :value="number_format($totalTeachers)" icon="graduation-cap" />
         <x-ui.stat-card label="Classes" :value="number_format($totalClasses)" icon="layout-grid" />
@@ -52,8 +52,8 @@
                                 <span class="text-neutral-700 dark:text-neutral-300">Submitted</span>
                                 <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsSubmitted }}</span>
                             </div>
-                            <div class="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-primary-500" style="width: {{ $resultsSubmitted > 0 ? 100 : 0 }}%"></div>
+                            <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                                <div class="h-full rounded-full bg-primary-600 dark:bg-primary-500" style="width: {{ $resultsSubmitted > 0 ? 100 : 0 }}%"></div>
                             </div>
                         </div>
                         <div>
@@ -61,8 +61,8 @@
                                 <span class="text-neutral-700 dark:text-neutral-300">Locked</span>
                                 <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsLocked }}</span>
                             </div>
-                            <div class="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-success-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsLocked / $resultsSubmitted) * 100) : 0 }}%"></div>
+                            <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                                <div class="h-full rounded-full bg-success-600 dark:bg-success-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsLocked / $resultsSubmitted) * 100) : 0 }}%"></div>
                             </div>
                         </div>
                         <div>
@@ -70,8 +70,8 @@
                                 <span class="text-neutral-700 dark:text-neutral-300">Pending</span>
                                 <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsPending }}</span>
                             </div>
-                            <div class="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-warning-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsPending / max(1, $resultsSubmitted)) * 100) : 0 }}%"></div>
+                            <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                                <div class="h-full rounded-full bg-warning-600 dark:bg-warning-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsPending / max(1, $resultsSubmitted)) * 100) : 0 }}%"></div>
                             </div>
                         </div>
                     </div>
