@@ -249,9 +249,11 @@
     <x-ui.card>
         <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
             <h3 class="text-sm font-semibold text-neutral-900 dark:text-white mb-2">Payments</h3>
-            <form id="report-form" method="GET" action="{{ route('admin.finance.report.export') }}">
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
-                    <div class="sm:col-span-1">
+        </div>
+        <div class="px-4 pb-3">
+            <div class="flex flex-col sm:flex-row sm:items-end gap-2">
+                <form id="report-form" method="GET" action="{{ route('admin.finance.report.export') }}" class="grid grid-cols-2 sm:grid-cols-3 gap-2 flex-1">
+                    <div>
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term</label>
                         <select name="term_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
                             <option value="">All</option>
@@ -260,7 +262,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="sm:col-span-2">
+                    <div class="col-span-2 sm:col-span-2">
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
                         <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
                             <option value="">All</option>
@@ -269,11 +271,11 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
+                </form>
                 <button type="button" onclick="document.getElementById('report-form').requestSubmit()" class="w-full sm:w-auto bg-success-600 hover:bg-success-700 text-white font-medium px-3 py-1.5 rounded-lg shadow-sm text-sm">
                     Download Report
                 </button>
-            </form>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
