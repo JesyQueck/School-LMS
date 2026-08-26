@@ -9,6 +9,8 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $studentFee->student->admission_no }} &middot; {{ $studentFee->student->schoolClass->name ?? 'N/A' }}</p>
     </div>
 
+    <div id="payment-feedback" class="fixed top-20 left-0 right-0 z-50 hidden"></div>
+
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-7 space-y-6">
             <x-ui.card>
@@ -97,3 +99,38 @@
         </div>
     </div>
 </x-layouts.app>
+
+@push('scripts')
+<script>
+(function () {
+    var feedbackEl = document.getElementById('payment-feedback');
+    if (!feedbackEl) { return; }
+
+    var variants = {
+        'error':   { 'border': 'border-l-4 border-danger-200 dark:border-danger-800', 'text': 'text-danger-800 dark:text-danger-300', 'bg': 'bg-danger-50 dark:bg-danger-950/40', 'color': 'text-danger-600 dark:text-danger-400' },
+        'success': { 'border': 'border-l-4 border-success-200 dark:border-success-800', 'text': 'text-success-800 dark:text-success-300', 'bg': 'bg-success-50 dark:bg-success-950/40', 'color': 'text-success-600 dark:text-success-400' },
+        'info':    { 'border': 'border-l-4 border-info-200 dark:border-info-800', 'text': 'text-info-800 dark:text-info-300', 'bg': 'bg-info-50 dark:bg-info-950/40', 'color': 'text-info-600 dark:text-info-400' },
+    };
+
+    function showFeedback(message, type) {
+        var v = variants[type || 'info'] || variants['info'];
+        feedbackEl.className = 'fixed top-20 left-0 right-0 z-50 mx-auto max-w-2xl rounded-xl px-4 py-3 ' + v.bg + ' ' + v.border + ' ' + v.text + ' flex items-center gap-3 shadow-md';
+        feedbackEl.innerHTML = '<svg class="h-5 w-5 flex-shrink-0 ' + v.color + '" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="flex-1 text-sm font-semibold">' + message + '</span>';
+        feedbackEl.classList.remove('hidden');
+
+        clearTimeout(feedbackEl._hideTimer);
+        feedbackEl._hideTimer = setTimeout(function () {
+            feedbackEl.classList.add('hidden');
+        }, 5000);
+    }
+
+    var status = @json(session('status'));
+    var error = @json(session('error'));
+    if (error) {
+        showFeedback(error, 'error');
+    } else if (status) {
+        showFeedback(status, 'success');
+    }
+})();
+</script>
+@endpush

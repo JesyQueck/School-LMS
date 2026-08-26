@@ -103,12 +103,13 @@ class FinanceController extends Controller
         try {
             $payment = $this->feeService->recordPayment($studentFee, $data, $request->user());
         } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['amount_paid' => $e->getMessage()])->withInput();
+            return back()->with('error', $e->getMessage())->withInput();
         }
 
         $this->audit($request, 'payment.created', Payment::class, $payment->id, null, $data);
 
-        return redirect()->route('admin.finance')->with('status', 'Payment recorded for '.$studentFee->student->full_name.'.');
+        return redirect()->route('admin.finance.student-fees.show', $studentFee->id)
+            ->with('status', 'Payment recorded for '.$studentFee->student->full_name.'.');
     }
 
     public function paymentReceipt(Request $request, Payment $payment)
