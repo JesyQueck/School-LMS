@@ -179,7 +179,7 @@
 
 <div class="flex flex-col h-full text-neutral-100">
     {{-- Branding --}}
-    <div class="flex items-center justify-center gap-3 px-4 py-4 border-b border-white/10 bg-primary-950">
+    <div class="flex items-center justify-center gap-3 px-4 py-4 border-b border-white/10 bg-primary-800">
         @if ($logoExists)
             <img src="{{ asset($logoPath) }}" alt="{{ $schoolName }}" class="h-14 w-auto max-w-[160px] object-contain" width="160" height="56">
         @else
@@ -213,7 +213,7 @@
     </nav>
 
     {{-- Bottom actions --}}
-    <div class="p-2 border-t border-white/10 bg-primary-950">
+    <div class="p-2 border-t border-white/10 bg-primary-800">
         <x-layout.sidebar-item
             :href="$logoutItem['href']"
             :icon="$logoutItem['icon']"
