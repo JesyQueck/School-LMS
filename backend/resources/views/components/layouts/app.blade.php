@@ -25,7 +25,7 @@
         <!-- Sidebar -->
         <aside
             id="sidebar"
-            class="fixed inset-y-0 left-0 z-40 w-72 bg-primary-800 border-r border-white/10 shadow-xl transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:static lg:w-72"
+            class="fixed inset-y-0 left-0 z-50 w-72 bg-primary-800 border-r border-white/10 transition-transform duration-300 ease-in-out flex flex-col -translate-x-full peer-checked:translate-x-0 lg:translate-x-0 lg:static lg:w-72"
             aria-label="Main navigation"
         >
             <x-layout.sidebar />
