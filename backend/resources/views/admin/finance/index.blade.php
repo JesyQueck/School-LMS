@@ -160,7 +160,7 @@
         <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
             <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Student Fees</h3>
         </div>
-        <form method="GET" class="p-4 grid grid-cols-1 sm:grid-cols-5 gap-3 border-b border-neutral-200 dark:border-dark-border">
+         <form method="GET" class="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3 border-b border-neutral-200 dark:border-dark-border">
             <div>
                 <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
                 <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
@@ -188,12 +188,12 @@
                     <option value="unpaid" {{ ($filters['status'] ?? '') == 'unpaid' ? 'selected' : '' }}>Unpaid</option>
                 </select>
             </div>
-            <div>
+            <div class="sm:col-span-2">
                 <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Search</label>
                 <input name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Name / ADM" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
             </div>
             <div class="flex items-end gap-2">
-                <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1.5 rounded-lg text-sm">Filter</button>
+                <button type="submit" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1.5 rounded-lg text-sm">Filter</button>
                 <a href="{{ route('admin.finance') }}" class="text-sm text-neutral-500 dark:text-neutral-400 hover:underline">Reset</a>
             </div>
         </form>
