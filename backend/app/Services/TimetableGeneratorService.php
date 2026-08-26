@@ -214,6 +214,12 @@ class TimetableGeneratorService
     {
         $conflicts = collect();
 
+        $excludeIds = is_array($excludeId) ? $excludeId : ($excludeId ? [$excludeId] : []);
+        if ($timetable->exists) {
+            $excludeIds[] = $timetable->id;
+        }
+        $excludeIds = array_unique(array_filter($excludeIds));
+
         $startTime = $timetable->start_time instanceof Carbon
             ? $timetable->start_time->format('H:i')
             : $timetable->start_time;
@@ -225,12 +231,8 @@ class TimetableGeneratorService
             $conflicting = Timetable::where('teacher_id', $timetable->teacher_id)
                 ->where('day', $timetable->day);
 
-            if ($timetable->exists) {
-                $conflicting->where('id', '!=', $timetable->id);
-            }
-
-            if ($excludeId) {
-                $conflicting->where('id', '!=', $excludeId);
+            foreach ($excludeIds as $id) {
+                $conflicting->where('id', '!=', $id);
             }
 
             $hasConflict = $conflicting->where(function ($q) use ($startTime, $endTime) {
@@ -251,17 +253,17 @@ class TimetableGeneratorService
             $conflicting = Timetable::where('class_subject_id', $timetable->class_subject_id)
                 ->where('day', $timetable->day);
 
-            if ($timetable->exists) {
-                $conflicting->where('id', '!=', $timetable->id);
-            }
-
-            if ($excludeId) {
-                $conflicting->where('id', '!=', $excludeId);
+            foreach ($excludeIds as $id) {
+                $conflicting->where('id', '!=', $id);
             }
 
             $hasConflict = $conflicting->where(function ($q) use ($startTime, $endTime) {
                 $q->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime]);
+                    ->orWhereBetween('end_time', [$startTime, $endTime])
+                    ->orWhere(function ($subQ) use ($startTime, $endTime) {
+                        $subQ->where('start_time', '<=', $startTime)
+                            ->where('end_time', '>=', $endTime);
+                    });
             })->exists();
 
             if ($hasConflict) {
@@ -285,9 +287,9 @@ class TimetableGeneratorService
         $modelB = clone $entryB;
         $modelB->fill($originalA);
 
-        $conflicts = $conflicts->merge($this->validateTimetableEntry($modelA, $entryB->id));
-        $conflicts = $conflicts->merge($this->validateTimetableEntry($modelB, $entryA->id));
+        $conflicts = $conflicts->merge($this->validateTimetableEntry($modelA, [$entryA->id, $entryB->id]));
+        $conflicts = $conflicts->merge($this->validateTimetableEntry($modelB, [$entryA->id, $entryB->id]));
 
-        return $conflicts;
+        return $conflicts->unique()->values();
     }
 }

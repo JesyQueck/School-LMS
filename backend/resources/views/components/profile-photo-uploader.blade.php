@@ -1,5 +1,5 @@
 @use('Illuminate\Support\Str')
-@props(['user' => null, 'editable' => true, 'formAction' => null, 'destroyAction' => null])
+@props(['user' => null, 'editable' => true, 'size' => 'h-16 w-16', 'formAction' => null, 'destroyAction' => null])
 
 @php
     $user = $user ?? auth()->user();
@@ -15,12 +15,12 @@
 <div class="flex items-center gap-4">
     @if ($photoUrl)
         <img src="{{ $photoUrl }}" alt="{{ $user->name ?? 'Profile' }}"
-             class="h-16 w-16 flex-shrink-0 rounded-full object-cover ring-2 ring-neutral-200 dark:ring-neutral-700">
+             class="{{ $size }} flex-shrink-0 rounded-full object-cover ring-2 ring-neutral-200 dark:ring-neutral-700">
     @else
         @php
             $initial = $user ? Str::upper(Str::substr($user->name ?? 'U', 0, 1)) : 'U';
         @endphp
-        <div class="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30 text-xl font-medium text-primary-700 dark:text-primary-300 ring-2 ring-neutral-200 dark:ring-neutral-700">
+        <div class="flex {{ $size }} flex-shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30 text-xl font-medium text-primary-700 dark:text-primary-300 ring-2 ring-neutral-200 dark:ring-neutral-700">
             {{ $initial }}
         </div>
     @endif

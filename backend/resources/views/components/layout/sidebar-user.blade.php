@@ -20,12 +20,12 @@
                 : asset('storage/' . $user->profile_photo);
         @endphp
         <img src="{{ $photoUrl }}" alt="{{ $user->name }}"
-             class="h-16 w-16 rounded-full object-cover ring-2 ring-white/20 mb-2">
+             class="h-50 w-50 rounded-full object-cover ring-2 ring-white/20 mb-2">
     @else
         @php
             $initial = $user ? Str::upper(Str::substr($user->name ?? 'U', 0, 1)) : 'U';
         @endphp
-        <div class="flex h-16 w-16 items-center justify-center rounded-full bg-white/15 text-xl font-semibold text-white ring-2 ring-white/20 mb-2">
+        <div class="flex h-20 w-20 items-center justify-center rounded-full bg-white/15 text-xl font-semibold text-white ring-2 ring-white/20 mb-2">
             {{ $initial }}
         </div>
     @endif

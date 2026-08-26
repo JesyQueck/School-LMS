@@ -9,8 +9,10 @@
 
     <x-ui.card>
         <div class="p-6">
+            <x-ui.toast :message="session('status')" />
+
             <div class="flex items-start gap-6">
-                <x-profile-photo-uploader :editable="auth()->user()->role !== 'student'" />
+                <x-profile-photo-uploader :size="'h-64 w-64'" :editable="auth()->user()->role !== 'student'" />
 
                 @if (auth()->user()->role === 'student')
                     <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
