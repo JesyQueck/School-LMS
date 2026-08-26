@@ -4,8 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title inertia>{{ config('app.name', 'Greenfield Academy') }}</title>
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.ico') }}">
-    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ asset(config('school.logo', 'images/Logo.webp')) }}" type="image/webp">
     <meta name="description" content="Greenfield Academy - Nurturing young minds through academic excellence, creative thinking, and strong moral values.">
     <meta property="og:title" content="{{ config('school.name', 'Greenfield Academy') }}">
     <meta property="og:description" content="Greenfield Academy - Nurturing young minds through academic excellence, creative thinking, and strong moral values.">

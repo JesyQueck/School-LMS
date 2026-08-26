@@ -32,10 +32,10 @@
  <div class="{{ $compact ? 'bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-3 shadow-sm' : 'bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border p-6 shadow-premium hover:shadow-premium-lg transition-all duration-300' }}">
      <div class="flex flex-col">
          <p class="{{ $compact ? 'text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase' : 'text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide' }}">{{ $label }}</p>
-         <div class="mt-1 flex items-center gap-2">
-             <p class="{{ $compact ? 'text-2xl font-bold text-neutral-900 dark:text-white' : 'text-4xl font-bold text-neutral-900 dark:text-white tracking-tight' }}">{{ $value }}</p>
-             @if($icon)
-                 <div class="{{ $compact ? 'h-6 w-6 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' : 'h-10 w-10 rounded-xl bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center' }}">
+          <div class="mt-1 flex items-center justify-between gap-2">
+              <p class="{{ $compact ? 'text-2xl font-bold text-neutral-900 dark:text-white' : 'text-4xl font-bold text-neutral-900 dark:text-white tracking-tight' }}">{{ $value }}</p>
+              @if($icon)
+                  <div class="{{ $compact ? 'h-6 w-6 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center shrink-0' : 'h-10 w-10 rounded-xl bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center shrink-0' }}">
                      <svg class="{{ $compact ? 'h-3 w-3' : 'h-5 w-5' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
                  </div>
              @endif
