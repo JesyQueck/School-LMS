@@ -4,7 +4,12 @@
     <meta charset="utf-8">
     <title>Financial Report</title>
     <style>
-        body { font-family: 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; color: #1a1a1a; padding: 32px; }
+        @font-face {
+            font-family: 'DejaVu Sans';
+            font-weight: normal;
+            font-style: normal;
+        }
+        body { font-family: 'DejaVu Sans', 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif; color: #1a1a1a; padding: 32px; }
         .center { text-align: center; }
         .line { border-top: 1px solid #e5e5e5; margin: 16px 0; }
         .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }

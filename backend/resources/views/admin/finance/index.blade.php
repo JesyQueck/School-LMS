@@ -251,7 +251,7 @@
             <h3 class="text-sm font-semibold text-neutral-900 dark:text-white mb-2">Payments</h3>
         </div>
         <div class="px-4 pb-3">
-            <div class="flex flex-col sm:flex-row sm:items-end gap-2">
+            <div class="flex flex-col sm:flex-row sm:items-end gap-2 mt-3">
                 <form id="report-form" method="GET" action="{{ route('admin.finance.report.export') }}" class="grid grid-cols-2 sm:grid-cols-3 gap-2 flex-1">
                     <div>
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term</label>
@@ -262,7 +262,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-span-2 sm:col-span-2">
+                    <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
                         <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
                             <option value="">All</option>
