@@ -85,7 +85,7 @@
             [
                 'label' => 'SYSTEM',
                 'items' => [
-                    $item('Accounts', route('admin.accounts.index'), 'user-check'),
+                    $item('Accounts', route('admin.accounts.index'), 'shield-lock'),
                     $item('Audit Logs', route('admin.audit-logs.index'), 'clipboard'),
                 ],
             ],
