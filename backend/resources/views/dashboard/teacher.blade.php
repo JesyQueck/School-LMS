@@ -71,30 +71,30 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <x-ui.stat-card label="My Classes" :value="$subjectAssignments->count()" icon="school" />
         <x-ui.stat-card label="My Subjects" :value="$subjectAssignments->pluck('classSubject.subject_id')->unique()->count()" icon="book-open" />
-        <x-ui.stat-card label="Students" :value="$totalStudents" icon="user" />
+        <x-ui.stat-card label="Students" :value="$totalStudents" icon="users" />
         <x-ui.stat-card label="Attendance Today" :value="$todayAttendanceRate . '%'" icon="calendar-check" />
         @if($isClassTeacher && $classAssignment)
             <x-ui.stat-card
                 label="My Class"
                 :value="$classAssignment->class->name ?? 'N/A'"
                 :trend="['direction' => 'neutral', 'value' => ($classAssignment->class->students->count() ?? 0) . ' students']"
-                icon="user"
+                 icon="users"
             />
         @endif
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-start">
         {{-- Today's Timetable --}}
-        <div class="lg:col-span-8">
-            <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+            <div class="lg:col-span-5 h-full flex flex-col">
+            <x-ui.card class="h-full flex flex-col">
+                <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Today's Classes</h3>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Your teaching schedule for today.</p>
                 </div>
-                <div class="p-6">
-                    <div class="space-y-3">
+                <div class="p-4 flex-1 overflow-y-auto">
+                    <div class="space-y-2">
                         @forelse($todayClasses as $period)
-                            <div class="flex items-center gap-4 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
+                            <div class="flex items-center gap-3 p-2.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
                                 <div class="flex-shrink-0 text-center">
                                     <p class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ \Carbon\Carbon::parse($period->start_time)->format('g:i A') }}</p>
                                     <p class="text-xs text-neutral-400 dark:text-neutral-500">{{ \Carbon\Carbon::parse($period->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($period->end_time)->format('g:i A') }}</p>
@@ -105,10 +105,10 @@
                                 </div>
                             </div>
                         @empty
-                            <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">No classes scheduled for today.</p>
+                            <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-3">No classes scheduled for today.</p>
                         @endforelse
                     </div>
-                    <div class="mt-4">
+                    <div class="mt-3">
                         <a href="{{ route('teacher.timetable') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Timetable</a>
                     </div>
                 </div>
@@ -116,16 +116,19 @@
         </div>
 
         {{-- Right Column --}}
-        <div class="lg:col-span-4 space-y-6">
+        <div class="lg:col-span-7 h-full">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
             {{-- My Classes --}}
-            <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+            <div class="h-full flex flex-col">
+            <x-ui.card class="h-full flex flex-col">
+                <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border flex items-center gap-2">
+                    <svg class="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 7v3a2 2 0 002 2h2l3-3h6l3 3h2a2 2 0 002-2V7M4 10V5a2 2 0 012-2h12a2 2 0 012 2v5M9 12h.01M15 12h.01M2 12h20"/></svg>
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">My Classes</h3>
                 </div>
-                <div class="p-6 space-y-3">
+                <div class="p-4 flex-1 flex flex-col gap-2">
                     @forelse($subjectAssignments->unique('classSubject.class_id') as $assignment)
                         @php $cls = $assignment->classSubject->class @endphp
-                        <div class="flex items-center justify-between p-3 rounded-lg border border-neutral-200 dark:border-dark-border">
+                        <div class="flex-1 flex items-center justify-between p-2.5 rounded-lg border border-neutral-200 dark:border-dark-border">
                             <div>
                                 <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $cls->name ?? 'N/A' }}</p>
                                 <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $cls->students->count() ?? 0 }} students</p>
@@ -133,30 +136,38 @@
                             <a href="{{ route('teacher.classes.show', $cls) }}" class="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline">Open</a>
                         </div>
                     @empty
-                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">No classes assigned yet.</p>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-3">No classes assigned yet.</p>
                     @endforelse
                 </div>
             </x-ui.card>
+            </div>
 
             {{-- Announcements --}}
-            <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+            <div class="h-full flex flex-col">
+            <x-ui.card class="h-full flex flex-col">
+                <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border flex items-center gap-2">
+                    <svg class="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Announcements</h3>
                 </div>
-                <div class="p-6 space-y-3">
+                <div class="p-4 flex-1 flex flex-col gap-2">
                     @forelse($recentAnnouncements as $announcement)
                         <div>
-                            <p class="text-sm font-medium text-neutral-900 dark:text-white">ðŸ“¢ {{ $announcement->title }}</p>
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2">{{ $announcement->body }}</p>
+                            <div class="flex items-start gap-2 self-start">
+                                <svg class="h-4 w-4 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                                <p class="text-sm font-medium text-neutral-900 dark:text-white text-left">{{ $announcement->title }}</p>
+                            </div>
+                            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 text-left line-clamp-2">{{ $announcement->body }}</p>
                         </div>
                     @empty
-                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">No announcements.</p>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-3">No announcements.</p>
                     @endforelse
                 </div>
-                <div class="px-6 pb-6">
+                <div class="px-4 pb-4 mt-auto">
                     <a href="{{ route('teacher.announcements') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All Announcements</a>
                 </div>
             </x-ui.card>
+            </div>
+            </div>
         </div>
     </div>
 
@@ -176,29 +187,30 @@
         @endphp
         <div class="mb-6">
             <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border flex items-center gap-2">
+                    <svg class="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 7v3a2 2 0 002 2h2l3-3h6l3 3h2a2 2 0 002-2V7M4 10V5a2 2 0 012-2h12a2 2 0 012 2v5M9 12h.01M15 12h.01M2 12h20"/></svg>
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">My Form Class</h3>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $formClass->name }} — Class Teacher Overview</p>
                 </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                        <div class="text-center p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800">
+                <div class="p-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div class="text-center p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800">
                             <p class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $formStudents->count() }}</p>
                             <p class="text-xs text-neutral-500 dark:text-neutral-400">Students</p>
                         </div>
-                        <div class="text-center p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800">
+                        <div class="text-center p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800">
                             <p class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $formClassAvg }}%</p>
                             <p class="text-xs text-neutral-500 dark:text-neutral-400">Class Average</p>
                         </div>
-                        <div class="text-center p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800">
+                        <div class="text-center p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800">
                             <p class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $formAttendanceRate }}%</p>
                             <p class="text-xs text-neutral-500 dark:text-neutral-400">Attendance Rate</p>
                         </div>
                     </div>
-                    <div class="flex gap-3">
-                        <a href="{{ route('teacher.classes.show', $formClass) }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">View Students</a>
-                        <a href="{{ route('teacher.class.attendance') }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Attendance</a>
-                        <a href="{{ route('teacher.class-performance') }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Class Performance</a>
+                    <div class="flex gap-2">
+                        <a href="{{ route('teacher.classes.show', $formClass) }}" class="flex-1 text-center text-sm font-medium px-3 py-1.5 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">View Students</a>
+                        <a href="{{ route('teacher.class.attendance') }}" class="flex-1 text-center text-sm font-medium px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Attendance</a>
+                        <a href="{{ route('teacher.class-performance') }}" class="flex-1 text-center text-sm font-medium px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Class Performance</a>
                     </div>
                 </div>
             </x-ui.card>

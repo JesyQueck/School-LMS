@@ -680,7 +680,7 @@ class StudentImportTest extends TestCase
 
         $response = $this->get('/student/dashboard');
 
-        $response->assertOk();
+        $response->assertRedirect(route('password.change'));
     }
 
     public function test_cancel_import_clears_session(): void

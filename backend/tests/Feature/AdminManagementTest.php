@@ -1634,7 +1634,7 @@ class AdminManagementTest extends TestCase
 
         $this->actingAs($studentUser);
         $response = $this->get('/student/dashboard');
-        $response->assertOk();
+        $response->assertRedirect(route('password.change'));
     }
 
     public function test_document_uploads_are_stored(): void

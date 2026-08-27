@@ -66,7 +66,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.only'])->group(function () {
     Route::get('/settings', [SettingController::class, 'profile'])->name('settings.profile');
     Route::patch('/settings', [SettingController::class, 'updateProfile'])->name('settings.profile.update');
 

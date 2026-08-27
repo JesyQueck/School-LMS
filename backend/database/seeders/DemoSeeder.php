@@ -119,13 +119,15 @@ class DemoSeeder extends Seeder
         $teachers = [];
 
         foreach ($teacherData as $data) {
+            $surname = explode(' ', $data[0])[1] ?? 'Default';
             $user = User::updateOrCreate(
                 ['email' => $data[1]],
                 [
                     'name' => $data[0],
-                    'password' => Hash::make('SchoolTest123!'),
+                    'password' => Hash::make($surname),
                     'role' => 'teacher',
                     'is_active' => true,
+                    'needs_password_change' => true,
                 ]
             );
 

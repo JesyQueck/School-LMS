@@ -113,14 +113,17 @@ class AccountController extends Controller
         $role = $request->query('role');
         $validRoles = ['teacher', 'student', 'parent', 'admin'];
 
-        $credentials = ImportCredential::with('user')
-            ->where(function ($q) use ($validRoles, $role) {
-                if (in_array($role, $validRoles)) {
-                    $q->where('role', $role);
-                }
-            })
+        $importCredentials = ImportCredential::with('user')
+            ->when(in_array($role, $validRoles), fn ($q) => $q->where('role', $role))
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $seededUsers = User::when(in_array($role, $validRoles), fn ($q) => $q->where('role', $role))
+            ->whereDoesntHave('importCredential')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $credentials = $importCredentials->merge($seededUsers);
 
         $roleLabels = [
             'admin' => 'Admin',

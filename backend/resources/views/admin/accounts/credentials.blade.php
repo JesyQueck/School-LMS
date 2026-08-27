@@ -48,7 +48,7 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Name</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Email</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Temporary Password</th>
-                        @if($credentials->whereNotNull('related_to')->isNotEmpty())
+                        @if($credentials->filter(fn ($c) => ($c instanceof \App\Models\ImportCredential && $c->related_to) || ($c instanceof \App\Models\User && $c->role === 'parent'))->isNotEmpty())
                             <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Related Student</th>
                         @endif
                         <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Status</th>
@@ -57,25 +57,33 @@
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                     @forelse($credentials as $credential)
                         @php
-                            $isChanged = $credential->user && ! $credential->user->needs_password_change;
+                            $isImport = $credential instanceof \App\Models\ImportCredential;
+                            $user = $credential instanceof \App\Models\User ? $credential : ($credential->user ?? null);
+                            $isChanged = $user && ! $user->needs_password_change;
+                            $role = $isImport ? $credential->role : ($credential->role ?? '');
+                            $name = $isImport ? $credential->name : ($credential->name ?? '');
+                            $email = $isImport ? $credential->email : ($credential->email ?? '');
+                            $password = $isImport ? ($credential->password ?? '') : (($credential->role === 'teacher' || $credential->role === 'admin') ? (explode(' ', $credential->name)[1] ?? 'Default') : 'StudentTest123!');
+                            $relatedTo = $isImport ? $credential->related_to : null;
+                            $showRelated = $credentials->filter(fn ($c) => (($c instanceof \App\Models\ImportCredential && $c->related_to) || ($c instanceof \App\Models\User && $c->role === 'parent')))->isNotEmpty();
                         @endphp
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                             <td class="px-6 py-4 text-sm">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $roleColors[$credential->role] ?? '' }}">
-                                    {{ $roleLabels[$credential->role] ?? ucfirst($credential->role) }}
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $roleColors[$role] ?? '' }}">
+                                    {{ $roleLabels[$role] ?? ucfirst($role) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $credential->name }}</td>
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $credential->email }}</td>
+                            <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $name }}</td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $email }}@school</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 font-mono">
                                 @if($isChanged)
                                     <span class="text-danger-600 dark:text-danger-400 font-medium">[CHANGED]</span>
                                 @else
-                                    {{ $credential->password }}
+                                    {{ $password }}
                                 @endif
                             </td>
-                            @if($credentials->whereNotNull('related_to')->isNotEmpty())
-                                <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $credential->related_to ?? 'N/A' }}</td>
+                            @if($showRelated)
+                                <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $relatedTo ?? 'N/A' }}</td>
                             @endif
                             <td class="px-6 py-4 text-sm">
                                 @if($isChanged)

@@ -301,7 +301,7 @@ class TimetableGeneratorService
             ? $timetable->end_time->format('H:i')
             : $timetable->end_time;
 
-        if (!$timetable->teacher_id || !$timetable->day || !$startTime || !$endTime) {
+        if (! $timetable->teacher_id || ! $timetable->day || ! $startTime || ! $endTime) {
             return 0;
         }
 
@@ -318,10 +318,11 @@ class TimetableGeneratorService
         $isAdjacent = $teacherEntries->contains(function ($entry) use ($startTime, $endTime) {
             $entryStart = Carbon::parse($entry->start_time)->format('H:i');
             $entryEnd = Carbon::parse($entry->end_time)->format('H:i');
+
             return $entryEnd === $startTime || $entryStart === $endTime;
         });
 
-        if (!$isAdjacent) {
+        if (! $isAdjacent) {
             return 0;
         }
 
