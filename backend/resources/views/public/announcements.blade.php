@@ -16,6 +16,11 @@
                         <span class="inline-flex items-center rounded-full bg-primary-100 dark:bg-primary-900/30 px-2.5 py-0.5 text-xs font-medium text-primary-700 dark:text-primary-300">General</span>
                     </div>
                     <p class="mt-3 text-neutral-600 dark:text-neutral-400">{{ $announcement->body }}</p>
+                    @if ($announcement->image)
+                        <div class="mt-4">
+                            <img src="{{ asset('storage/' . $announcement->image) }}" alt="{{ $announcement->title }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border object-cover">
+                        </div>
+                    @endif
                 </div>
             @empty
                 <x-ui.empty-state title="No announcements" description="There are no announcements at this time." />

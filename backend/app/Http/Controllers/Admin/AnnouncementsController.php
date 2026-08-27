@@ -7,6 +7,7 @@ use App\Models\Announcement;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AnnouncementsController extends Controller
 {
@@ -29,9 +30,14 @@ class AnnouncementsController extends Controller
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:10000'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'target_role' => ['required', 'in:all,student,teacher,parent'],
             'show_on_website' => ['boolean'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('announcements', 'public');
+        }
 
         $announcement = Announcement::create(array_merge($data, [
             'created_by' => Auth::id(),

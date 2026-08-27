@@ -20,6 +20,11 @@
                             </div>
                             <h3 class="text-lg font-semibold text-neutral-900 dark:text-white mb-2">{{ $announcement->title }}</h3>
                             <p class="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed">{{ $announcement->body }}</p>
+                            @if ($announcement->image)
+                                <div class="mt-3">
+                                    <img src="{{ asset('storage/' . $announcement->image) }}" alt="{{ $announcement->title }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border object-cover">
+                                </div>
+                            @endif
                             <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-3">By {{ $announcement->createdBy->name ?? 'Admin' }}</p>
                         </div>
                     </div>

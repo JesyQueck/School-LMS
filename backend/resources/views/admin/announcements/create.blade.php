@@ -29,13 +29,54 @@
                     @enderror
                 </div>
 
-                <div>
-                    <label for="body" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Message <span class="text-danger-500">*</span></label>
-                    <textarea id="body" name="body" rows="6" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-500 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Write your announcement message here.">{{ old('body') }}</textarea>
-                    @error('body')
-                        <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                 <div>
+                     <label for="body" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Message <span class="text-danger-500">*</span></label>
+                     <textarea id="body" name="body" rows="6" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-500 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Write your announcement message here.">{{ old('body') }}</textarea>
+                     @error('body')
+                         <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
+                     @enderror
+                 </div>
+
+                 <div>
+                     <label for="image" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Attachment Image</label>
+                     <input id="image" name="image" type="file" accept="image/*" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text file:mr-3 file:-ml-1 file:mt-0.5 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 dark:file:bg-primary-900/30 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-900/40 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500">
+                     @error('image')
+                         <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
+                     @enderror
+                     <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1.5">Recommended: landscape image, up to 2MB (jpeg, png, jpg, webp).</p>
+                     <div id="image-preview" class="mt-3 hidden">
+                         <img id="image-preview-src" src="#" alt="Preview" class="max-w-full max-h-48 rounded-lg border border-neutral-300 dark:border-dark-border object-cover">
+                         <button type="button" id="clear-image-preview" class="ml-2 text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 underline">Remove</button>
+                     </div>
+                 </div>
+                 @push('scripts')
+                     <script>
+                     (function () {
+                         var input = document.getElementById('image');
+                         var previewWrap = document.getElementById('image-preview');
+                         var previewSrc = document.getElementById('image-preview-src');
+                         var clearBtn = document.getElementById('clear-image-preview');
+                         if (input && previewSrc) {
+                             input.addEventListener('change', function (e) {
+                                 var file = e.target.files[0];
+                                 if (!file) {
+                                     previewWrap.classList.add('hidden');
+                                     previewSrc.src = '#';
+                                     return;
+                                 }
+                                 var url = URL.createObjectURL(file);
+                                 previewSrc.src = url;
+                                 previewWrap.classList.remove('hidden');
+                             });
+                             clearBtn?.addEventListener('click', function () {
+                                 input.value = '';
+                                 previewSrc.src = '#';
+                                 previewWrap.classList.add('hidden');
+                             });
+                         }
+                     })();
+                     </script>
+                 @endpush
 
                 <div>
                     <label for="target_role" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Target Audience <span class="text-danger-500">*</span></label>
