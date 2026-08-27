@@ -247,6 +247,11 @@ class TimetableGeneratorService
             if ($hasConflict) {
                 $conflicts[] = 'Teacher is already scheduled at this time.';
             }
+
+            $consecutiveCount = $this->countConsecutiveClasses($timetable, $excludeIds);
+            if ($consecutiveCount > 3) {
+                $conflicts[] = 'Teacher cannot have more than 3 consecutive classes without a break.';
+            }
         }
 
         if ($timetable->class_subject_id && $timetable->day && $startTime && $endTime) {
@@ -269,9 +274,71 @@ class TimetableGeneratorService
             if ($hasConflict) {
                 $conflicts[] = 'This class already has a lesson at this time.';
             }
+
+            $sameSubjectCount = Timetable::where('class_subject_id', $timetable->class_subject_id)
+                ->where('day', $timetable->day)
+                ->when($timetable->exists, function ($q) use ($excludeIds) {
+                    foreach ($excludeIds as $id) {
+                        $q->where('id', '!=', $id);
+                    }
+                })
+                ->count();
+
+            if ($sameSubjectCount >= 2) {
+                $conflicts[] = 'Maximum 2 periods of the same subject per day allowed.';
+            }
         }
 
         return $conflicts;
+    }
+
+    public function countConsecutiveClasses(Timetable $timetable, array $excludeIds = []): int
+    {
+        $startTime = $timetable->start_time instanceof Carbon
+            ? $timetable->start_time->format('H:i')
+            : $timetable->start_time;
+        $endTime = $timetable->end_time instanceof Carbon
+            ? $timetable->end_time->format('H:i')
+            : $timetable->end_time;
+
+        if (!$timetable->teacher_id || !$timetable->day || !$startTime || !$endTime) {
+            return 0;
+        }
+
+        $teacherEntries = Timetable::where('teacher_id', $timetable->teacher_id)
+            ->where('day', $timetable->day)
+            ->where(function ($q) use ($excludeIds) {
+                foreach ($excludeIds as $id) {
+                    $q->where('id', '!=', $id);
+                }
+            })
+            ->orderBy('start_time')
+            ->get();
+
+        $isAdjacent = $teacherEntries->contains(function ($entry) use ($startTime, $endTime) {
+            $entryStart = Carbon::parse($entry->start_time)->format('H:i');
+            $entryEnd = Carbon::parse($entry->end_time)->format('H:i');
+            return $entryEnd === $startTime || $entryStart === $endTime;
+        });
+
+        if (!$isAdjacent) {
+            return 0;
+        }
+
+        $consecutiveCount = 1;
+        $chainEnd = $endTime;
+
+        foreach ($teacherEntries->sortBy('start_time') as $entry) {
+            $entryStart = Carbon::parse($entry->start_time)->format('H:i');
+            $entryEnd = Carbon::parse($entry->end_time)->format('H:i');
+
+            if ($entryStart === $chainEnd) {
+                $consecutiveCount++;
+                $chainEnd = $entryEnd;
+            }
+        }
+
+        return $consecutiveCount;
     }
 
     public function validateSwap(Timetable $entryA, Timetable $entryB): Collection

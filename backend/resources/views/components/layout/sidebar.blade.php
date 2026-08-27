@@ -65,7 +65,7 @@
                     $item('Classes', route('admin.classes'), 'layout-grid'),
                     $item('Academic Structure', route('admin.academic'), 'calendar'),
                     $item('Subjects', route('admin.subjects.index'), 'book-open'),
-                    $item('Assignments', route('admin.assignments'), 'user-check'),
+                    $item('Assignments', route('admin.assignments'), 'file-user'),
                     $item('Timetable', route('admin.timetable.index'), 'calendar-check'),
                     $item('Report Cards', route('admin.report-cards.index'), 'file-text'),
                 ],
