@@ -13,7 +13,7 @@
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
     @endif
 
-    <form method="POST" action="{{ route('admin.announcements.update', $announcement) }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.announcements.update', $announcement) }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
         @method('PATCH')
 

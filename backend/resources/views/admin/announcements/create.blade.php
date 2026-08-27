@@ -13,7 +13,7 @@
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
     @endif
 
-    <form method="POST" action="{{ route('admin.announcements.store') }}" class="space-y-6">
+    <form method="POST" action="{{ route('admin.announcements.store') }}" enctype="multipart/form-data" class="space-y-6">
         @csrf
 
         <x-ui.card>
