@@ -119,15 +119,15 @@
                 <div class="px-6 pb-6 grid grid-cols-3 gap-2 text-center">
                     <div class="rounded-lg bg-success-200 dark:bg-success-900/20 p-2">
                         <p class="text-lg font-bold text-success-700 dark:text-success-300">{{ $finance['paid'] }}</p>
-                        <p class="text-[10px] font-bold text-white dark:text-neutral-200 uppercase">Paid</p>
+                        <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Paid</p>
                     </div>
                     <div class="rounded-lg bg-warning-200 dark:bg-warning-900/20 p-2">
                         <p class="text-lg font-bold text-warning-700 dark:text-warning-300">{{ $finance['partial'] }}</p>
-                        <p class="text-[10px] font-bold text-white dark:text-neutral-200 uppercase">Partial</p>
+                        <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Partial</p>
                     </div>
                     <div class="rounded-lg bg-danger-200 dark:bg-danger-900/20 p-2">
                         <p class="text-lg font-bold text-danger-700 dark:text-danger-300">{{ $finance['unpaid'] }}</p>
-                        <p class="text-[10px] font-bold text-white dark:text-neutral-200 uppercase">Unpaid</p>
+                        <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Unpaid</p>
                     </div>
                 </div>
                 <div class="px-6 pb-6">

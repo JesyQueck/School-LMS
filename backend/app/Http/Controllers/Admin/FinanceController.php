@@ -47,7 +47,7 @@ class FinanceController extends Controller
 
         $studentFees->each(fn ($fee) => $fee->computed_status = $this->feeService->recomputeStatus($fee));
 
-        $payments = Payment::with(['studentFee.student', 'studentFee.feeType', 'recordedBy'])
+        $payments = Payment::with(['studentFee.student.schoolClass', 'studentFee.feeType', 'studentFee.term', 'recordedBy'])
             ->latest('payment_date')
             ->paginate(10)
             ->appends($request->only(['class_id', 'term_id', 'status', 'search']));
@@ -108,8 +108,9 @@ class FinanceController extends Controller
 
         $this->audit($request, 'payment.created', Payment::class, $payment->id, null, $data);
 
-        return redirect()->route('admin.finance.student-fees.show', $studentFee->id)
-            ->with('status', 'Payment recorded for '.$studentFee->student->full_name.'.');
+        return redirect()->route('admin.finance')
+            ->with('status', 'Payment recorded for '.$studentFee->student->full_name.'.')
+            ->with('show_receipt', $payment->id);
     }
 
     public function paymentReceipt(Request $request, Payment $payment)

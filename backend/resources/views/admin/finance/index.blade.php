@@ -292,8 +292,11 @@
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                     @forelse($payments as $payment)
-                        <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                            <td class="px-3 py-2 text-sm font-medium text-neutral-900 dark:text-white">{{ $payment->receipt_number }}</td>
+                        <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors" data-payment-id="{{ $payment->id }}">
+                            <td class="px-3 py-2 text-sm font-medium text-neutral-900 dark:text-white">
+                                {{ $payment->receipt_number }}
+                                <button type="button" data-view-receipt="{{ $payment->id }}" class="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:underline">Receipt</button>
+                            </td>
                             <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->studentFee->student->full_name ?? 'N/A' }}</td>
                             <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->studentFee->feeType->name ?? 'N/A' }}</td>
                             <td class="px-3 py-2 text-sm text-success-600 dark:text-success-400">₦{{ number_format($payment->amount_paid, 2) }}</td>
@@ -312,9 +315,136 @@
         </div>
     </x-ui.card>
 
+    {{-- Receipt Modals (one per payment) --}}
+    @foreach($payments as $payment)
+        @php
+            $receiptStudent = $payment->studentFee->student ?? null;
+            $receiptClass = $receiptStudent?->schoolClass ?? null;
+            $receiptFeeType = $payment->studentFee->feeType ?? null;
+            $receiptTerm = $payment->studentFee->term ?? null;
+            $receiptAmount = number_format($payment->amount_paid, 2);
+            $receiptMethod = ucfirst($payment->payment_method ?? 'Cash');
+        @endphp
+        <div id="receipt-modal-{{ $payment->id }}" class="receipt-modal fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 p-3">
+            <div class="bg-white dark:bg-dark-surface rounded-xl shadow-xl w-full max-w-xl mx-auto max-h-[90vh] flex flex-col">
+                <div class="flex items-end justify-end px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
+                    <button type="button" data-close-modal="{{ $payment->id }}" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="overflow-y-auto p-6">
+                    <div id="receipt-body-{{ $payment->id }}" class="receipt-body relative">
+                        @php
+                            $schoolName = config('school.name', 'Greenfield Academy');
+                            $schoolAddress = config('school.address', '123 Education Lane, Victoria Island, Lagos');
+                            $schoolPhone = config('school.phone', '+234 800 000 0000');
+                            $schoolEmail = config('school.email', 'info@greenfieldacademy.edu');
+                            $logoUrl = asset(config('school.logo', 'images/Logo.webp'));
+                        @endphp
+                        <img src="{{ $logoUrl }}" alt="{{ $schoolName }}" class="receipt-watermark">
+                        <div class="center" style="margin-bottom: 16px;">
+                            <img src="{{ $logoUrl }}" alt="{{ $schoolName }}" style="height: 48px; width: auto; display: block; margin: 0 auto 6px;">
+                            <div class="sub" style="font-size: 16px; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px;">{{ $schoolName }}</div>
+                            <div class="label" style="font-size: 11px; color: #666; text-align: center;">{{ $schoolAddress }} &middot; {{ $schoolPhone }} &middot; {{ $schoolEmail }}</div>
+                        </div>
+                        <div class="center">
+                            <div class="sub" style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 12px;">Official Payment Receipt</div>
+                        </div>
+                        <div class="line"></div>
+                        <div class="row"><span class="label">Receipt No:</span><span>{{ $payment->receipt_number }}</span></div>
+                        <div class="row"><span class="label">Date:</span><span>{{ $payment->payment_date?->format('d F Y') }}</span></div>
+                        <div class="line"></div>
+                        <div class="row"><span class="label">Student:</span><span>{{ $receiptStudent?->full_name ?? 'N/A' }}</span></div>
+                        <div class="row"><span class="label">Admission No:</span><span>{{ $receiptStudent?->admission_no ?? 'N/A' }}</span></div>
+                        <div class="row"><span class="label">Class:</span><span>{{ $receiptClass?->name ?? 'N/A' }}</span></div>
+                        <div class="row"><span class="label">Fee:</span><span>{{ $receiptFeeType?->name ?? 'N/A' }}</span></div>
+                        <div class="row"><span class="label">Term:</span><span>{{ $receiptTerm?->name ?? 'N/A' }}</span></div>
+                        <div class="line"></div>
+                        <div class="center" style="margin: 18px 0;">
+                            <div class="label">Amount Paid</div>
+                            <div class="amount">₦{{ $receiptAmount }}</div>
+                        </div>
+                        <div class="row"><span class="label">Payment Method:</span><span>{{ $receiptMethod }}</span></div>
+                        <div class="row"><span class="label">Reference:</span><span>{{ $payment->reference ?? '—' }}</span></div>
+                        <div class="row"><span class="label">Recorded By:</span><span>{{ $payment->recordedBy->name ?? 'System' }}</span></div>
+                        <div class="line"></div>
+                        <p class="center" style="font-size: 12px; color: #888;">Thank you for your payment.</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-3 px-4 py-3 border-t border-neutral-200 dark:border-dark-border no-print">
+                    <button type="button" data-close-modal="{{ $payment->id }}" class="px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:underline">Close</button>
+                    <button type="button" data-print-receipt="{{ $payment->id }}" class="px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg">Print Receipt</button>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
     @push('scripts')
         <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            /* Receipt modal handling */
+            var receiptCSS = '.center { text-align: center; } .line { border-top: 1px solid #e5e5e5; margin: 16px 0; } .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; } .label { color: #666; } .sub { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; } .amount { font-size: 28px; font-weight: 700; color: #047857; } .print-btn { margin: 24px auto; display: block; padding: 10px 24px; background: #047857; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; } .receipt-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-25deg); width: 320px; max-width: 80%; height: auto; opacity: 0.06; pointer-events: none; z-index: 0; } .receipt-body { position: relative; z-index: 1; } @media print { .no-print { display: none !important; } .receipt-watermark { opacity: 0.05; } }';
+            var receiptStyle = document.createElement('style');
+            receiptStyle.textContent = receiptCSS;
+            document.head.appendChild(receiptStyle);
+
+            function openReceipt(id) {
+                var modal = document.getElementById('receipt-modal-' + id);
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+            }
+
+            function closeReceipt(id) {
+                var modal = document.getElementById('receipt-modal-' + id);
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            }
+
+            document.querySelectorAll('[data-view-receipt]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    openReceipt(this.getAttribute('data-view-receipt'));
+                });
+            });
+
+            document.querySelectorAll('[data-close-modal]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    closeReceipt(this.getAttribute('data-close-modal'));
+                });
+            });
+
+            document.querySelectorAll('[data-print-receipt]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var id = this.getAttribute('data-print-receipt');
+                    var body = document.getElementById('receipt-body-' + id);
+                    if (!body) { return; }
+                    var printWindow = window.open('', '_blank', 'width=800,height=600');
+                    printWindow.document.write(
+                        '<!DOCTYPE html><html><head><title>Receipt</title>' +
+                        '<style>body { font-family: "Segoe UI", system-ui, sans-serif; color: #1a1a1a; max-width: 480px; margin: 40px auto; padding: 0 20px; } img { max-width: 100%; height: auto; }' +
+                        receiptCSS + '</style>' +
+                        '</head><body>' + body.innerHTML +
+                        '<button class="print-btn no-print" onclick="window.print()">Print Receipt</button>' +
+                        '</body></html>'
+                    );
+                    printWindow.document.close();
+                    printWindow.focus();
+                    printWindow.print();
+                });
+            });
+
+            /* After a payment is recorded, open its receipt immediately */
+            var showReceipt = @json(session('show_receipt'));
+            if (showReceipt) {
+                var modal = document.getElementById('receipt-modal-' + showReceipt);
+                if (modal) { openReceipt(showReceipt); }
+            }
+
+            /* Existing student search handling */
             var searchInput = document.querySelector('input[name="student_search"]');
             if (!searchInput) return;
 
