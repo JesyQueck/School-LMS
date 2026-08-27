@@ -47,4 +47,53 @@ class AnnouncementsController extends Controller
 
         return redirect()->route('admin.announcements')->with('status', 'Announcement published.');
     }
+
+    public function edit(Announcement $announcement)
+    {
+        return view('admin.announcements.edit', compact('announcement'));
+    }
+
+    public function update(Request $request, Announcement $announcement)
+    {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:10000'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
+            'target_role' => ['required', 'in:all,student,teacher,parent'],
+            'show_on_website' => ['boolean'],
+        ]);
+
+        if ($request->hasFile('image')) {
+            if ($announcement->image) {
+                Storage::disk('public')->delete($announcement->image);
+            }
+            $data['image'] = $request->file('image')->store('announcements', 'public');
+        }
+
+        if ($request->boolean('clear_image')) {
+            if ($announcement->image) {
+                Storage::disk('public')->delete($announcement->image);
+            }
+            $data['image'] = null;
+        }
+
+        $announcement->update($data);
+
+        $this->audit($request, 'announcement.updated', Announcement::class, $announcement->id, null, $data);
+
+        return redirect()->route('admin.announcements')->with('status', 'Announcement updated.');
+    }
+
+    public function destroy(Request $request, Announcement $announcement)
+    {
+        if ($announcement->image) {
+            Storage::disk('public')->delete($announcement->image);
+        }
+
+        $this->audit($request, 'announcement.deleted', Announcement::class, $announcement->id);
+
+        $announcement->delete();
+
+        return redirect()->route('admin.announcements')->with('status', 'Announcement deleted.');
+    }
 }

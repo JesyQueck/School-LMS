@@ -201,6 +201,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements');
         Route::get('/announcements/create', [AnnouncementsController::class, 'create'])->name('announcements.create');
         Route::post('/announcements', [AnnouncementsController::class, 'store'])->name('announcements.store');
+        Route::get('/announcements/{announcement}/edit', [AnnouncementsController::class, 'edit'])->name('announcements.edit');
+        Route::patch('/announcements/{announcement}', [AnnouncementsController::class, 'update'])->name('announcements.update');
+        Route::delete('/announcements/{announcement}', [AnnouncementsController::class, 'destroy'])->name('announcements.destroy');
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
