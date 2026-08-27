@@ -15,7 +15,12 @@
         'meeting' => asset('images/facilities_img1.webp'),
         'computer' => asset('images/computer_lab_img.webp'),
     ];
-    $imgSrc = $imageUrls[$image] ?? $image ?? $imageUrls['default'];
+     $imgSrc = $imageUrls[$image] ?? null;
+    if (! $imgSrc && is_string($image) && str_starts_with($image, 'announcements/')) {
+        $imgSrc = asset('storage/' . $image);
+    } elseif (! $imgSrc) {
+        $imgSrc = $image ?? $imageUrls['default'];
+    }
 @endphp
 
 <a href="{{ $href }}" class="group block bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border shadow-premium overflow-hidden card-lift hover:shadow-premium-lg">

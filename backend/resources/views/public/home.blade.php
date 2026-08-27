@@ -1,3 +1,6 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
 <x-layouts.guest>
     {{-- ============================================ --}}
     {{-- 1. PREMIUM NAVIGATION (via navbar component) --}}
@@ -288,56 +291,35 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div class="animate-on-scroll">
-                        <x-public.news-card
-                            title="Welcome Back to School"
-                            excerpt="We are excited to welcome all our students back for the 2026/2027 academic session. School resumes on September 1st with orientation activities planned throughout the week."
-                            date="Aug 28, 2026"
-                            author="Admin"
-                            image="school"
-                            category="Announcement"
-                            href="/news"
-                        />
-                    </div>
-                    <div class="animate-on-scroll" style="transition-delay: 0.1s;">
-                        <x-public.news-card
-                            title="Science Fair Winners Announced"
-                            excerpt="Congratulations to all participants in this year's Science Fair. The winning projects showcased incredible innovation and scientific reasoning from our JSS students."
-                            date="Aug 20, 2026"
-                            author="Mrs. Smith"
-                            image="science"
-                            category="Achievement"
-                            href="/news"
-                        />
-                    </div>
+                    @foreach($announcements as $announcement)
+                        <div class="animate-on-scroll">
+                            <x-public.news-card
+                                :title="$announcement->title"
+                                :excerpt="Str::limit(strip_tags($announcement->body), 160)"
+                                :date="$announcement->created_at->format('M d, Y')"
+                                :author="$announcement->createdBy?->name ?? 'Admin'"
+                                :image="$announcement->image"
+                                :category="$announcement->is_event ? 'Event' : 'Announcement'"
+                                :href="route('public.announcements')"
+                            />
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="space-y-4 animate-on-scroll" style="transition-delay: 0.2s;">
                     <h3 class="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider mb-2 px-1">Upcoming Events</h3>
-                    <x-public.event-card
-                        title="New Student Orientation"
-                        date="2026-09-01"
-                        time="09:00 AM"
-                        location="Main Hall"
-                        description="Welcome session for all new students joining Greenfield Academy this term."
-                        href="/news"
-                    />
-                    <x-public.event-card
-                        title="Inter-House Sports"
-                        date="2026-09-15"
-                        time="08:00 AM"
-                        location="School Field"
-                        description="Annual inter-house sports competition featuring track and field events."
-                        href="/news"
-                    />
-                    <x-public.event-card
-                        title="Parent-Teacher Conference"
-                        date="2026-10-05"
-                        time="10:00 AM"
-                        location="Classrooms"
-                        description="Discuss student progress and academic performance with class teachers."
-                        href="/news"
-                    />
+                    @forelse($events as $event)
+                        <x-public.event-card
+                            :title="$event->title"
+                            :date="$event->event_date->format('Y-m-d')"
+                            :time="$event->event_time->format('g:i A')"
+                            :location="$event->event_location"
+                            :description="Str::limit(strip_tags($event->body), 120)"
+                            :href="route('public.announcements')"
+                        />
+                    @empty
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400">No upcoming events at this time.</p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -478,9 +460,7 @@
         </div>
     </section>
 
-    </section>
-
-    @if($announcements?->isNotEmpty())
+    @if($announcements?->isNotEmpty() && $announcements->skip(3)->isNotEmpty())
     <section class="bg-neutral-50 dark:bg-dark-bg py-20 lg:py-32">
         <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10">
             <div class="text-center mx-auto mb-12 sm:mb-16 max-w-2xl">
@@ -489,18 +469,20 @@
                     Latest News
                 </span>
                 <h2 class="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight leading-[1.15] mb-4">
-                    Announcements
-                </h2>
+                    Announcements</h2>
                 <p class="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 leading-relaxed">
                     Stay informed with the latest school announcements.
                 </p>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($announcements as $announcement)
+                @foreach($announcements->skip(3) as $announcement)
                 <div class="bg-white dark:bg-dark-surface rounded-2xl border-2 border-neutral-200 dark:border-dark-border p-6 shadow-premium">
                     <h3 class="text-lg font-bold text-neutral-900 dark:text-white mb-2">{{ $announcement->title }}</h3>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-3">{{ $announcement->created_at->diffForHumans() }}</p>
-                    <p class="text-sm text-neutral-600 dark:text-neutral-400">{{ $announcement->body }}</p>
+                    <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-3">{{ Str::limit($announcement->body, 150) }}</p>
+                    @if ($announcement->image)
+                        <img src="{{ asset('storage/' . $announcement->image) }}" alt="{{ $announcement->title }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border object-cover">
+                    @endif
                 </div>
                 @endforeach
             </div>

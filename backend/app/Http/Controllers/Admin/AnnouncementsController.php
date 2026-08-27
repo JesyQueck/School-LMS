@@ -33,6 +33,10 @@ class AnnouncementsController extends Controller
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'target_role' => ['required', 'in:all,student,teacher,parent'],
             'show_on_website' => ['boolean'],
+            'is_event' => ['boolean'],
+            'event_date' => ['nullable', 'date', 'required_if:is_event,1'],
+            'event_time' => ['nullable', 'date_format:H:i', 'required_if:is_event,1'],
+            'event_location' => ['nullable', 'string', 'max:255', 'required_if:is_event,1'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -61,6 +65,10 @@ class AnnouncementsController extends Controller
             'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
             'target_role' => ['required', 'in:all,student,teacher,parent'],
             'show_on_website' => ['boolean'],
+            'is_event' => ['boolean'],
+            'event_date' => ['nullable', 'date', 'required_if:is_event,1'],
+            'event_time' => ['nullable', 'date_format:H:i', 'required_if:is_event,1'],
+            'event_location' => ['nullable', 'string', 'max:255', 'required_if:is_event,1'],
         ]);
 
         if ($request->hasFile('image')) {

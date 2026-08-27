@@ -15,10 +15,17 @@ class Announcement extends Model
         'created_by',
         'target_role',
         'show_on_website',
+        'is_event',
+        'event_date',
+        'event_time',
+        'event_location',
     ];
 
     protected $casts = [
         'show_on_website' => 'boolean',
+        'is_event' => 'boolean',
+        'event_date' => 'date',
+        'event_time' => 'datetime',
     ];
 
     public function createdBy(): BelongsTo
@@ -38,5 +45,12 @@ class Announcement extends Model
     public function scopeForWebsite(Builder $query): Builder
     {
         return $query->where('show_on_website', true);
+    }
+
+    public function scopeUpcomingEvents(Builder $query): Builder
+    {
+        return $query->where('is_event', true)
+            ->where('event_date', '>=', now()->toDateString())
+            ->orderBy('event_date');
     }
 }

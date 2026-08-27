@@ -13,7 +13,7 @@
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
     @endif
 
-    <form method="POST" action="{{ route('admin.announcements.store') }}" enctype="multipart/form-data" class="space-y-6">
+    <form method="POST" action="{{ route('admin.announcements.store') }}" enctype="multipart/form-data" class="space-y-6" x-data="{ isEvent: {{ old('is_event') ? 'true' : 'false' }} }">
         @csrf
 
         <x-ui.card>
@@ -101,6 +101,44 @@
                             Show on public website
                         </label>
                         <p class="text-sm text-neutral-500 dark:text-neutral-400">Also display this announcement on the public-facing school website, regardless of target audience.</p>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-neutral-200 dark:border-dark-border">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5 mt-0.5">
+                            <input id="is_event" name="is_event" type="checkbox" value="1" {{ old('is_event') ? 'checked' : '' }} class="h-4 w-4 rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500 dark:checked-bg-primary-600" x-model="isEvent">
+                        </div>
+                        <div class="ml-2">
+                            <label for="is_event" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                                Mark as upcoming event
+                            </label>
+                            <p class="text-sm text-neutral-500 dark:text-neutral-400">Check this to mark the announcement as an event. Events appear in the "Upcoming Events" section of the website and also function as announcements sent to the target roles.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="isEvent" class="grid grid-cols-1 md:grid-cols-2 gap-4" x-cloak>
+                    <div>
+                        <label for="event_date" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Event Date</label>
+                        <input id="event_date" name="event_date" type="date" value="{{ old('event_date') }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        @error('event_date')
+                            <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="event_time" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Event Time</label>
+                        <input id="event_time" name="event_time" type="time" value="{{ old('event_time') }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        @error('event_time')
+                            <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="event_location" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Event Location</label>
+                        <input id="event_location" name="event_location" type="text" value="{{ old('event_location') }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="e.g. Main Hall, School Field">
+                        @error('event_location')
+                            <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
             </div>

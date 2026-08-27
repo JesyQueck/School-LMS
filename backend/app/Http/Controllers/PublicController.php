@@ -8,17 +8,27 @@ class PublicController extends Controller
 {
     public function home()
     {
-        $announcements = Announcement::forRole('all')
-            ->where(function ($q) {
-                $q->where('target_role', 'all')
-                    ->orWhere('show_on_website', true);
-            })
+        $announcements = Announcement::where(function ($q) {
+            $q->where('target_role', 'all')
+                ->orWhere('show_on_website', true);
+        })
             ->with('createdBy')
             ->latest()
             ->limit(3)
             ->get();
 
-        return view('public.home', compact('announcements'));
+        $events = Announcement::where('is_event', true)
+            ->where('event_date', '>=', now()->toDateString())
+            ->where(function ($q) {
+                $q->where('target_role', 'all')
+                    ->orWhere('show_on_website', true);
+            })
+            ->with('createdBy')
+            ->orderBy('event_date')
+            ->limit(5)
+            ->get();
+
+        return view('public.home', compact('announcements', 'events'));
     }
 
     public function about()
@@ -38,10 +48,8 @@ class PublicController extends Controller
 
     public function announcements()
     {
-        $announcements = Announcement::where(function ($q) {
-            $q->where('target_role', 'all')
-                ->orWhere('show_on_website', true);
-        })
+        $announcements = Announcement::where('target_role', 'all')
+            ->orWhere('show_on_website', true)
             ->with('createdBy')
             ->latest()
             ->paginate(15);
