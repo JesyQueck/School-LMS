@@ -552,15 +552,34 @@ class TeacherPortalController extends Controller
         $timetable = Timetable::with([
             'classSubject.subject',
             'classSubject.class',
+            'periodConfig.periods',
         ])
             ->whereIn('class_subject_id', $subjectAssignmentIds)
             ->orderBy('day')
             ->orderBy('start_time')
             ->get();
 
+        $periods = collect();
+        if ($timetable->isNotEmpty()) {
+            if ($timetable->first()->periodConfig) {
+                $periods = $timetable->first()->periodConfig->periods->sortBy('sort_order');
+            } else {
+                $periods = $timetable->map(function ($entry) {
+                    return (object) [
+                        'name' => $entry->start_time->format('g:ia'),
+                        'start_time' => $entry->start_time,
+                        'end_time' => $entry->end_time,
+                        'is_break' => false,
+                        'sort_order' => 0,
+                    ];
+                })->sortBy('start_time')->values();
+            }
+        }
+
         return view('teacher.timetable.index', [
             'subjectAssignmentIds' => $subjectAssignmentIds,
             'timetable' => $timetable,
+            'periods' => $periods,
         ]);
     }
 

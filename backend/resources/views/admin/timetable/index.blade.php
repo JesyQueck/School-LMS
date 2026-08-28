@@ -317,7 +317,7 @@
                                     <span class="text-xs text-neutral-500 dark:text-neutral-400">({{ $entryCount }} entries)</span>
                                 </button>
 
-                                <div class="class-grid-content overflow-x-auto">
+                                <div class="class-grid-content overflow-x-auto" data-class-id="{{ $cls->id }}">
                                     <table class="min-w-full text-xs border border-neutral-200 dark:border-dark-border">
                                         <thead class="bg-neutral-50 dark:bg-neutral-800">
                                             <tr>
@@ -562,10 +562,15 @@
                 var entryId = this.getAttribute('data-entry-id');
                 var day = this.getAttribute('data-current-day');
                 var start = this.getAttribute('data-current-start');
+
+                var classGrid = this.closest('.class-grid-content');
+                var gridId = classGrid ? classGrid.getAttribute('data-class-id') : null;
+
                 e.dataTransfer.setData('text/plain', JSON.stringify({
                     entryId: entryId,
                     fromDay: day,
-                    fromPeriod: start
+                    fromPeriod: start,
+                    gridId: gridId
                 }));
                 this.classList.add('opacity-50');
             });
@@ -637,16 +642,21 @@
                         .then(function(r) {
                             if (r && r.success) {
                                 showFeedback(r.message || 'Entry moved successfully.', 'success');
+
                                 var movedEl = document.querySelector('.draggable-entry[data-entry-id="' + data.entryId + '"]');
-                                if (movedEl) {
-                                    var targetCell = document.querySelector('.drop-cell[data-day="' + toDay + '"][data-period-start="' + toPeriodStart + '"]');
-                                    if (targetCell) {
-                                        movedEl.setAttribute('data-current-day', toDay);
-                                        movedEl.setAttribute('data-current-start', toPeriodStart);
-                                        movedEl.setAttribute('data-current-end', r.end_time || toEndTime);
-                                        targetCell.innerHTML = '';
-                                        targetCell.appendChild(movedEl);
-                                    }
+                                var sourceGrid = data.gridId ? document.querySelector('.class-grid-content[data-class-id="' + data.gridId + '"]') : null;
+                                var sourceCell = sourceGrid ? sourceGrid.querySelector('.drop-cell[data-day="' + data.fromDay + '"][data-period-start="' + data.fromPeriod + '"]') : document.querySelector('.drop-cell[data-day="' + data.fromDay + '"][data-period-start="' + data.fromPeriod + '"]');
+
+                                var targetCell = cell;
+
+                                if (movedEl && sourceCell && targetCell) {
+                                    movedEl.setAttribute('data-current-day', toDay);
+                                    movedEl.setAttribute('data-current-start', toPeriodStart);
+                                    movedEl.setAttribute('data-current-end', r.end_time || toEndTime);
+
+                                    sourceCell.innerHTML = '<span class="text-neutral-300 dark:text-neutral-600">—</span>';
+                                    targetCell.innerHTML = '';
+                                    targetCell.appendChild(movedEl);
                                 }
                             } else {
                                 showFeedback('Move failed: ' + (r && r.message ? r.message : 'Unknown error'), 'error');

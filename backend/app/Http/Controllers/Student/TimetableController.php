@@ -19,6 +19,7 @@ class TimetableController extends Controller
             'classSubject.subject',
             'classSubject.class',
             'teacher.user',
+            'periodConfig.periods',
         ])
             ->whereHas('classSubject.class', function ($query) use ($student) {
                 $query->where('id', $student->class_id);
@@ -27,19 +28,24 @@ class TimetableController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $periods = $timetable->map(function (Timetable $entry, $index) {
-            return [
-                'period' => $index + 1,
-                'subject' => $entry->classSubject->subject->name ?? 'Unknown Subject',
-                'teacher' => $entry->teacher && $entry->teacher->user
-                    ? $entry->teacher->user->name
-                    : 'Not assigned',
-                'day' => $entry->day,
-                'start_time' => $entry->start_time,
-                'end_time' => $entry->end_time,
-            ];
-        });
+        $periods = collect();
+        if ($timetable->isNotEmpty()) {
+            if ($timetable->first()->periodConfig) {
+                $periods = $timetable->first()->periodConfig->periods->sortBy('sort_order');
+            } else {
+                $periods = $timetable->map(function ($entry) {
+                    return (object) [
+                        'name' => $entry->start_time->format('g:ia'),
+                        'start_time' => $entry->start_time,
+                        'end_time' => $entry->end_time,
+                        'is_break' => false,
+                        'sort_order' => 0,
+                    ];
+                })->sortBy('start_time')->values();
+            }
+        }
 
-        return view('student.timetable', compact('student', 'periods'));
+        return view('student.timetable', compact('student', 'periods', 'timetable'));
     }
+
 }
