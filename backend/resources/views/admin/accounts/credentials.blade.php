@@ -74,7 +74,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $name }}</td>
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $email }}@school</td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 font-mono">{{ $email }}</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 font-mono">
                                 @if($isChanged)
                                     <span class="text-danger-600 dark:text-danger-400 font-medium">[CHANGED]</span>

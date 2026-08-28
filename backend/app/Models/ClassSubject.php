@@ -13,10 +13,14 @@ class ClassSubject extends Model
         'subject_id',
         'is_compulsory',
         'periods_per_week',
+        'ca_max',
+        'exam_max',
     ];
 
     protected $casts = [
         'is_compulsory' => 'boolean',
+        'ca_max' => 'integer',
+        'exam_max' => 'integer',
     ];
 
     public function class(): BelongsTo

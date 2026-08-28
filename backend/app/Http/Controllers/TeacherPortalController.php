@@ -105,6 +105,19 @@ class TeacherPortalController extends Controller
         $totalTodayAttendance = $todayAttendanceRecords->where('status', 'present')->count();
         $todayAttendanceRate = $totalStudents > 0 ? round(($totalTodayAttendance / max($totalStudents, 1)) * 100) : 0;
 
+        $formClassAttendanceRate = 0;
+        if ($isClassTeacher && $classAssignment) {
+            $formClassStudentCount = Student::where('class_id', $classAssignment->class_id)->count();
+            if ($formClassStudentCount > 0) {
+                $formClassAttendanceRecords = Attendance::where('class_id', $classAssignment->class_id)
+                    ->whereDate('date', now()->toDateString())
+                    ->get();
+                $presentCount = $formClassAttendanceRecords->where('status', 'present')->count();
+                $formClassAttendanceRate = round(($presentCount / $formClassStudentCount) * 100);
+            }
+        }
+        $formClassAttendanceRateValue = $isClassTeacher ? $formClassAttendanceRate.'%' : $todayAttendanceRate.'%';
+
         $recentAnnouncements = Announcement::forRole('teacher')
             ->latest()
             ->limit(5)
@@ -124,6 +137,7 @@ class TeacherPortalController extends Controller
             'todayClasses' => $todayClasses,
             'todayAttendanceRate' => $todayAttendanceRate,
             'totalTodayAttendance' => $totalTodayAttendance,
+            'formClassAttendanceRateValue' => $formClassAttendanceRateValue,
             'recentAnnouncements' => $recentAnnouncements,
             'myClasses' => $myClasses,
         ]);
@@ -216,7 +230,7 @@ class TeacherPortalController extends Controller
             }
         }
 
-        $request->session()->forget('attendance_started_today_'.$date);
+        $request->session()->put('attendance_marked_today_'.$termId.'_'.$classId, $date);
 
         $this->audit($request, 'attendance.marked', Attendance::class, null, null, [
             'class_id' => $classId,
@@ -228,7 +242,7 @@ class TeacherPortalController extends Controller
         ]);
 
         return redirect()
-            ->route('teacher.dashboard')
+            ->route('teacher.attendance')
             ->with('status', 'Attendance recorded.');
     }
 
@@ -287,6 +301,7 @@ class TeacherPortalController extends Controller
         $activeClassAssignment = $classAssignments->first();
 
         $students = collect();
+        $todayAttendances = collect();
 
         if ($activeClassAssignment) {
             $students = Student::where('class_id', $activeClassAssignment->class_id)
@@ -295,16 +310,36 @@ class TeacherPortalController extends Controller
                     'fees',
                 ])
                 ->get();
+
+            $today = now()->toDateString();
+            $todayAttendances = Attendance::where('class_id', $activeClassAssignment->class_id)
+                ->where('term_id', $activeClassAssignment->term_id)
+                ->whereDate('date', $today)
+                ->with('student')
+                ->get();
         }
 
-        $showAttendanceForm = $request->session()->has(
-            'attendance_started_today_'.now()->toDateString()
-        );
+        $termId = $activeClassAssignment->term_id ?? null;
+        $classId = $activeClassAssignment->class_id ?? null;
+        $todayKey = 'attendance_marked_today_'.$termId.'_'.$classId;
+        $startedKey = 'attendance_started_today_'.$termId.'_'.$classId;
+
+        // "Marked" is date-stamped; a new day automatically resets the UI to
+        // "Take Attendance". Overview takes priority over the form on the same day.
+        // After clicking "Edit", the session flag is cleared so the form shows again.
+        // If the session was lost (e.g., after logout/login), fall back to checking
+        // whether attendance records exist in the database for today.
+        $markedDate = $request->session()->get($todayKey);
+        $hasSessionFlag = $markedDate === now()->toDateString();
+        $showOverview = $hasSessionFlag || (! $request->session()->has($startedKey) && $todayAttendances->isNotEmpty());
+        $showAttendanceForm = ! $showOverview && $request->session()->has($startedKey);
 
         return view('teacher.attendance.index', [
             'classAssignment' => $activeClassAssignment,
             'students' => $students,
+            'todayAttendances' => $todayAttendances,
             'showAttendanceForm' => $showAttendanceForm,
+            'showOverview' => $showOverview,
         ]);
     }
 
@@ -312,10 +347,34 @@ class TeacherPortalController extends Controller
     {
         $validated = $request->validated();
 
+        // Date-stamp the "started" flag so a new day automatically resets the UI
+        // back to the "Take Attendance" prompt.
         $request->session()->put(
-            'attendance_started_today_'.now()->toDateString(),
-            true
+            'attendance_started_today_'.$validated['term_id'].'_'.$validated['class_id'],
+            now()->toDateString()
         );
+
+        return redirect()->route('teacher.attendance');
+    }
+
+    public function editAttendance(Request $request)
+    {
+        $teacher = $this->getTeacherOrFail($request);
+
+        $classAssignment = ClassAssignment::with('class', 'term')
+            ->where('teacher_id', $teacher->getKey())
+            ->whereHas('academicSession', function ($query) {
+                $query->where('is_current', true);
+            })
+            ->first();
+
+        if (! $classAssignment) {
+            abort(403, 'You are not authorized to mark attendance.');
+        }
+
+        // Clear the "marked today" flag so the marking form is shown again.
+        // The "started" flag is kept, so the flow returns to the form.
+        $request->session()->forget('attendance_marked_today_'.$classAssignment->term_id.'_'.$classAssignment->class_id);
 
         return redirect()->route('teacher.attendance');
     }
@@ -400,6 +459,11 @@ class TeacherPortalController extends Controller
             abort(403, 'You are not authorized to view this class.');
         }
 
+        $isClassTeacher = ClassAssignment::where('teacher_id', $teacherId)
+            ->where('class_id', $classId)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->exists();
+
         $students = Student::where('class_id', $classId)
             ->with('user')
             ->get();
@@ -407,6 +471,7 @@ class TeacherPortalController extends Controller
         return view('teacher.students.index', [
             'class' => $class,
             'students' => $students,
+            'isClassTeacher' => $isClassTeacher,
         ]);
     }
 
@@ -424,45 +489,14 @@ class TeacherPortalController extends Controller
             abort(403, 'My Students is only available for class teachers.');
         }
 
-        $subjectAssignments = TeacherClassSubject::with([
-            'classSubject.class',
-            'classSubject.subject',
-        ])
-            ->where('teacher_id', $teacherId)
-            ->where('is_active', true)
+        $students = Student::where('class_id', $classAssignment->class_id)
+            ->with('user')
             ->get();
-
-        $allClassIds = $subjectAssignments->pluck('classSubject.class_id')->unique()->filter();
-        $allClassIds->push($classAssignment->class_id);
-
-        $classes = SchoolClass::whereIn('id', $allClassIds)->withCount('students')->get();
-
-        $selectedClassId = $request->input('class_id');
-
-        $studentQuery = Student::with('user');
-        if ($selectedClassId) {
-            $studentQuery->where('class_id', $selectedClassId);
-        } else {
-            $studentQuery->where('class_id', $classAssignment->class_id);
-        }
-
-        if ($search = $request->input('search')) {
-            $studentQuery->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', '%'.$search.'%')
-                    ->orWhere('last_name', 'like', '%'.$search.'%')
-                    ->orWhere('admission_no', 'like', '%'.$search.'%')
-                    ->orWhereHas('user', fn ($q) => $q->where('name', 'like', '%'.$search.'%'));
-            });
-        }
-
-        $students = $studentQuery->get();
 
         return view('teacher.students.my-students', [
             'teacher' => $teacher,
-            'classes' => $classes,
             'students' => $students,
             'classAssignment' => $classAssignment,
-            'selectedClassId' => $selectedClassId,
         ]);
     }
 

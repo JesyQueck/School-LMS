@@ -17,7 +17,7 @@
                 <input type="text" id="studentSearch" placeholder="Search students..." class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm w-64">
             </div>
         </div>
-        <div class="overflow-x-auto">
+         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
                 <thead class="bg-neutral-50 dark:bg-dark-surface">
                     <tr>
@@ -25,7 +25,9 @@
                         <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Gender</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Actions</th>
+                        @if(isset($isClassTeacher) && $isClassTeacher)
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
@@ -37,12 +39,14 @@
                             <td class="px-6 py-4 text-sm">
                                 <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Active</span>
                             </td>
-                            <td class="px-6 py-4 text-sm">
-                                <a href="{{ route('teacher.students.show', $student) }}" class="text-primary-600 dark:text-primary-400 hover:underline">View</a>
-                            </td>
+                            @if(isset($isClassTeacher) && $isClassTeacher)
+                                <td class="px-6 py-4 text-sm">
+                                    <a href="{{ route('teacher.students.show', $student) }}" class="text-primary-600 dark:text-primary-400 hover:underline">View</a>
+                                </td>
+                            @endif
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No students found.</td></tr>
+                        <tr><td colspan="{{ isset($isClassTeacher) && $isClassTeacher ? 5 : 4 }}" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No students found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

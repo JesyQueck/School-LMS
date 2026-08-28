@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +28,10 @@ class AppServiceProvider extends ServiceProvider
                         ['Retry-After' => $retryAfter]
                     );
                 });
+        });
+
+        Authenticate::redirectUsing(function ($request) {
+            return $request->expectsJson() ? null : (Route::has('login') ? route('login') : '/login');
         });
 
         // Blade components are auto-discovered in Laravel 13+

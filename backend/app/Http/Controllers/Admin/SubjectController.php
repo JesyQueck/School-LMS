@@ -66,11 +66,15 @@ class SubjectController extends Controller
             'name' => ['required', 'string', 'max:255', 'unique:subjects,name,'.$subject->id],
             'class_ids' => ['nullable', 'array'],
             'class_ids.*' => ['exists:classes,id'],
+            'score_settings' => ['nullable', 'array'],
+            'score_settings.*.class_id' => ['required', 'exists:classes,id'],
+            'score_settings.*.ca_max' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'score_settings.*.exam_max' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
         $oldValue = $subject->toArray();
         $subject->update(['name' => $data['name']]);
-        $subject->updateClassSubjects($data['class_ids'] ?? []);
+        $subject->updateClassSubjects($data['class_ids'] ?? [], $data['score_settings'] ?? []);
         $subject->load('classSubjects');
 
         $this->audit($request, 'subject.updated', Subject::class, $subject->id, $oldValue, $subject->toArray());

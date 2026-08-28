@@ -84,7 +84,7 @@ class TeacherPortalTest extends TestCase
             'status' => 'present',
         ]);
 
-        $attendanceResponse->assertRedirect('/teacher/dashboard');
+        $attendanceResponse->assertRedirect('/teacher/attendance');
         $this->assertDatabaseHas('attendances', ['student_id' => $student->id, 'status' => 'present']);
     }
 
@@ -535,5 +535,103 @@ class TeacherPortalTest extends TestCase
         $response->assertOk();
         $response->assertSee('Alice Smith');
         $response->assertDontSee('Bob Jones');
+    }
+
+    public function test_attendance_flow_shows_take_attendance_then_overview_then_edit(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-2002',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        ClassAssignment::create([
+            'teacher_id' => $teacher->id,
+            'class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM402',
+            'first_name' => 'Carol',
+            'last_name' => 'Dan',
+        ]);
+        $studentUser2 = User::factory()->create();
+        $student2 = Student::create([
+            'user_id' => $studentUser2->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM403',
+            'first_name' => 'Eve',
+            'last_name' => 'Lee',
+        ]);
+
+        $this->actingAs($teacherUser);
+
+        // Initial state: "Take Attendance" prompt is shown (no started/marked flags).
+        $initial = $this->get('/teacher/attendance')->assertOk();
+        $initial->assertViewHas('showOverview', false);
+        $initial->assertViewHas('showAttendanceForm', false);
+        $initial->assertSee('Take Attendance');
+
+        // Click "Take Attendance" sets the started flag → the marking form appears.
+        $this->post('/teacher/attendance/start', [
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+        ])->assertRedirect('/teacher/attendance');
+
+        $form = $this->get('/teacher/attendance')->assertOk();
+        $form->assertViewHas('showAttendanceForm', true);
+        $form->assertViewHas('showOverview', false);
+        $form->assertSee('Save Attendance');
+
+        // Submit attendance (one present, one absent).
+        $this->post('/teacher/attendance', [
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+            'date' => now()->toDateString(),
+            'status' => [
+                $student->id => 'present',
+                $student2->id => 'absent',
+            ],
+        ])->assertRedirect('/teacher/attendance');
+
+        // Overview now replaces the form, with an Edit button and the student names.
+        $overview = $this->get('/teacher/attendance')->assertOk();
+        $overview->assertViewHas('showOverview', true);
+        $overview->assertViewHas('showAttendanceForm', false);
+        $overview->assertSee('Edit Attendance')
+            ->assertSee('Carol Dan')
+            ->assertSee('Eve Lee');
+
+        // Clicking Edit returns to the marking form.
+        $this->get('/teacher/attendance/edit')->assertRedirect('/teacher/attendance');
+        $formAgain = $this->get('/teacher/attendance')->assertOk();
+        $formAgain->assertViewHas('showAttendanceForm', true);
+        $formAgain->assertViewHas('showOverview', false);
+        $formAgain->assertSee('Save Attendance');
+
+        $this->assertDatabaseHas('attendances', ['student_id' => $student->id, 'status' => 'present']);
+        $this->assertDatabaseHas('attendances', ['student_id' => $student2->id, 'status' => 'absent']);
     }
 }

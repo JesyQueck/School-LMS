@@ -267,8 +267,8 @@ class ReportCardPdfTest extends TestCase
                 'class_id' => $class->id,
                 'subject_id' => $subject->id,
             ]);
-            $ca = 25 + ($i % 10);
-            $exam = 55 + ($i % 40);
+            $ca = 20 + ($i % 11);
+            $exam = 55 + ($i % 16);
             Result::create([
                 'student_id' => $student->id,
                 'class_subject_id' => $classSubject->id,

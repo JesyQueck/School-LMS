@@ -41,6 +41,38 @@
                 @enderror
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Score Settings</label>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-2">Configure CA and Exam maximum scores for each class. CA + Exam should total 100.</p>
+                @php
+                    $assignedClassSubjects = $subject->classSubjects->keyBy('class_id');
+                @endphp
+                <div class="space-y-3">
+                    @foreach($classes as $class)
+                        @if(in_array($class->id, $assignedClassIds))
+                            @php
+                                $cs = $assignedClassSubjects[$class->id] ?? null;
+                            @endphp
+                            <div class="flex items-center gap-4 p-3 rounded-lg border border-neutral-200 dark:border-dark-border">
+                                <span class="text-sm font-medium text-neutral-700 dark:text-neutral-300 w-40">{{ $class->name }}</span>
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs text-neutral-500 dark:text-neutral-400">CA Max:</label>
+                                    <input type="number" name="score_settings[{{ $loop->index }}][class_id]" value="{{ $class->id }}" class="hidden">
+                                    <input type="number" name="score_settings[{{ $loop->index }}][ca_max]" min="0" max="100" value="{{ old('score_settings.'.$loop->index.'.ca_max', $cs->ca_max ?? 30) }}" class="w-16 px-2 py-1 border border-neutral-300 dark:border-dark-border rounded-lg text-sm text-center bg-neutral-50 dark:bg-neutral-800">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <label class="text-xs text-neutral-500 dark:text-neutral-400">Exam Max:</label>
+                                    <input type="number" name="score_settings[{{ $loop->index }}][exam_max]" min="0" max="100" value="{{ old('score_settings.'.$loop->index.'.exam_max', $cs->exam_max ?? 70) }}" class="w-16 px-2 py-1 border border-neutral-300 dark:border-dark-border rounded-lg text-sm text-center bg-neutral-50 dark:bg-neutral-800">
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+                @error('score_settings')
+                    <p class="mt-1 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div class="flex gap-3 justify-end pt-2">
                 <a href="{{ route('admin.subjects.index') }}" class="px-4 py-2 rounded-lg border border-neutral-300 dark:border-dark-border text-neutral-700 dark:text-dark-text hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Cancel</a>
                 <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-bg">Save Changes</button>

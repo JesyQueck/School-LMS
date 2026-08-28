@@ -27,9 +27,8 @@
                         <p>Students: {{ $cls->students->count() ?? 0 }}</p>
                         <p>Subject: {{ $assignment->classSubject->subject->name ?? 'N/A' }}</p>
                     </div>
-                    <div class="mt-4 flex gap-2">
-                        <a href="{{ route('teacher.classes.show', $cls) }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">Open Class</a>
-                        <a href="{{ route('teacher.scores') }}?class_subject_id={{ $assignment->class_subject_id }}" class="flex-1 text-center text-sm font-medium px-4 py-2 rounded-lg border border-neutral-200 dark:border-dark-border text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">Enter Scores</a>
+                    <div class="mt-4">
+                        <a href="{{ route('teacher.classes.show', $cls) }}" class="block text-center text-sm font-medium px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors">Open Class</a>
                     </div>
                 </div>
             </x-ui.card>

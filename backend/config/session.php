@@ -129,7 +129,11 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
+        Str::slug((string) env('APP_NAME', 'laravel')).'-session'.((function () {
+            $port = getenv('SERVE_PORT') ?: (isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : null);
+
+            return $port ? '-'.$port : '';
+        })())
     ),
 
     /*

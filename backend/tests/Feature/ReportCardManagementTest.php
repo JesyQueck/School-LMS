@@ -345,8 +345,8 @@ class ReportCardManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'class_subject_id' => $data['classSubject']->id,
             'term_id' => $data['term']->id,
-            'ca_score' => 99,
-            'exam_score' => 99,
+            'ca_score' => 30,
+            'exam_score' => 70,
         ], $admin);
     }
 
@@ -574,7 +574,7 @@ class ReportCardManagementTest extends TestCase
         $this->expectExceptionMessage('locked');
 
         // Direct Eloquent update should be blocked by the model event
-        $result->update(['ca_score' => 99]);
+        $result->update(['ca_score' => 25]);
     }
 
     public function test_locked_result_can_be_unlocked_via_service(): void

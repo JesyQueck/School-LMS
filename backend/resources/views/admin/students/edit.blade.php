@@ -10,17 +10,19 @@
     </div>
 
     <x-ui.card>
-        <div class="p-6 text-center">
+        <div class="p-6">
             @if (session('status'))
                 <x-ui.toast :message="session('status')" />
             @endif
 
-            <h3 class="text-lg font-medium text-neutral-900 dark:text-white mb-3">Profile Photo</h3>
-            <x-profile-photo-uploader :user="$student->user"
-                :size="'h-56 w-56'"
-                :form-action="route('admin.students.photo.update', $student)"
-                :destroy-action="route('admin.students.photo.destroy', $student)" />
-            <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Set or remove this student's profile photo.</p>
+            <div class="flex flex-col items-center">
+                <h3 class="text-lg font-medium text-neutral-900 dark:text-white mb-3">Profile Photo</h3>
+                <x-profile-photo-uploader :user="$student->user"
+                    :size="'h-56 w-56'"
+                    :form-action="route('admin.students.photo.update', $student)"
+                    :destroy-action="route('admin.students.photo.destroy', $student)" />
+                <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Set or remove this student's profile photo.</p>
+            </div>
         </div>
     </x-ui.card>
 

@@ -92,7 +92,7 @@ class MassAssignmentSecurityTest extends TestCase
             'student_id' => $student->id,
             'class_subject_id' => $classSubject->id,
             'term_id' => $term->id,
-            'ca_score' => 50,
+            'ca_score' => 30,
             'exam_score' => 50,
             'id' => 999999,
         ]);

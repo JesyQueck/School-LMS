@@ -12,26 +12,9 @@
         </p>
     </div>
 
-    <x-ui.card>
+     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Student List</h3>
-                <form method="GET" class="flex items-center gap-3">
-                    <select name="class_id" onchange="this.form.submit()" class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm">
-                        <option value="">All Classes</option>
-                        @foreach($classes as $class)
-                            <option value="{{ $class->id }}" {{ $selectedClassId == $class->id ? 'selected' : '' }}>{{ $class->name }} ({{ $class->students_count }} students)</option>
-                        @endforeach
-                    </select>
-                    <div class="relative">
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Search students..." class="rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm w-64 pl-8">
-                        <svg class="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                    <button type="submit" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Filter</button>
-                </form>
-            </div>
+            <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Student List</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">

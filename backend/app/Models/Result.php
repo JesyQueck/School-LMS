@@ -32,16 +32,28 @@ class Result extends Model
     protected static function booted(): void
     {
         static::saving(function (Result $result) {
+            $classSubject = ClassSubject::find($result->class_subject_id);
+            $caMax = $classSubject->ca_max ?? 30;
+            $examMax = $classSubject->exam_max ?? 70;
+
             if (filled($result->ca_score) && $result->ca_score < 0) {
                 throw new RuntimeException('CA score cannot be negative.');
             }
 
-            if (filled($result->ca_score) && $result->ca_score > 100) {
-                throw new RuntimeException('CA score cannot exceed 100.');
+            if (filled($result->ca_score) && $result->ca_score > $caMax) {
+                throw new RuntimeException("CA score cannot exceed {$caMax}.");
             }
 
             if (filled($result->exam_score) && $result->exam_score < 0) {
                 throw new RuntimeException('Exam score cannot be negative.');
+            }
+
+            if (filled($result->exam_score) && $result->exam_score > $examMax) {
+                throw new RuntimeException("Exam score cannot exceed {$examMax}.");
+            }
+
+            if (filled($result->ca_score) && $result->ca_score > 100) {
+                throw new RuntimeException('CA score cannot exceed 100.');
             }
 
             if (filled($result->exam_score) && $result->exam_score > 100) {

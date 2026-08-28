@@ -314,7 +314,7 @@ class ResultManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'class_subject_id' => $data['classSubject']->id,
             'term_id' => $data['term']->id,
-            'ca_score' => 40,
+            'ca_score' => 30,
             'exam_score' => 50,
         ], $data['adminUser']);
     }
@@ -334,7 +334,7 @@ class ResultManagementTest extends TestCase
         ]);
 
         $this->expectException(\RuntimeException::class);
-        $result->update(['ca_score' => 99]);
+        $result->update(['ca_score' => 25]);
     }
 
     public function test_locked_result_allows_unlocking_via_eloquent(): void
@@ -520,8 +520,8 @@ class ResultManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'class_subject_id' => $data['classSubject']->id,
             'term_id' => $data['term']->id,
-            'ca_score' => 40,
-            'exam_score' => 50,
+            'ca_score' => 30,
+            'exam_score' => 60,
         ], $data['adminUser']);
 
         $this->assertEquals(90.0, (float) $result->total);
@@ -568,8 +568,8 @@ class ResultManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'class_subject_id' => $data['classSubject']->id,
             'term_id' => $data['term']->id,
-            'ca_score' => 35,
-            'exam_score' => 45,
+            'ca_score' => 30,
+            'exam_score' => 50,
         ]);
 
         $this->assertSame(80.0, (float) $result->total);
@@ -604,8 +604,8 @@ class ResultManagementTest extends TestCase
                 'student_id' => $data['student']->id,
                 'class_subject_id' => $classSubject->id,
                 'term_id' => $data['term']->id,
-                'ca_score' => $total,
-                'exam_score' => 0,
+                'ca_score' => min(30, $total),
+                'exam_score' => $total > 30 ? $total - 30 : 0,
             ]);
 
             $this->assertSame($expected[0], $result->grade, "Failed asserting grade for total {$total}");
@@ -622,16 +622,16 @@ class ResultManagementTest extends TestCase
             'student_id' => $data['student']->id,
             'class_subject_id' => $data['classSubject']->id,
             'term_id' => $data['term']->id,
-            'ca_score' => 35,
-            'exam_score' => 45,
+            'ca_score' => 30,
+            'exam_score' => 50,
         ], $data['adminUser']);
 
         $modelResult = Result::create([
             'student_id' => $data['student']->id,
             'class_subject_id' => $data['otherClassSubject']->id,
             'term_id' => $data['term']->id,
-            'ca_score' => 35,
-            'exam_score' => 45,
+            'ca_score' => 30,
+            'exam_score' => 50,
         ]);
 
         $this->assertSame($serviceResult->total, $modelResult->total);

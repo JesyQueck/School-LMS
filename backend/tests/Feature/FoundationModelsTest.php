@@ -238,8 +238,8 @@ class FoundationModelsTest extends TestCase
             'student_id' => $student->id,
             'class_subject_id' => $classSubject->id,
             'term_id' => $term->id,
-            'ca_score' => 40,
-            'exam_score' => 35,
+            'ca_score' => 30,
+            'exam_score' => 45,
         ]);
 
         $this->assertSame(75.0, (float) $result->total);
@@ -281,8 +281,8 @@ class FoundationModelsTest extends TestCase
             'student_id' => $student->id,
             'class_subject_id' => $classSubject->id,
             'term_id' => $term->id,
-            'ca_score' => 40,
-            'exam_score' => 35,
+            'ca_score' => 30,
+            'exam_score' => 45,
             'remark' => 'Outstanding performance — top of class',
         ]);
 
@@ -324,8 +324,8 @@ class FoundationModelsTest extends TestCase
             'student_id' => $student->id,
             'class_subject_id' => $classSubject->id,
             'term_id' => $term->id,
-            'ca_score' => 78,
-            'exam_score' => 90,
+            'ca_score' => 30,
+            'exam_score' => 70,
         ]);
 
         $this->assertSame('A1', $result->grade);

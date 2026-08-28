@@ -24,7 +24,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Student</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Present</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Absent</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Late</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-dark-surface divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -48,13 +47,7 @@
                                     <input type="radio" name="status[{{ $student->id }}]" value="absent" class="mr-2" checked>
                                     <span class="text-sm text-neutral-600 dark:text-neutral-400">No</span>
                                 </label>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="status[{{ $student->id }}]" value="late" class="mr-2">
-                                    <span class="text-sm text-neutral-600 dark:text-neutral-400">Late</span>
-                                </label>
-                            </td>
+                             </td>
                         </tr>
                         @endforeach
                     </tbody>

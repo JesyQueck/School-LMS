@@ -83,6 +83,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 
         Route::get('/class/attendance', [TeacherPortalController::class, 'classAttendance'])->name('class.attendance');
         Route::get('/attendance', [TeacherPortalController::class, 'attendance'])->name('attendance');
+        Route::get('/attendance/edit', [TeacherPortalController::class, 'editAttendance'])->name('attendance.edit');
         Route::post('/attendance', [TeacherPortalController::class, 'storeAttendance'])->name('attendance.store');
         Route::post('/attendance/start', [TeacherPortalController::class, 'startAttendance'])->name('attendance.start');
         Route::get('/assignments', [TeacherPortalController::class, 'mySubjects'])->name('assignments');
@@ -108,7 +109,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/students/{student}', [TeacherPortalController::class, 'studentProfile'])->name('students.show');
     });
 
-    Route::middleware('role:parent')->prefix('parent')->name('parent.')->group(function () {
+    Route::middleware(['auth', 'password.only', 'role:parent'])->prefix('parent')->name('parent.')->group(function () {
         Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
         Route::get('/children/{student}', [ChildController::class, 'show'])->name('children.show');
         Route::get('/children/{student}/results', [ParentResultsController::class, 'index'])->name('children.results');
@@ -120,7 +121,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/announcements', [ParentAnnouncementsController::class, 'index'])->name('announcements');
     });
 
-    Route::middleware('role:student')->prefix('student')->name('student.')->group(function () {
+    Route::middleware(['auth', 'password.only', 'role:student'])->prefix('student')->name('student.')->group(function () {
         Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
         Route::get('/attendance', [StudentAttendanceController::class, 'index'])->name('attendance');
         Route::get('/fees', [StudentFeesController::class, 'index'])->name('fees');

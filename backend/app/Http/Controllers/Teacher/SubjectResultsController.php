@@ -7,6 +7,7 @@ use App\Http\Requests\StoreSubjectResultsRequest;
 use App\Models\ClassAssignment;
 use App\Models\Student;
 use App\Models\TeacherClassSubject;
+use App\Models\Term;
 use App\Services\ResultService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
@@ -26,29 +27,58 @@ class SubjectResultsController extends Controller
             abort(403, 'You do not have a teacher profile.');
         }
 
-        $classAssignment = ClassAssignment::with(['class', 'term'])
-            ->where('teacher_id', $teacher->id)
-            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
-            ->first();
-
-        if (! $classAssignment) {
-            return view('teacher.subject-results.scores', [
-                'students' => collect(),
-                'assignments' => collect(),
-                'classAssignment' => null,
-            ]);
-        }
-
-        $students = Student::where('class_id', $classAssignment->class_id)
-            ->with(['results' => fn ($q) => $q->where('term_id', $classAssignment->term_id)])
-            ->get();
+        $classSubjectId = $request->query('class_subject_id');
 
         $assignments = TeacherClassSubject::where('teacher_id', $teacher->id)
             ->where('is_active', true)
             ->with(['classSubject.subject', 'classSubject.class'])
             ->get();
 
-        return view('teacher.subject-results.scores', compact('students', 'assignments', 'classAssignment'));
+        if (! $classSubjectId && $assignments->isNotEmpty()) {
+            $classSubjectId = $assignments->first()->class_subject_id;
+        }
+
+        $selectedAssignment = null;
+        $classAssignment = null;
+        $students = collect();
+
+        if ($classSubjectId) {
+            $selectedAssignment = $assignments->firstWhere('class_subject_id', $classSubjectId);
+
+            if ($selectedAssignment) {
+                $classSubject = $selectedAssignment->classSubject;
+                $term = Term::where('is_current', true)->first();
+
+                if ($classSubject && $term) {
+                    $classAssignment = new ClassAssignment;
+                    $classAssignment->class_id = $classSubject->class_id;
+                    $classAssignment->term_id = $term->id;
+                    $classAssignment->class = $classSubject->class;
+
+                    $students = Student::where('class_id', $classSubject->class_id)
+                        ->with(['results' => fn ($q) => $q->where('term_id', $term->id)])
+                        ->get();
+                }
+            }
+        }
+
+        $caMax = 30;
+        $examMax = 70;
+
+        if ($selectedAssignment && $selectedAssignment->classSubject) {
+            $caMax = $selectedAssignment->classSubject->ca_max ?? 30;
+            $examMax = $selectedAssignment->classSubject->exam_max ?? 70;
+        }
+
+        return view('teacher.subject-results.scores', compact(
+            'students',
+            'assignments',
+            'classAssignment',
+            'selectedAssignment',
+            'classSubjectId',
+            'caMax',
+            'examMax'
+        ));
     }
 
     public function store(StoreSubjectResultsRequest $request)
