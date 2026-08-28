@@ -79,6 +79,8 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/dashboard', [TeacherPortalController::class, 'dashboard'])->name('dashboard');
         Route::get('/classes', [TeacherPortalController::class, 'classes'])->name('classes.index');
         Route::get('/classes/{class}', [TeacherPortalController::class, 'classStudents'])->name('classes.show');
+        Route::get('/my-students', [TeacherPortalController::class, 'myStudents'])->name('students.index');
+
         Route::get('/class/attendance', [TeacherPortalController::class, 'classAttendance'])->name('class.attendance');
         Route::get('/attendance', [TeacherPortalController::class, 'attendance'])->name('attendance');
         Route::post('/attendance', [TeacherPortalController::class, 'storeAttendance'])->name('attendance.store');
@@ -100,6 +102,10 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/assessments', [AccountController::class, 'assessments'])->name('assessments');
         Route::get('/scores', [SubjectResultsController::class, 'scores'])->name('scores');
         Route::post('/scores', [SubjectResultsController::class, 'store'])->name('scores.store');
+    });
+
+    Route::middleware(['auth', 'password.only', 'role:teacher,admin'])->prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/students/{student}', [TeacherPortalController::class, 'studentProfile'])->name('students.show');
     });
 
     Route::middleware('role:parent')->prefix('parent')->name('parent.')->group(function () {

@@ -91,6 +91,26 @@
             ],
         ];
     } elseif ($role === 'teacher') {
+        $isClassTeacher = false;
+        if ($user && $user->teacher) {
+            $isClassTeacher = \App\Models\ClassAssignment::where('teacher_id', $user->teacher->id)
+                ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+                ->exists();
+        }
+
+        $teachingItems = [
+            $item('My Classes', route('teacher.classes.index'), 'school'),
+        ];
+
+        if ($isClassTeacher) {
+            $teachingItems[] = $item('My Students', route('teacher.students.index'), 'users');
+        }
+
+        $teachingItems[] = $item('Attendance', route('teacher.attendance'), 'calendar');
+        $teachingItems[] = $item('Results', route('teacher.results'), 'clipboard-list');
+        $teachingItems[] = $item('Report Cards', route('teacher.report-cards.index'), 'file-text');
+        $teachingItems[] = $item('Timetable', route('teacher.timetable'), 'calendar-check');
+
         $sections = [
             [
                 'label' => 'MAIN',
@@ -100,13 +120,7 @@
             ],
             [
                 'label' => 'TEACHING',
-                'items' => [
-                    $item('My Classes', route('teacher.classes.index'), 'school'),
-                    $item('Attendance', route('teacher.attendance'), 'calendar'),
-                    $item('Results', route('teacher.results'), 'clipboard-list'),
-                    $item('Report Cards', route('teacher.report-cards.index'), 'file-text'),
-                    $item('Timetable', route('teacher.timetable'), 'calendar-check'),
-                ],
+                'items' => $teachingItems,
             ],
             [
                 'label' => 'COMMUNICATION',

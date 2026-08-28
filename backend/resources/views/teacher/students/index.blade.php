@@ -38,7 +38,7 @@
                                 <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Active</span>
                             </td>
                             <td class="px-6 py-4 text-sm">
-                                <a href="{{ route('teacher.students.show', [$class, $student]) }}" class="text-primary-600 dark:text-primary-400 hover:underline">View</a>
+                                <a href="{{ route('teacher.students.show', $student) }}" class="text-primary-600 dark:text-primary-400 hover:underline">View</a>
                             </td>
                         </tr>
                     @empty
