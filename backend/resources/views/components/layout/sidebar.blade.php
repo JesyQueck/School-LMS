@@ -3,6 +3,14 @@
 @php
     $user = auth()->user();
     $role = $user?->role;
+    $parentChildren = $role === 'parent' && $user->parentProfile
+        ? $user->parentProfile->students()->orderBy('students.id')->get()
+        : collect();
+    $routeStudent = request()->route('student');
+    $routeStudentId = is_object($routeStudent) ? $routeStudent->getKey() : $routeStudent;
+    $navigationChild = $parentChildren->firstWhere('id', $routeStudentId)
+        ?? $parentChildren->firstWhere('id', request()->query('student'))
+        ?? $parentChildren->first();
 
     $roleLabels = [
         'admin' => 'System Administrator',
@@ -28,9 +36,9 @@
         return false;
     };
 
-    $item = function (string $label, string $href, string $icon = 'circle', string $method = 'GET') use ($pathIsActive) {
+    $item = function (string $label, string $href, string $icon = 'circle', string $method = 'GET', ?bool $active = null) use ($pathIsActive) {
         $itemPath = ltrim(parse_url($href, PHP_URL_PATH), '/');
-        $active = $pathIsActive($href);
+        $active = $active ?? $pathIsActive($href);
         return [
             'label' => $label,
             'href' => $href,
@@ -155,6 +163,10 @@
         ];
 
     } elseif ($role === 'parent') {
+        $childRoute = fn (string $routeName) => $navigationChild
+            ? route($routeName, $navigationChild)
+            : route('parent.dashboard');
+
         $sections = [
             [
                 'label' => 'MAIN',
@@ -165,8 +177,18 @@
             [
                 'label' => 'CHILDREN',
                 'items' => [
-                    $item('Children', route('parent.dashboard'), 'users'),
+                    $item('Children', route('parent.dashboard').'#my-children', 'users', active: false),
                     $item('Timetable', route('parent.timetable'), 'calendar'),
+                ],
+            ],
+            [
+                'label' => 'SCHOOL',
+                'items' => [
+                    $item('Results', $childRoute('parent.children.results'), 'clipboard-list'),
+                    $item('Attendance', $childRoute('parent.children.attendance'), 'calendar-check'),
+                    $item('Fees', $childRoute('parent.children.fees'), 'wallet'),
+                    $item('Report Cards', $childRoute('parent.children.report-cards'), 'file-text'),
+                    $item('Announcements', route('parent.announcements'), 'megaphone'),
                 ],
             ],
         ];

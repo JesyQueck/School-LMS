@@ -333,6 +333,45 @@ class AuthFlowTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Forgot Password');
+        $response->assertSee('text-center mb-8', false);
+        $response->assertSee('shadow-premium-lg p-8', false);
+        $response->assertSee('autocomplete="email"', false);
+        $response->assertSee('Send Reset Link');
+        $response->assertSee('Remember your password?');
+        $response->assertDontSee('mx-auto mb-6', false);
+    }
+
+    public function test_reset_password_page_matches_auth_card_and_has_no_standalone_logo(): void
+    {
+        $response = $this->get('/reset-password/test-reset-token');
+
+        $response->assertOk();
+        $response->assertSee('Reset your password');
+        $response->assertSee('text-center mb-8', false);
+        $response->assertSee('shadow-premium-lg p-8', false);
+        $response->assertSee('name="token" value="test-reset-token"', false);
+        $response->assertSee('autocomplete="new-password"', false);
+        $response->assertSee('Reset Password');
+        $response->assertSee('Remember your password?');
+        $response->assertDontSee('mx-auto mb-6', false);
+        $response->assertDontSee('h-24 w-auto object-contain', false);
+    }
+
+    public function test_auth_validation_errors_are_not_repeated_in_the_alert_and_field_message(): void
+    {
+        $loginResponse = $this->from('/login')->followingRedirects()->post('/login', [
+            'identifier' => 'unknown.user@example.com',
+            'password' => 'incorrect-password',
+        ]);
+        $loginResponse->assertOk();
+        $this->assertSame(1, substr_count($loginResponse->getContent(), e(__('auth.failed'))));
+
+        $forgotPasswordResponse = $this->from('/forgot-password')->followingRedirects()->post('/forgot-password', [
+            'email' => 'not-an-email-address',
+        ]);
+        $forgotPasswordResponse->assertOk();
+        $emailError = 'The email field must be a valid email address.';
+        $this->assertSame(1, substr_count($forgotPasswordResponse->getContent(), e($emailError)));
     }
 
     public function test_parent_can_request_a_reset_link_but_other_roles_cannot(): void
@@ -435,12 +474,19 @@ class AuthFlowTest extends TestCase
             ->where('email', $parent->email)
             ->update(['created_at' => now()->subMinutes(config('auth.passwords.users.expire') + 1)]);
 
-        $this->post('/reset-password', [
+        $response = $this->from('/reset-password/expired-token')
+            ->followingRedirects()
+            ->post('/reset-password', [
             'email' => $parent->email,
             'token' => $token,
             'password' => 'ParentNewPassword123!',
             'password_confirmation' => 'ParentNewPassword123!',
-        ])->assertSessionHasErrors(['email' => 'The password reset link is invalid or has expired.']);
+        ]);
+        $response->assertOk();
+        $this->assertSame(1, substr_count(
+            $response->getContent(),
+            'The password reset link is invalid or has expired.'
+        ));
 
         $this->assertTrue(Hash::check('Temporary123!', $parent->fresh()->password));
         $this->assertDatabaseMissing('audit_logs', ['action' => 'parent.password_reset']);

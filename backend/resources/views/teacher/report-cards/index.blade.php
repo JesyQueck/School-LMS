@@ -355,10 +355,15 @@
                     document.getElementById('preview-modal').classList.add('flex');
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error loading results: ' + error.message);
-                    document.getElementById('preview-results').innerHTML = 
-                        '<tr><td colspan="6" class="py-2 px-3 text-center" style="color: #ef4444;">Error loading results</td></tr>';
+                    const resultsBody = document.getElementById('preview-results');
+                    const errorRow = document.createElement('tr');
+                    const errorCell = document.createElement('td');
+                    errorCell.colSpan = 6;
+                    errorCell.className = 'py-2 px-3 text-center text-danger-600 dark:text-danger-400';
+                    errorCell.setAttribute('role', 'alert');
+                    errorCell.textContent = 'Error loading results: ' + error.message;
+                    errorRow.appendChild(errorCell);
+                    resultsBody.replaceChildren(errorRow);
                     document.getElementById('preview-modal').classList.remove('hidden');
                     document.getElementById('preview-modal').classList.add('flex');
                 });

@@ -63,6 +63,8 @@ class TeacherReportCardTest extends TestCase
 
         $response = $this->get('/teacher/report-cards');
         $response->assertOk();
+        $response->assertDontSee("alert('Error loading results:", false);
+        $response->assertSee("errorCell.setAttribute('role', 'alert')", false);
     }
 
     public function test_teacher_report_cards_display_correctly_with_current_term(): void

@@ -12,8 +12,19 @@
     <div class="grid grid-cols-1 gap-6">
         <x-ui.card>
             <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Attendance History</h3>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Daily attendance records for the current term.</p>
+                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">
+                    {{ $currentTerm ? 'Current Term Attendance' : 'Attendance History' }}
+                </h3>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    @if($currentTerm)
+                        Showing records for {{ $currentTerm->name }}
+                        @if($currentTerm->academicSession)
+                            &middot; {{ $currentTerm->academicSession->name }}
+                        @endif
+                    @else
+                        Showing all recorded periods. No current term is configured.
+                    @endif
+                </p>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -49,8 +60,16 @@
                                 <td colspan="4" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center">
                                         <svg class="h-12 w-12 text-neutral-400 dark:text-neutral-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        <p class="text-sm text-neutral-500 dark:text-neutral-400">No attendance records found.</p>
-                                        <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Records will appear here once marked by teachers.</p>
+                                        @if($currentTerm && $hasAnyAttendance)
+                                            <p class="text-sm text-neutral-500 dark:text-neutral-400">No attendance records found for {{ $currentTerm->name }}.</p>
+                                            <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Attendance records exist for this child in other periods.</p>
+                                        @elseif($currentTerm)
+                                            <p class="text-sm text-neutral-500 dark:text-neutral-400">No attendance has been recorded for this child yet.</p>
+                                            <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">No attendance records are available for {{ $currentTerm->name }}.</p>
+                                        @else
+                                            <p class="text-sm text-neutral-500 dark:text-neutral-400">No attendance records found.</p>
+                                            <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">Records will appear here once marked by teachers.</p>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

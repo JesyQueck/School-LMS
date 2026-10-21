@@ -25,7 +25,7 @@
     <div class="space-y-8">
         {{-- MY CHILDREN --}}
         <section>
-            <h2 class="text-lg font-semibold text-neutral-900 dark:text-white mb-3">My Children</h2>
+            <h2 id="my-children" class="text-lg font-semibold text-neutral-900 dark:text-white mb-3">My Children</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 @forelse($children as $child)
                     <x-ui.card hoverable>
@@ -68,27 +68,52 @@
             </div>
         </section>
 
-        @if($children->count() > 0)
-            @php $first = $children->first(); @endphp
+        @if($selectedChild)
+            <section aria-labelledby="child-summary-heading">
+                <div class="mb-4 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-dark-border dark:bg-dark-surface sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 id="child-summary-heading" class="text-lg font-semibold text-neutral-900 dark:text-white">Child summaries</h2>
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Choose a linked child to view their academic progress, attendance, and fees.</p>
+                    </div>
+                    <form method="GET" action="{{ route('parent.dashboard') }}" class="flex w-full flex-col gap-2 sm:w-auto sm:min-w-72 sm:flex-row sm:items-end">
+                        <div class="flex-1">
+                            <label for="dashboard-child" class="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">Selected child</label>
+                            <select id="dashboard-child" name="student" class="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text">
+                                @foreach($children as $child)
+                                    <option value="{{ $child->id }}" {{ $selectedChild->id === $child->id ? 'selected' : '' }}>
+                                        {{ $child->full_name ?? $child->admission_no }} — {{ $child->admission_no }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2">
+                            View summaries
+                        </button>
+                    </form>
+                </div>
+                <p class="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
+                    Showing summaries for <span class="font-semibold text-neutral-900 dark:text-white">{{ $selectedChild->full_name }}</span>
+                    <span aria-hidden="true">&middot;</span> {{ $selectedChild->schoolClass->name ?? 'Unassigned' }}
+                </p>
+            </section>
 
             {{-- RECENT RESULTS --}}
             <section>
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">Recent Results</h2>
-                    <a href="{{ route('parent.children.results', $first) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Results</a>
+                    <a href="{{ route('parent.children.results', $selectedChild) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Results</a>
                 </div>
                 <x-ui.card>
                     <div class="px-6 py-4 border-b border-neutral-100 dark:border-dark-border flex items-center justify-between">
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $first->full_name }} &middot; {{ $first->schoolClass->name ?? '' }}</p>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $selectedChild->full_name }} &middot; {{ $selectedChild->schoolClass->name ?? '' }}</p>
                     </div>
                     <div class="p-6 space-y-2">
-                        @php
-                            $publishedTermIds = $first->reportCards()->where('status', \App\Models\ReportCard::STATUS_PUBLISHED)->pluck('term_id');
-                            $recentResults = $first->results->whereIn('term_id', $publishedTermIds)->take(5);
-                        @endphp
                         @forelse($recentResults as $result)
                             <div class="flex items-center justify-between text-sm">
-                                <span class="text-neutral-700 dark:text-neutral-300">{{ $result->classSubject->subject->name ?? 'N/A' }}</span>
+                                <div>
+                                    <p class="text-neutral-700 dark:text-neutral-300">{{ $result->classSubject->subject->name ?? 'N/A' }}</p>
+                                    <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $result->term->name ?? 'Term' }}</p>
+                                </div>
                                 <span class="font-semibold text-neutral-900 dark:text-white">{{ $result->total ?? 'N/A' }}%</span>
                             </div>
                         @empty
@@ -102,20 +127,20 @@
             <section>
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">Attendance</h2>
-                    <a href="{{ route('parent.children.attendance', $first) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Attendance</a>
+                    <a href="{{ route('parent.children.attendance', $selectedChild) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Attendance</a>
                 </div>
                 <x-ui.card>
                     <div class="p-6 flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $first->full_name }}</p>
+                            <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $selectedChild->full_name }}</p>
                             <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                                Present: {{ $first->metrics['present'] }}
-                                &middot; Total records: {{ $first->metrics['total_records'] }}
+                                Present: {{ $selectedChild->metrics['present'] }}
+                                &middot; Total records: {{ $selectedChild->metrics['total_records'] }}
                             </p>
                         </div>
                         <div class="text-right">
                             <p class="text-xs text-neutral-500 dark:text-neutral-400">Attendance Rate</p>
-                            <p class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $first->metrics['attendance_rate'] }}%</p>
+                            <p class="text-2xl font-bold text-neutral-900 dark:text-white">{{ $selectedChild->metrics['attendance_rate'] }}%</p>
                         </div>
                     </div>
                 </x-ui.card>
@@ -125,25 +150,27 @@
             <section>
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">Fees</h2>
-                    <a href="{{ route('parent.children.fees', $first) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Fee Details</a>
+                    <a href="{{ route('parent.children.fees', $selectedChild) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Fee Details</a>
                 </div>
                 <x-ui.card>
                     <div class="p-6 flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $first->full_name }}</p>
+                            <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $selectedChild->full_name }}</p>
                             <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                                {{ $first->metrics['outstanding'] > 0 ? 'Outstanding' : 'All paid' }}
+                                {{ $selectedChild->metrics['outstanding'] > 0 ? 'Outstanding' : 'All paid' }}
                             </p>
                         </div>
                         <div class="text-right">
                             <p class="text-xs text-neutral-500 dark:text-neutral-400">Outstanding</p>
-                            <p class="text-2xl font-bold {{ $first->metrics['outstanding'] > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">
-                                ₦{{ number_format($first->metrics['outstanding'], 2) }}
+                            <p class="text-2xl font-bold {{ $selectedChild->metrics['outstanding'] > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">
+                                ₦{{ number_format($selectedChild->metrics['outstanding'], 2) }}
                             </p>
                         </div>
                     </div>
                 </x-ui.card>
             </section>
+        @else
+            <x-ui.empty-state title="No child summaries available" description="Once the school links a child to your account, their academic progress, attendance, and fee summaries will appear here." />
         @endif
 
         {{-- ANNOUNCEMENTS --}}

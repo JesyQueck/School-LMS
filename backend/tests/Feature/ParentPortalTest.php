@@ -15,6 +15,7 @@ use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Subject;
 use App\Models\Term;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -45,6 +46,176 @@ class ParentPortalTest extends TestCase
         $response->assertOk();
         $response->assertSee('John Doe');
         $response->assertSee('ADM501');
+    }
+
+    public function test_parent_sidebar_links_to_existing_parent_features(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-SIDEBAR',
+        ]);
+        $parent->students()->attach($student->id);
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.dashboard'));
+
+        $response->assertOk();
+        foreach ([
+            'Dashboard' => route('parent.dashboard'),
+            'Children' => route('parent.dashboard').'#my-children',
+            'Timetable' => route('parent.timetable'),
+            'Results' => route('parent.children.results', $student),
+            'Attendance' => route('parent.children.attendance', $student),
+            'Fees' => route('parent.children.fees', $student),
+            'Report Cards' => route('parent.children.report-cards', $student),
+            'Announcements' => route('parent.announcements'),
+            'Profile' => route('settings.profile'),
+            'Change Password' => route('password.change'),
+        ] as $label => $href) {
+            $response->assertSee($label);
+            $response->assertSee('href="'.$href.'"', false);
+        }
+    }
+
+    public function test_parent_can_select_each_linked_child_for_dashboard_summaries(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $children = collect([
+            ['name' => 'First Child', 'admission_no' => 'ADM-SEL-1'],
+            ['name' => 'Second Child', 'admission_no' => 'ADM-SEL-2'],
+        ])->map(function (array $data) use ($parent, $class) {
+            $child = Student::create([
+                'user_id' => User::factory()->create(['name' => $data['name']])->id,
+                'class_id' => $class->id,
+                'admission_no' => $data['admission_no'],
+                'first_name' => $data['name'],
+            ]);
+            $parent->students()->attach($child->id);
+
+            return $child;
+        });
+        $this->actingAs($parentUser);
+
+        foreach ($children as $child) {
+            $response = $this->get(route('parent.dashboard', ['student' => $child->id]));
+
+            $response->assertOk();
+            $this->assertSame($child->id, $response->viewData('selectedChild')->id);
+            $response->assertSee('Showing summaries for');
+            $response->assertSee($child->admission_no);
+        }
+    }
+
+    public function test_parent_cannot_select_a_child_linked_to_another_parent(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        ParentProfile::create(['user_id' => $parentUser->id]);
+        $otherParentUser = User::factory()->create(['role' => 'parent']);
+        $otherParent = ParentProfile::create(['user_id' => $otherParentUser->id]);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $unlinkedChild = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-FORGED',
+        ]);
+        $otherParent->students()->attach($unlinkedChild->id);
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.dashboard', ['student' => $unlinkedChild->id]));
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('student');
+        $response->assertSessionMissing('selectedChild');
+    }
+
+    public function test_parent_dashboard_shows_empty_state_when_no_children_are_linked(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        ParentProfile::create(['user_id' => $parentUser->id]);
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.dashboard'));
+
+        $response->assertOk();
+        $response->assertSee('No children linked');
+        $response->assertSee('No child summaries available');
+        $this->assertNull($response->viewData('selectedChild'));
+    }
+
+    public function test_dashboard_recent_results_are_chronological_and_only_published_terms_are_shown(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $studentClass = SchoolClass::create(['name' => 'JSS 1']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $studentClass->id,
+            'admission_no' => 'ADM-CHRONO',
+        ]);
+        $parent->students()->attach($student->id);
+
+        $olderSession = AcademicSession::create([
+            'name' => '2024/2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-07-31',
+        ]);
+        $newerSession = AcademicSession::create([
+            'name' => '2025/2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-07-31',
+        ]);
+
+        $terms = collect([
+            ['session' => $olderSession, 'name' => 'Old Term', 'start' => '2024-09-01', 'subject' => 'Old Published Subject', 'status' => ReportCard::STATUS_PUBLISHED, 'score' => 61],
+            ['session' => $olderSession, 'name' => 'Middle Term', 'start' => '2025-01-01', 'subject' => 'Middle Published Subject', 'status' => ReportCard::STATUS_PUBLISHED, 'score' => 72],
+            ['session' => $newerSession, 'name' => 'Latest Term', 'start' => '2025-09-01', 'subject' => 'Latest Published Subject', 'status' => ReportCard::STATUS_PUBLISHED, 'score' => 83],
+            ['session' => $newerSession, 'name' => 'Unpublished Term', 'start' => '2026-01-01', 'subject' => 'Unpublished Subject', 'status' => ReportCard::STATUS_DRAFT, 'score' => 99],
+        ])->map(function (array $data) use ($student, $studentClass) {
+            $term = Term::create([
+                'academic_session_id' => $data['session']->id,
+                'name' => $data['name'],
+                'start_date' => $data['start'],
+                'end_date' => $data['start'],
+            ]);
+            ReportCard::create([
+                'student_id' => $student->id,
+                'term_id' => $term->id,
+                'class_id' => $studentClass->id,
+                'status' => $data['status'],
+            ]);
+            $subject = Subject::create(['name' => $data['subject']]);
+            $classSubject = ClassSubject::create([
+                'class_id' => $studentClass->id,
+                'subject_id' => $subject->id,
+            ]);
+            Result::create([
+                'student_id' => $student->id,
+                'class_subject_id' => $classSubject->id,
+                'term_id' => $term->id,
+                'ca_score' => min(30, $data['score']),
+                'exam_score' => max(0, $data['score'] - 30),
+                'total' => $data['score'],
+            ]);
+
+            return $data['subject'];
+        });
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.dashboard', ['student' => $student->id]));
+
+        $response->assertOk();
+        $response->assertSeeInOrder([
+            'Latest Published Subject',
+            'Middle Published Subject',
+            'Old Published Subject',
+        ]);
+        $response->assertDontSee('Unpublished Subject');
     }
 
     public function test_parent_cannot_view_unlinked_child(): void
@@ -264,6 +435,177 @@ class ParentPortalTest extends TestCase
         $response = $this->get('/parent/children/'.$student->id.'/attendance');
         $response->assertOk();
         $response->assertSee('Present');
+        $response->assertSee('Current Term Attendance');
+        $response->assertSee('First Term');
+    }
+
+    public function test_parent_attendance_is_limited_to_the_configured_current_term(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+        ]);
+        $currentTerm = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Current Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $pastTerm = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Past Term',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-04-20',
+        ]);
+        $class = SchoolClass::create(['name' => 'Attendance Current Class']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-CURRENT-ATTENDANCE',
+            'first_name' => 'Current',
+            'last_name' => 'Student',
+        ]);
+        $parent->students()->attach($student->id);
+        $teacher = User::factory()->create(['role' => 'teacher']);
+
+        foreach ([
+            ['term_id' => $currentTerm->id, 'date' => '2026-09-15'],
+            ['term_id' => $pastTerm->id, 'date' => '2026-02-15'],
+        ] as $record) {
+            Attendance::create([
+                'student_id' => $student->id,
+                'class_id' => $class->id,
+                'term_id' => $record['term_id'],
+                'date' => $record['date'],
+                'status' => 'present',
+                'marked_by' => $teacher->id,
+            ]);
+        }
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.children.attendance', $student));
+
+        $response->assertOk();
+        $response->assertSee('Current Student');
+        $response->assertSee('Current Term');
+        $response->assertDontSee('Past Term');
+        $this->assertSame(1, $response->viewData('attendance')->count());
+    }
+
+    public function test_parent_attendance_without_a_current_term_is_labeled_as_history(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Historical Term',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-04-20',
+        ]);
+        $class = SchoolClass::create(['name' => 'Attendance History Class']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-HISTORY-ATTENDANCE',
+        ]);
+        $parent->students()->attach($student->id);
+        Attendance::create([
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+            'date' => '2026-02-15',
+            'status' => 'present',
+            'marked_by' => User::factory()->create(['role' => 'teacher'])->id,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.children.attendance', $student));
+
+        $response->assertOk();
+        $response->assertSee('Attendance History');
+        $response->assertSee('Showing all recorded periods. No current term is configured.');
+        $response->assertSee('Historical Term');
+        $this->assertSame(1, $response->viewData('attendance')->count());
+        $this->assertNull($response->viewData('currentTerm'));
+    }
+
+    public function test_parent_attendance_distinguishes_no_current_period_records_from_no_attendance_history(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+        ]);
+        $currentTerm = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Current Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $pastTerm = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Past Term',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-04-20',
+        ]);
+        $class = SchoolClass::create(['name' => 'Attendance Empty Class']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-EMPTY-CURRENT-ATTENDANCE',
+        ]);
+        $parent->students()->attach($student->id);
+        Attendance::create([
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $pastTerm->id,
+            'date' => '2026-02-15',
+            'status' => 'present',
+            'marked_by' => User::factory()->create(['role' => 'teacher'])->id,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $response = $this->get(route('parent.children.attendance', $student));
+
+        $response->assertOk();
+        $response->assertSee('No attendance records found for Current Term.');
+        $response->assertSee('Attendance records exist for this child in other periods.');
+        $this->assertSame(0, $response->viewData('attendance')->count());
+    }
+
+    public function test_parent_cannot_view_attendance_for_an_unlinked_child(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        ParentProfile::create(['user_id' => $parentUser->id]);
+        $otherParent = ParentProfile::create([
+            'user_id' => User::factory()->create(['role' => 'parent'])->id,
+        ]);
+        $class = SchoolClass::create(['name' => 'Unlinked Attendance Class']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-UNLINKED-ATTENDANCE',
+        ]);
+        $otherParent->students()->attach($student->id);
+
+        $this->actingAs($parentUser);
+
+        $this->get(route('parent.children.attendance', $student))->assertForbidden();
     }
 
     public function test_parent_can_view_child_fees(): void
@@ -313,6 +655,84 @@ class ParentPortalTest extends TestCase
         $response->assertOk();
         $response->assertSee('Tuition');
         $response->assertSee('50,000.00');
+    }
+
+    public function test_parent_cannot_view_fees_for_an_unlinked_child(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        ParentProfile::create(['user_id' => $parentUser->id]);
+        $otherParent = ParentProfile::create([
+            'user_id' => User::factory()->create(['role' => 'parent'])->id,
+        ]);
+        $class = SchoolClass::create(['name' => 'Unlinked Fees Class']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-UNLINKED-FEES',
+        ]);
+        $otherParent->students()->attach($student->id);
+
+        $this->actingAs($parentUser);
+
+        $this->get(route('parent.children.fees', $student))->assertForbidden();
+    }
+
+    public function test_parent_timetable_selection_is_limited_to_linked_children(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $otherParent = ParentProfile::create([
+            'user_id' => User::factory()->create(['role' => 'parent'])->id,
+        ]);
+        $linkedClass = SchoolClass::create(['name' => 'Linked Timetable Class']);
+        $unlinkedClass = SchoolClass::create(['name' => 'Unlinked Timetable Class']);
+        $linkedChild = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $linkedClass->id,
+            'admission_no' => 'ADM-LINKED-TIMETABLE',
+            'first_name' => 'Linked',
+            'last_name' => 'Child',
+        ]);
+        $unlinkedChild = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $unlinkedClass->id,
+            'admission_no' => 'ADM-UNLINKED-TIMETABLE',
+            'first_name' => 'Unlinked',
+            'last_name' => 'Child',
+        ]);
+        $parent->students()->attach($linkedChild->id);
+        $otherParent->students()->attach($unlinkedChild->id);
+
+        foreach ([
+            ['class' => $linkedClass, 'name' => 'Linked Subject'],
+            ['class' => $unlinkedClass, 'name' => 'Unlinked Subject'],
+        ] as $entry) {
+            $subject = Subject::create(['name' => $entry['name']]);
+            $classSubject = ClassSubject::create([
+                'class_id' => $entry['class']->id,
+                'subject_id' => $subject->id,
+            ]);
+            Timetable::create([
+                'class_subject_id' => $classSubject->id,
+                'day' => 'Monday',
+                'start_time' => '08:00:00',
+                'end_time' => '08:45:00',
+            ]);
+        }
+
+        $this->actingAs($parentUser);
+
+        $selectedResponse = $this->get(route('parent.timetable', ['student' => $linkedChild->id]));
+        $selectedResponse->assertOk();
+        $this->assertSame($linkedChild->id, $selectedResponse->viewData('selected')->id);
+        $selectedResponse->assertSee('Linked Subject');
+        $selectedResponse->assertDontSee('Unlinked Subject');
+
+        $forgedResponse = $this->get(route('parent.timetable', ['student' => $unlinkedChild->id]));
+        $forgedResponse->assertOk();
+        $this->assertSame($linkedChild->id, $forgedResponse->viewData('selected')->id);
+        $forgedResponse->assertSee('Linked Subject');
+        $forgedResponse->assertDontSee('Unlinked Subject');
     }
 
     public function test_parent_can_view_report_cards_for_linked_child(): void
@@ -478,5 +898,82 @@ class ParentPortalTest extends TestCase
 
         $response = $this->get('/parent/children/'.$student->id.'/report-cards/'.$reportCard->id.'/download');
         $response->assertForbidden();
+    }
+
+    public function test_parent_cannot_download_a_linked_report_card_for_an_unlinked_child(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        ParentProfile::create(['user_id' => $parentUser->id]);
+        $otherParent = ParentProfile::create([
+            'user_id' => User::factory()->create(['role' => 'parent'])->id,
+        ]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Published Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+        ]);
+        $class = SchoolClass::create(['name' => 'Unlinked Report Card Class']);
+        $student = Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-UNLINKED-REPORT-CARD',
+        ]);
+        $otherParent->students()->attach($student->id);
+        $reportCard = ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $this->get(route('parent.children.report-cards.download', [$student, $reportCard]))
+            ->assertForbidden();
+    }
+
+    public function test_parent_cannot_download_another_linked_childs_report_card_using_the_wrong_child_route(): void
+    {
+        $parentUser = User::factory()->create(['role' => 'parent']);
+        $parent = ParentProfile::create(['user_id' => $parentUser->id]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Published Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+        ]);
+        $class = SchoolClass::create(['name' => 'Shared Report Card Class']);
+        $children = collect(['First', 'Second'])->map(function (string $name) use ($parent, $class) {
+            $student = Student::create([
+                'user_id' => User::factory()->create()->id,
+                'class_id' => $class->id,
+                'admission_no' => 'ADM-REPORT-'.$name,
+            ]);
+            $parent->students()->attach($student->id);
+
+            return $student;
+        });
+        $reportCard = ReportCard::create([
+            'student_id' => $children[1]->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+        ]);
+
+        $this->actingAs($parentUser);
+
+        $this->get(route('parent.children.report-cards.download', [$children[0], $reportCard]))
+            ->assertForbidden();
     }
 }

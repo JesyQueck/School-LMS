@@ -8,6 +8,7 @@ use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Term;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DashboardController extends Controller
 {
@@ -16,8 +17,22 @@ class DashboardController extends Controller
         $parent = $request->user()->parentProfile;
 
         $children = $parent
-            ? $parent->students()->with(['schoolClass', 'results.classSubject.subject', 'attendance', 'fees.payments'])->get()
+            ? $parent->students()->with([
+                'schoolClass',
+                'results.classSubject.subject',
+                'attendance',
+                'fees.payments',
+                'reportCards' => fn ($query) => $query
+                    ->where('status', ReportCard::STATUS_PUBLISHED)
+                    ->with('term'),
+            ])->orderBy('students.id')->get()
             : collect();
+
+        $filters = $request->validate([
+            'student' => ['nullable', 'integer', Rule::in($children->modelKeys())],
+        ]);
+        $selectedChild = $children->firstWhere('id', $filters['student'] ?? null)
+            ?? $children->first();
 
         $children->each(function (Student $child) {
             $child->metrics = $this->computeMetrics($child);
@@ -47,7 +62,30 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('parent.dashboard', compact('children', 'stats', 'currentTerm', 'announcements'));
+        $recentResults = collect();
+        if ($selectedChild) {
+            $publishedTermIds = $selectedChild->reportCards->pluck('term_id');
+            $recentResults = $selectedChild->results()
+                ->whereIn('term_id', $publishedTermIds)
+                ->join('terms', 'results.term_id', '=', 'terms.id')
+                ->leftJoin('academic_sessions', 'terms.academic_session_id', '=', 'academic_sessions.id')
+                ->select('results.*')
+                ->with(['term', 'classSubject.subject'])
+                ->orderByDesc('academic_sessions.start_date')
+                ->orderByDesc('terms.start_date')
+                ->orderByDesc('results.id')
+                ->limit(5)
+                ->get();
+        }
+
+        return view('parent.dashboard', compact(
+            'children',
+            'selectedChild',
+            'recentResults',
+            'stats',
+            'currentTerm',
+            'announcements',
+        ));
     }
 
     protected function computeMetrics(Student $child): array
