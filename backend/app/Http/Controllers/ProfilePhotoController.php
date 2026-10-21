@@ -16,7 +16,9 @@ class ProfilePhotoController extends Controller
             'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
 
-        $this->storePhoto($request->user(), $request->file('photo'));
+        if (! $this->storePhoto($request->user(), $request->file('photo'))) {
+            return back()->withErrors(['photo' => 'Unable to save the profile photo. Please try again.']);
+        }
 
         return redirect()->route('settings.profile')
             ->with('status', 'Profile photo updated successfully.');
@@ -36,7 +38,9 @@ class ProfilePhotoController extends Controller
             'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'],
         ]);
 
-        $this->storePhoto($student->user, $request->file('photo'));
+        if (! $this->storePhoto($student->user, $request->file('photo'))) {
+            return back()->withErrors(['photo' => 'Unable to save the profile photo. Please try again.']);
+        }
 
         return redirect()->route('admin.students.edit', $student)
             ->with('status', 'Student profile photo updated successfully.');
@@ -50,14 +54,24 @@ class ProfilePhotoController extends Controller
             ->with('status', 'Student profile photo removed.');
     }
 
-    protected function storePhoto($user, $file): void
+    protected function storePhoto($user, $file): bool
     {
-        if ($user->profile_photo && Storage::disk('public')->exists($user->profile_photo)) {
-            Storage::disk('public')->delete($user->profile_photo);
+        $disk = Storage::disk('public');
+        $newPhotoPath = $disk->putFile('profile-photos', $file);
+
+        if (! is_string($newPhotoPath) || $newPhotoPath === '') {
+            return false;
         }
 
-        $user->profile_photo = $file->store('profile-photos', 'public');
-        $user->save();
+        $previousPhotoPath = $user->profile_photo;
+        $user->profile_photo = $newPhotoPath;
+        $user->saveOrFail();
+
+        if ($this->isManagedProfilePhoto($previousPhotoPath) && $disk->exists($previousPhotoPath)) {
+            $disk->delete($previousPhotoPath);
+        }
+
+        return true;
     }
 
     protected function removePhoto($user): void
@@ -68,5 +82,18 @@ class ProfilePhotoController extends Controller
 
         $user->profile_photo = null;
         $user->save();
+    }
+
+    private function isManagedProfilePhoto(?string $path): bool
+    {
+        if (! $path || ! str_starts_with($path, 'profile-photos/')) {
+            return false;
+        }
+
+        $filename = substr($path, strlen('profile-photos/'));
+
+        return $filename !== ''
+            && basename($filename) === $filename
+            && ! str_contains($filename, '\\');
     }
 }
