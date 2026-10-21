@@ -95,28 +95,31 @@ class TeacherPortalController extends Controller
             ->select('timetables.*')
             ->get();
 
-        $todayAttendanceRecords = collect();
-        if ($todayClasses->isNotEmpty()) {
-            $todayClassIds = $todayClasses->pluck('classSubject.class_id')->unique();
-            $todayAttendanceRecords = Attendance::whereIn('class_id', $todayClassIds)
-                ->whereDate('date', now()->toDateString())
-                ->get();
-        }
-        $totalTodayAttendance = $todayAttendanceRecords->where('status', 'present')->count();
-        $todayAttendanceRate = $totalStudents > 0 ? round(($totalTodayAttendance / max($totalStudents, 1)) * 100) : 0;
-
-        $formClassAttendanceRate = 0;
+        $attendanceClassIds = $currentTerm
+            ? $todayClasses
+                ->filter(fn (Timetable $timetable) => $timetable->term_id === null || (int) $timetable->term_id === (int) $currentTerm->id)
+                ->pluck('classSubject.class_id')
+                ->unique()
+            : collect();
         if ($isClassTeacher && $classAssignment) {
-            $formClassStudentCount = Student::where('class_id', $classAssignment->class_id)->count();
-            if ($formClassStudentCount > 0) {
-                $formClassAttendanceRecords = Attendance::where('class_id', $classAssignment->class_id)
-                    ->whereDate('date', now()->toDateString())
-                    ->get();
-                $presentCount = $formClassAttendanceRecords->where('status', 'present')->count();
-                $formClassAttendanceRate = round(($presentCount / $formClassStudentCount) * 100);
-            }
+            $attendanceClassIds = collect([$classAssignment->class_id]);
         }
-        $formClassAttendanceRateValue = $isClassTeacher ? $formClassAttendanceRate.'%' : $todayAttendanceRate.'%';
+
+        $attendanceExpectedCount = 0;
+        $attendanceRecordedCount = 0;
+        if ($currentTerm && $attendanceClassIds->isNotEmpty()) {
+            $attendanceExpectedCount = Student::whereIn('class_id', $attendanceClassIds)->count();
+            $attendanceRecordedCount = Attendance::whereIn('class_id', $attendanceClassIds)
+                ->where('term_id', $currentTerm->id)
+                ->whereDate('date', now()->toDateString())
+                ->distinct('student_id')
+                ->count('student_id');
+        }
+        $attendanceKpiValue = ! $currentTerm
+            ? 'Unavailable'
+            : ($attendanceExpectedCount > 0
+                ? $attendanceRecordedCount.' / '.$attendanceExpectedCount
+                : 'No roster');
 
         $recentAnnouncements = Announcement::forRole('teacher')
             ->latest()
@@ -135,9 +138,9 @@ class TeacherPortalController extends Controller
             'currentTerm' => $currentTerm,
             'totalStudents' => $totalStudents,
             'todayClasses' => $todayClasses,
-            'todayAttendanceRate' => $todayAttendanceRate,
-            'totalTodayAttendance' => $totalTodayAttendance,
-            'formClassAttendanceRateValue' => $formClassAttendanceRateValue,
+            'attendanceKpiValue' => $attendanceKpiValue,
+            'attendanceExpectedCount' => $attendanceExpectedCount,
+            'attendanceRecordedCount' => $attendanceRecordedCount,
             'recentAnnouncements' => $recentAnnouncements,
             'myClasses' => $myClasses,
         ]);

@@ -1,37 +1,42 @@
 <x-layouts.app title="Teacher Dashboard">
     {{-- Greeting --}}
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
-            Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ $user->name ?? 'Teacher' }} 👋
-        </h1>
-        <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-            @if($isClassTeacher)
-                {{ $classAssignment->class->name ?? 'Class Teacher' }}
-            @endif
-            @if($isClassTeacher && $isSubjectTeacher)
-                &middot;
-            @endif
-            @if($isSubjectTeacher)
-                Subject Teacher
-            @endif
-            @if($isClassTeacher || $isSubjectTeacher)
-                &middot;
-            @endif
-            {{ $currentTerm?->academicSession?->name ?? 'Current Session' }} &middot; {{ $currentTerm?->name ?? 'Current Term' }}
-        </p>
+    <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">
+                Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ $user->name ?? 'Teacher' }} 👋
+            </h1>
+            <p class="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                @if($isClassTeacher)
+                    {{ $classAssignment->class->name ?? 'Class Teacher' }}
+                @endif
+                @if($isClassTeacher && $isSubjectTeacher)
+                    &middot;
+                @endif
+                @if($isSubjectTeacher)
+                    Subject Teacher
+                @endif
+                @if($isClassTeacher || $isSubjectTeacher)
+                    &middot;
+                @endif
+                {{ $currentTerm?->academicSession?->name ?? 'Current Session' }} &middot; {{ $currentTerm?->name ?? 'Current Term' }}
+            </p>
+        </div>
     </div>
 
     {{-- Summary Cards --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-3">
         <x-ui.stat-card compact label="Classes Taught" :value="$subjectAssignments->unique('classSubject.class_id')->count()" icon="graduation-cap" />
         <x-ui.stat-card compact label="Subjects Taught" :value="$subjectAssignments->pluck('classSubject.subject_id')->unique()->count()" icon="book-open" />
         <x-ui.stat-card compact label="Students Taught" :value="$totalStudents" icon="users" />
-        @if($isClassTeacher)
-            <x-ui.stat-card compact label="Form Class Attendance Today" :value="$formClassAttendanceRateValue" icon="calendar-check" />
-        @else
-            <x-ui.stat-card compact label="Attendance Today" :value="$todayAttendanceRate . '%'" icon="calendar-check" />
-        @endif
+        <x-ui.stat-card compact label="Attendance Recorded / Roster" :value="$attendanceKpiValue" icon="calendar-check" />
     </div>
+    <p class="mb-6 text-xs text-neutral-500 dark:text-neutral-400">
+        @if($currentTerm)
+            Recorded students / expected roster for today's classes in {{ $currentTerm->name }}. This is coverage, not an attendance rate.
+        @else
+            Attendance coverage is unavailable because no current term is configured.
+        @endif
+    </p>
 
     {{-- Today's Classes + Announcements --}}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">

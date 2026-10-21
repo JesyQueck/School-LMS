@@ -2,6 +2,7 @@
     @php
         $user = auth()->user();
         $greeting = 'Good ' . (now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening'));
+        $attendanceChartPayload = json_encode($attendanceChart, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
     @endphp
 
     <div class="mb-6">
@@ -16,11 +17,59 @@
 
     {{-- School Statistics --}}
     <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="users" />
-        <x-ui.stat-card label="Teachers" :value="number_format($totalTeachers)" icon="graduation-cap" />
-        <x-ui.stat-card label="Classes" :value="number_format($totalClasses)" icon="layout-grid" />
-        <x-ui.stat-card label="Parents" :value="number_format($totalParents)" icon="user-check" />
+        <x-ui.stat-card label="Students" :value="number_format($totalStudents)" icon="users" compact />
+        <x-ui.stat-card label="Teachers" :value="number_format($totalTeachers)" icon="graduation-cap" compact />
+        <x-ui.stat-card label="Classes" :value="number_format($totalClasses)" icon="layout-grid" compact />
+        <x-ui.stat-card label="Parents" :value="number_format($totalParents)" icon="user-check" compact />
     </div>
+
+    <section class="mb-6">
+        @if($currentTerm && count($attendanceChart['labels']) > 0)
+            <x-ui.chart
+                title="Recorded attendance"
+                description="Daily marked-student counts by status for {{ $currentTerm->name }}. Counts are not attendance rates."
+                height="280"
+            >
+                <canvas
+                    data-dashboard-chart="attendance"
+                    data-chart-data="{{ $attendanceChartPayload }}"
+                    role="img"
+                    aria-label="Stacked bar chart of recorded attendance counts by date and status for {{ $currentTerm->name }}"
+                ></canvas>
+            </x-ui.chart>
+            <table class="sr-only">
+                <caption>Recorded attendance counts by date and status for {{ $currentTerm->name }}</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        @foreach($attendanceChart['datasets'] as $dataset)
+                            <th scope="col">{{ $dataset['label'] }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($attendanceChart['labels'] as $dateIndex => $date)
+                        <tr>
+                            <th scope="row">{{ $date }}</th>
+                            @foreach($attendanceChart['datasets'] as $dataset)
+                                <td>{{ $dataset['data'][$dateIndex] }}</td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <x-ui.card>
+                <h2 id="attendance-chart-heading" class="text-base font-semibold text-neutral-900 dark:text-white">Recorded attendance</h2>
+                <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ $currentTerm ? "Daily marked-student counts for {$currentTerm->name}. Counts are not attendance rates." : 'Configure a current term to view attendance counts.' }}
+                </p>
+                <p class="mt-4 rounded-lg bg-neutral-50 px-4 py-3 text-sm text-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-400">
+                    {{ $currentTerm ? 'No attendance has been recorded for this term yet.' : 'Attendance data is unavailable without a configured current term.' }}
+                </p>
+            </x-ui.card>
+            @endif
+    </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-start">
         {{-- Academic Overview --}}
@@ -45,36 +94,27 @@
                     </div>
                 </div>
                 <div class="px-6 pb-6 mt-auto">
-                    <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">Results</p>
-                    <div class="space-y-3">
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-neutral-700 dark:text-neutral-300">Submitted</span>
-                                <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsSubmitted }}</span>
+                    <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">
+                        Current term result records
+                    </p>
+                    @if($resultMetrics)
+                        <dl class="grid grid-cols-3 gap-3 text-sm">
+                            <div>
+                                <dt class="text-neutral-500 dark:text-neutral-400">Recorded</dt>
+                                <dd class="font-semibold text-neutral-900 dark:text-white">{{ number_format($resultMetrics['recorded']) }}</dd>
                             </div>
-                            <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-primary-600 dark:bg-primary-500" style="width: {{ $resultsSubmitted > 0 ? 100 : 0 }}%"></div>
+                            <div>
+                                <dt class="text-neutral-500 dark:text-neutral-400">Locked</dt>
+                                <dd class="font-semibold text-neutral-900 dark:text-white">{{ number_format($resultMetrics['locked']) }}</dd>
                             </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-neutral-700 dark:text-neutral-300">Locked</span>
-                                <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsLocked }}</span>
+                            <div>
+                                <dt class="text-neutral-500 dark:text-neutral-400">Unlocked</dt>
+                                <dd class="font-semibold text-neutral-900 dark:text-white">{{ number_format($resultMetrics['unlocked']) }}</dd>
                             </div>
-                            <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-success-600 dark:bg-success-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsLocked / $resultsSubmitted) * 100) : 0 }}%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-neutral-700 dark:text-neutral-300">Pending</span>
-                                <span class="font-semibold text-neutral-900 dark:text-white">{{ $resultsPending }}</span>
-                            </div>
-                            <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                                <div class="h-full rounded-full bg-warning-600 dark:bg-warning-500" style="width: {{ $resultsSubmitted > 0 ? round(($resultsPending / max(1, $resultsSubmitted)) * 100) : 0 }}%"></div>
-                            </div>
-                        </div>
-                    </div>
+                        </dl>
+                    @else
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400">Unavailable because no current term is configured.</p>
+                    @endif
                 </div>
             </x-ui.card>
         </div>
@@ -83,7 +123,8 @@
         <div class="lg:col-span-4 h-full">
             <x-ui.card class="h-full flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Finance Overview</h3>
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">All-term Finance Overview</h3>
+                    <p class="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">School-wide totals across all recorded terms.</p>
                 </div>
                 <div class="p-6 flex-1">
                     <div class="grid grid-cols-[1fr_auto] gap-1 items-end text-sm mb-4">

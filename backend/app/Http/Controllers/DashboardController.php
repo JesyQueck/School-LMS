@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Attendance;
 use App\Models\ParentProfile;
 use App\Models\Result;
 use App\Models\SchoolClass;
@@ -10,6 +11,7 @@ use App\Models\Student;
 use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\Term;
+use Carbon\Carbon;
 use App\Services\FeeService;
 
 class DashboardController extends Controller
@@ -30,12 +32,60 @@ class DashboardController extends Controller
         $teachersAssigned = Teacher::whereHas('classSubjectAssignments')->count();
         $totalTeachersForAssignment = $totalTeachers;
 
-        $results = Result::all();
-        $resultsSubmitted = $results->count();
-        $resultsLocked = $results->where('is_locked', true)->count();
-        $resultsPending = $results->where('is_locked', false)->count();
+        $resultMetrics = null;
+        if ($currentTerm) {
+            $termResults = Result::where('term_id', $currentTerm->id)
+                ->selectRaw('COUNT(*) as recorded, SUM(CASE WHEN is_locked = 1 THEN 1 ELSE 0 END) as locked')
+                ->first();
+
+            $resultMetrics = [
+                'recorded' => (int) $termResults->recorded,
+                'locked' => (int) $termResults->locked,
+                'unlocked' => (int) $termResults->recorded - (int) $termResults->locked,
+            ];
+        }
 
         $finance = $feeService->financeSummary();
+
+        $attendanceChart = ['labels' => [], 'datasets' => []];
+        if ($currentTerm) {
+            $attendanceRows = Attendance::query()
+                ->where('term_id', $currentTerm->id)
+                ->select(['date', 'status'])
+                ->selectRaw('COUNT(*) as total')
+                ->groupBy('date', 'status')
+                ->orderBy('date')
+                ->get();
+
+            $dates = $attendanceRows->pluck('date')
+                ->map(fn ($date) => Carbon::parse($date)->format('M j, Y'))
+                ->unique()
+                ->values();
+            $statuses = $attendanceRows->pluck('status')
+                ->map(fn ($status) => strtolower((string) $status))
+                ->unique()
+                ->sortBy(fn ($status) => match ($status) {
+                    'present' => 0,
+                    'absent' => 1,
+                    'late' => 2,
+                    default => 3,
+                })
+                ->values();
+
+            $attendanceChart['labels'] = $dates->all();
+            $attendanceChart['datasets'] = $statuses->map(function ($status) use ($attendanceRows, $dates) {
+                $countsByDate = $attendanceRows
+                    ->filter(fn ($row) => strtolower((string) $row->status) === $status)
+                    ->mapWithKeys(fn ($row) => [
+                        Carbon::parse($row->date)->format('M j, Y') => (int) $row->total,
+                    ]);
+
+                return [
+                    'label' => ucfirst($status),
+                    'data' => $dates->map(fn ($date) => $countsByDate->get($date, 0))->all(),
+                ];
+            })->all();
+        }
 
         $recentActivity = AuditLog::with('user')
             ->latest()
@@ -49,14 +99,14 @@ class DashboardController extends Controller
             'totalParents',
             'session',
             'termName',
+            'currentTerm',
             'activeClasses',
             'subjects',
             'teachersAssigned',
             'totalTeachersForAssignment',
-            'resultsSubmitted',
-            'resultsLocked',
-            'resultsPending',
+            'resultMetrics',
             'finance',
+            'attendanceChart',
             'recentActivity'
         ));
     }

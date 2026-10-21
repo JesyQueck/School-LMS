@@ -8,10 +8,10 @@
     <link rel="icon" href="{{ asset(config('school.logo', 'images/Logo.webp')) }}" type="image/webp">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-background dark:bg-dark-bg text-neutral-900 dark:text-dark-text transition-colors duration-150">
+<body class="h-dvh overflow-hidden bg-background dark:bg-dark-bg text-neutral-900 dark:text-dark-text transition-colors duration-150">
     <x-layout.skip-link />
 
-    <div class="flex h-screen overflow-hidden bg-background dark:bg-dark-bg">
+    <div class="flex h-full min-h-0 overflow-hidden bg-background dark:bg-dark-bg">
         <input id="sidebar-menu-checkbox" type="checkbox" class="peer sr-only">
 
         <!-- Mobile backdrop -->
@@ -31,12 +31,12 @@
         </aside>
 
         <!-- Main content wrapper -->
-        <div class="flex flex-1 flex-col overflow-hidden">
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <x-layout.header title="{!! $title ?? 'Dashboard' !!}">
                 {!! $breadcrumbs ?? '' !!}
             </x-layout.header>
 
-            <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <main id="main-content" class="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                 {{ $slot }}
             </main>
         </div>

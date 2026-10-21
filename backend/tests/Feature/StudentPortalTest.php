@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\ClassSubject;
 use App\Models\FeeType;
 use App\Models\ReportCard;
+use App\Models\Result;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
@@ -40,6 +41,170 @@ class StudentPortalTest extends TestCase
         $response = $this->get('/student/dashboard');
         $response->assertOk();
         $response->assertSee('Jane Doe');
+        $response->assertSee('No results');
+        $this->assertNull($response->viewData('averageScore'));
+        $this->assertSame(0, $response->viewData('subjectCount'));
+        $this->assertSame([], $response->viewData('resultTrend')['rows']);
+        $response->assertSee('No published results are available to chart yet.');
+    }
+
+    public function test_student_dashboard_averages_only_published_scored_results_and_orders_report_cards_by_academic_dates(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'Student Dashboard Results Class']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-STUDENT-DASH-RESULTS',
+        ]);
+        $newerSession = AcademicSession::create([
+            'name' => '2025/2026',
+            'start_date' => '2025-09-01',
+            'end_date' => '2026-07-31',
+        ]);
+        $olderSession = AcademicSession::create([
+            'name' => '2024/2025',
+            'start_date' => '2024-09-01',
+            'end_date' => '2025-07-31',
+        ]);
+        $newerTerm = Term::create([
+            'academic_session_id' => $newerSession->id,
+            'name' => 'Chronologically Newer Term',
+            'start_date' => '2025-09-01',
+            'end_date' => '2025-12-20',
+        ]);
+        $olderTerm = Term::create([
+            'academic_session_id' => $olderSession->id,
+            'name' => 'Chronologically Older Term',
+            'start_date' => '2024-09-01',
+            'end_date' => '2024-12-20',
+        ]);
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $newerTerm->id,
+            'class_id' => $class->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+        ]);
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $olderTerm->id,
+            'class_id' => $class->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+        ]);
+        $math = Subject::create(['name' => 'Published Math']);
+        $science = Subject::create(['name' => 'Unpublished Science']);
+        $mathClassSubject = ClassSubject::create(['class_id' => $class->id, 'subject_id' => $math->id]);
+        $previousClass = SchoolClass::create(['name' => 'Student Previous Academic Class']);
+        $previousMathClassSubject = ClassSubject::create(['class_id' => $previousClass->id, 'subject_id' => $math->id]);
+        $scienceClassSubject = ClassSubject::create(['class_id' => $class->id, 'subject_id' => $science->id]);
+
+        foreach ([
+            ['term' => $newerTerm, 'subject' => $mathClassSubject, 'ca' => 24, 'exam' => 56],
+            ['term' => $olderTerm, 'subject' => $previousMathClassSubject, 'ca' => 18, 'exam' => 42],
+        ] as $result) {
+            Result::create([
+                'student_id' => $student->id,
+                'class_subject_id' => $result['subject']->id,
+                'term_id' => $result['term']->id,
+                'ca_score' => $result['ca'],
+                'exam_score' => $result['exam'],
+            ]);
+        }
+        foreach ([
+            ['term' => $newerTerm, 'date' => '2025-09-15', 'status' => 'present'],
+            ['term' => $olderTerm, 'date' => '2024-09-15', 'status' => 'absent'],
+        ] as $attendance) {
+            Attendance::create([
+                'student_id' => $student->id,
+                'class_id' => $class->id,
+                'term_id' => $attendance['term']->id,
+                'date' => $attendance['date'],
+                'status' => $attendance['status'],
+                'marked_by' => User::factory()->create(['role' => 'teacher'])->id,
+            ]);
+        }
+        $unpublishedTerm = Term::create([
+            'academic_session_id' => $newerSession->id,
+            'name' => 'Unpublished Results Term',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-04-20',
+        ]);
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $unpublishedTerm->id,
+            'class_id' => $class->id,
+            'status' => ReportCard::STATUS_DRAFT,
+        ]);
+        Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $scienceClassSubject->id,
+            'term_id' => $unpublishedTerm->id,
+            'ca_score' => 30,
+            'exam_score' => 70,
+        ]);
+
+        $response = $this->actingAs($studentUser)->get(route('student.dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(70.0, $response->viewData('averageScore'));
+        $this->assertSame(1, $response->viewData('subjectCount'));
+        $this->assertSame(2, $response->viewData('totalRecords'));
+        $this->assertSame(50.0, $response->viewData('attendanceRate'));
+        $this->assertSame($newerTerm->id, $response->viewData('latestReportCard')->term_id);
+        $this->assertSame([
+            $olderTerm->name.' · '.$olderSession->name,
+            $newerTerm->name.' · '.$newerSession->name,
+        ], $response->viewData('resultTrend')['labels']);
+        $this->assertSame([60.0, 80.0], $response->viewData('resultTrend')['averages']);
+        $this->assertCount(2, $response->viewData('resultTrend')['rows']);
+        $response->assertSee('Chronologically Newer Term');
+        $response->assertDontSee('Unpublished Science');
+    }
+
+    public function test_student_dashboard_displays_a_real_zero_average_as_zero_not_as_missing(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $class = SchoolClass::create(['name' => 'Student Zero Average Class']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-STUDENT-ZERO',
+        ]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Zero Score Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+        ]);
+        ReportCard::create([
+            'student_id' => $student->id,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+            'status' => ReportCard::STATUS_PUBLISHED,
+        ]);
+        $subject = Subject::create(['name' => 'Zero Score Subject']);
+        $classSubject = ClassSubject::create(['class_id' => $class->id, 'subject_id' => $subject->id]);
+        Result::create([
+            'student_id' => $student->id,
+            'class_subject_id' => $classSubject->id,
+            'term_id' => $term->id,
+            'ca_score' => 0,
+            'exam_score' => 0,
+        ]);
+
+        $response = $this->actingAs($studentUser)->get(route('student.dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(0.0, $response->viewData('averageScore'));
+        $response->assertSee('0%');
+        $response->assertDontSee('No results');
+        $this->assertCount(1, $response->viewData('resultTrend')['rows']);
+        $response->assertSee('One published term is available; a trend cannot be inferred.');
     }
 
     public function test_student_cannot_access_removed_results_page(): void

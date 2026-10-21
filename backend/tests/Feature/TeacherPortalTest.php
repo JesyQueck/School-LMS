@@ -12,6 +12,7 @@ use App\Models\Subject;
 use App\Models\Teacher;
 use App\Models\TeacherClassSubject;
 use App\Models\Term;
+use App\Models\Timetable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -86,6 +87,103 @@ class TeacherPortalTest extends TestCase
 
         $attendanceResponse->assertRedirect('/teacher/attendance');
         $this->assertDatabaseHas('attendances', ['student_id' => $student->id, 'status' => 'present']);
+    }
+
+    public function test_teacher_dashboard_reports_current_term_attendance_records_against_roster_without_counting_unmarked_as_absent(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'T-DASH-1']);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+        $currentTerm = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Current Attendance Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $pastTerm = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'Past Attendance Term',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-04-20',
+        ]);
+        $class = SchoolClass::create(['name' => 'Teacher Dashboard Attendance Class']);
+        ClassAssignment::create([
+            'teacher_id' => $teacher->id,
+            'class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $currentTerm->id,
+        ]);
+        $subject = Subject::create(['name' => 'Teacher Dashboard Attendance Subject']);
+        $classSubject = ClassSubject::create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+        ]);
+        TeacherClassSubject::create([
+            'teacher_id' => $teacher->id,
+            'class_subject_id' => $classSubject->id,
+            'is_active' => true,
+        ]);
+        Timetable::create([
+            'class_subject_id' => $classSubject->id,
+            'day' => now()->format('l'),
+            'start_time' => '08:00:00',
+            'end_time' => '08:45:00',
+            'term_id' => $currentTerm->id,
+            'academic_session_id' => $session->id,
+        ]);
+
+        $students = collect(range(1, 3))->map(fn ($index) => Student::create([
+            'user_id' => User::factory()->create()->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-TEACHER-DASH-'.$index,
+        ]));
+
+        foreach ([
+            ['student' => $students[0], 'term' => $currentTerm, 'date' => now()->toDateString(), 'status' => 'present'],
+            ['student' => $students[1], 'term' => $currentTerm, 'date' => now()->toDateString(), 'status' => 'absent'],
+            ['student' => $students[2], 'term' => $pastTerm, 'date' => now()->toDateString(), 'status' => 'present'],
+            ['student' => $students[2], 'term' => $currentTerm, 'date' => now()->subDay()->toDateString(), 'status' => 'present'],
+        ] as $record) {
+            Attendance::create([
+                'student_id' => $record['student']->id,
+                'class_id' => $class->id,
+                'term_id' => $record['term']->id,
+                'date' => $record['date'],
+                'status' => $record['status'],
+                'marked_by' => $teacherUser->id,
+            ]);
+        }
+
+        $response = $this->actingAs($teacherUser)->get(route('teacher.dashboard'));
+
+        $response->assertOk();
+        $this->assertSame(2, $response->viewData('attendanceRecordedCount'));
+        $this->assertSame(3, $response->viewData('attendanceExpectedCount'));
+        $this->assertSame('2 / 3', $response->viewData('attendanceKpiValue'));
+        $this->assertTrue($response->viewData('isClassTeacher'));
+        $response->assertSee('Attendance Recorded / Roster');
+        $response->assertSee('Recorded students / expected roster for today');
+        $response->assertSee('This is coverage, not an attendance rate.');
+    }
+
+    public function test_teacher_dashboard_marks_attendance_coverage_unavailable_without_a_current_term(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'T-DASH-2']);
+
+        $response = $this->actingAs($teacherUser)->get(route('teacher.dashboard'));
+
+        $response->assertOk();
+        $this->assertSame('Unavailable', $response->viewData('attendanceKpiValue'));
+        $this->assertSame(0, $response->viewData('attendanceRecordedCount'));
+        $this->assertSame(0, $response->viewData('attendanceExpectedCount'));
+        $response->assertSee('Attendance coverage is unavailable because no current term is configured.');
     }
 
     public function test_teacher_cannot_view_students_of_unassigned_class(): void

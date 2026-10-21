@@ -7,12 +7,13 @@ use App\Models\Announcement;
 use App\Models\ReportCard;
 use App\Models\Student;
 use App\Models\Term;
+use App\Services\PublishedResultTrendService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PublishedResultTrendService $trendService)
     {
         $parent = $request->user()->parentProfile;
 
@@ -24,7 +25,13 @@ class DashboardController extends Controller
                 'fees.payments',
                 'reportCards' => fn ($query) => $query
                     ->where('status', ReportCard::STATUS_PUBLISHED)
-                    ->with('term'),
+                    ->with('term.academicSession')
+                    ->join('terms', 'report_cards.term_id', '=', 'terms.id')
+                    ->leftJoin('academic_sessions', 'terms.academic_session_id', '=', 'academic_sessions.id')
+                    ->select('report_cards.*')
+                    ->orderByDesc('academic_sessions.start_date')
+                    ->orderByDesc('terms.start_date')
+                    ->orderByDesc('report_cards.id'),
             ])->orderBy('students.id')->get()
             : collect();
 
@@ -39,18 +46,22 @@ class DashboardController extends Controller
         });
 
         $totalChildren = $children->count();
-        $avgAttendance = $totalChildren > 0
-            ? round($children->avg(fn (Student $c) => $c->metrics['attendance_rate']), 1)
-            : 0;
-        $avgResult = $totalChildren > 0
-            ? round($children->avg(fn (Student $c) => $c->metrics['average_score']), 1)
-            : 0;
+        $childrenWithAttendance = $children->filter(fn (Student $child) => $child->metrics['attendance_rate'] !== null);
+        $childrenWithResults = $children->filter(fn (Student $child) => $child->metrics['average_score'] !== null);
+        $avgAttendance = $childrenWithAttendance->isNotEmpty()
+            ? round($childrenWithAttendance->avg(fn (Student $child) => $child->metrics['attendance_rate']), 1)
+            : null;
+        $avgResult = $childrenWithResults->isNotEmpty()
+            ? round($childrenWithResults->avg(fn (Student $child) => $child->metrics['average_score']), 1)
+            : null;
         $feesDue = $children->sum(fn (Student $c) => $c->metrics['outstanding']);
 
         $stats = [
             'children' => $totalChildren,
             'attendance' => $avgAttendance,
+            'attendance_children' => $childrenWithAttendance->count(),
             'avg_result' => $avgResult,
+            'result_children' => $childrenWithResults->count(),
             'fees_due' => $feesDue,
         ];
 
@@ -63,6 +74,7 @@ class DashboardController extends Controller
             ->get();
 
         $recentResults = collect();
+        $resultTrend = ['labels' => [], 'averages' => [], 'rows' => []];
         if ($selectedChild) {
             $publishedTermIds = $selectedChild->reportCards->pluck('term_id');
             $recentResults = $selectedChild->results()
@@ -76,12 +88,28 @@ class DashboardController extends Controller
                 ->orderByDesc('results.id')
                 ->limit(5)
                 ->get();
+            $resultTrend = $trendService->forStudent($selectedChild);
         }
+
+        $recentReportCards = $children
+            ->map(fn (Student $child) => $child->reportCards->first()
+                ? ['student' => $child, 'reportCard' => $child->reportCards->first()]
+                : null)
+            ->filter()
+            ->sortByDesc(fn (array $entry) => [
+                $entry['reportCard']->term?->academicSession?->start_date?->format('Ymd') ?? '',
+                $entry['reportCard']->term?->start_date?->format('Ymd') ?? '',
+                $entry['reportCard']->id,
+                $entry['student']->id,
+            ])
+            ->values();
 
         return view('parent.dashboard', compact(
             'children',
             'selectedChild',
             'recentResults',
+            'resultTrend',
+            'recentReportCards',
             'stats',
             'currentTerm',
             'announcements',
@@ -94,17 +122,19 @@ class DashboardController extends Controller
             ->where('status', ReportCard::STATUS_PUBLISHED)
             ->pluck('term_id');
 
-        $results = $child->results->whereIn('term_id', $publishedTermIds);
-        $averageScore = $results->count() > 0
-            ? round($results->avg(fn ($r) => $r->total ?? 0), 1)
-            : 0;
+        $results = $child->results
+            ->whereIn('term_id', $publishedTermIds)
+            ->filter(fn ($result) => $result->total !== null);
+        $averageScore = $results->isNotEmpty()
+            ? round($results->avg('total'), 1)
+            : null;
 
         $records = $child->attendance;
         $present = $records->where('status', 'present')->count();
         $totalRecords = $records->count();
         $attendanceRate = $totalRecords > 0
             ? round(($present / $totalRecords) * 100, 1)
-            : 0;
+            : null;
 
         $outstanding = $child->fees->sum(function ($fee) {
             $paid = $fee->payments->sum('amount_paid');

@@ -8,12 +8,13 @@ use App\Models\ReportCard;
 use App\Models\Term;
 use App\Models\Timetable;
 use App\Services\ResultService;
+use App\Services\PublishedResultTrendService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PublishedResultTrendService $trendService)
     {
         $student = $request->user()->student;
 
@@ -26,11 +27,19 @@ class DashboardController extends Controller
         $currentTerm = Term::where('is_current', true)->with('academicSession')->first();
         $publishedTermIds = $student->reportCards()->where('status', ReportCard::STATUS_PUBLISHED)->pluck('term_id');
 
-        $results = $student->results->whereIn('term_id', $publishedTermIds);
-        $averageScore = $results->count() > 0
-            ? round($results->avg(fn ($r) => $r->total ?? 0), 1)
-            : 0;
-        $subjectCount = $results->count();
+        $publishedResults = $student->results
+            ->whereIn('term_id', $publishedTermIds)
+            ->filter(fn ($result) => $result->total !== null)
+            ->values();
+        $averageScore = $publishedResults->isNotEmpty()
+            ? round($publishedResults->avg('total'), 1)
+            : null;
+        $resultTrend = $trendService->forStudent($student);
+        $subjectCount = $publishedResults
+            ->map(fn ($result) => $result->classSubject?->subject_id)
+            ->filter()
+            ->unique()
+            ->count();
 
         $records = $student->attendance;
         $present = $records->where('status', 'present')->count();
@@ -39,7 +48,7 @@ class DashboardController extends Controller
         $totalRecords = $records->count();
         $attendanceRate = $totalRecords > 0
             ? round(($present / $totalRecords) * 100, 1)
-            : 0;
+            : null;
 
         $outstanding = $student->fees->sum(function ($fee) {
             $paid = $fee->payments->sum('amount_paid');
@@ -49,9 +58,21 @@ class DashboardController extends Controller
         $totalExpected = $student->fees->sum(fn ($fee) => $fee->amount_expected ?? 0);
         $totalPaid = $student->fees->sum(fn ($fee) => $fee->payments->sum('amount_paid'));
 
-        $grade = (new ResultService)->calculateGrade($averageScore > 0 ? $averageScore : null)['grade'];
+        $grade = $averageScore !== null
+            ? (new ResultService)->calculateGrade($averageScore)['grade']
+            : null;
 
-        $latestReportCard = $student->reportCards->sortByDesc(fn ($rc) => $rc->term_id)->first();
+        $latestReportCard = ReportCard::query()
+            ->where('student_id', $student->id)
+            ->where('status', ReportCard::STATUS_PUBLISHED)
+            ->join('terms', 'report_cards.term_id', '=', 'terms.id')
+            ->leftJoin('academic_sessions', 'terms.academic_session_id', '=', 'academic_sessions.id')
+            ->select('report_cards.*')
+            ->with('term.academicSession')
+            ->orderByDesc('academic_sessions.start_date')
+            ->orderByDesc('terms.start_date')
+            ->orderByDesc('report_cards.id')
+            ->first();
 
         $announcements = Announcement::forRole('student')
             ->with('createdBy')
@@ -64,12 +85,14 @@ class DashboardController extends Controller
         return view('student.dashboard', compact(
             'student',
             'currentTerm',
-            'publishedTermIds',
+            'publishedResults',
+            'resultTrend',
             'averageScore',
             'subjectCount',
             'present',
             'absent',
             'late',
+            'totalRecords',
             'attendanceRate',
             'outstanding',
             'totalExpected',
