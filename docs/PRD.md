@@ -355,11 +355,25 @@ Stores all authenticated users.
 |---------|-------------|
 | id | Primary Key |
 | name | Full Name |
-| email | Login Email |
+| email | Email address; optional for students |
 | password | Hashed Password |
 | role | admin, teacher, parent, student |
 | is_active | Account Status |
 | timestamps | Laravel timestamps |
+
+### Login identifiers
+
+- Administrators sign in with their email address.
+- Teachers can sign in with their email address or their linked teacher profile's unique `employee_id` (Staff ID).
+- Students sign in with their linked student profile's unique `admission_no`; a student email address is optional and is not a login identifier.
+- Parents/guardians sign in with their email address or `PARENT-{parent_profile_id}`. The parent profile identifier is distinct from any child's admission number, and one parent profile may be linked to multiple students.
+- All roles must provide their password. Newly provisioned accounts require a password change at first sign-in.
+
+### Password recovery
+
+- Administrators can regenerate student and teacher temporary passwords from Accounts → Credentials. The passwords are encrypted separately from authentication hashes and remain retrievable only while password change is required.
+- Parents/guardians recover passwords through the email reset flow. Reset links use Laravel's expiring, single-use password broker tokens; account-existence responses are generic.
+- Successful password changes atomically clear the encrypted temporary password and the password-change requirement. Parent and administrator passwords are never retrievable by administrators through Credentials.
 
 ---
 
@@ -371,7 +385,7 @@ Stores student profiles.
 |---------|-------------|
 | id | Primary Key |
 | user_id | Linked User |
-| admission_number | Unique Admission Number |
+| admission_no | Unique Admission Number |
 | class_id | Current Class |
 | house | School House |
 | admission_date | Admission Date |

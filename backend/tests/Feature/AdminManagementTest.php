@@ -13,6 +13,7 @@ use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -313,6 +314,11 @@ class AdminManagementTest extends TestCase
             'user_id' => $teacherUser->id,
             'qualification' => 'B.Sc. Mathematics',
         ]);
+        $this->assertTrue($teacherUser->fresh()->needs_password_change);
+        $this->assertNotSame('Password123!', $teacherUser->fresh()->password);
+        $response->assertSessionHas('new_teacher_credentials', fn (array $credentials) => Hash::check($credentials['password'], $teacherUser->fresh()->password));
+        $teacherCredential = ImportCredential::where('user_id', $teacherUser->id)->latest('id')->firstOrFail();
+        $response->assertSessionHas('new_teacher_credentials', fn (array $credentials) => $teacherCredential->temporary_password === $credentials['password']);
     }
 
     public function test_admin_can_access_teacher_edit_page(): void
@@ -644,8 +650,10 @@ class AdminManagementTest extends TestCase
             'name' => 'No Email Student',
             'role' => 'student',
         ]);
-        $this->assertStringNotContainsString('@example.com', User::find($student->user_id)->email);
-        $this->assertStringContainsString('@placeholder.local', User::find($student->user_id)->email);
+        $this->assertNull(User::find($student->user_id)->email);
+        $response->assertSessionHas('new_student_credentials', fn ($credentials) => $credentials[0]['login_identifier'] === 'GRA-0099');
+        $this->assertTrue($student->user->needs_password_change);
+        $response->assertSessionHas('new_student_credentials', fn ($credentials) => filled($credentials[0]['password']));
     }
 
     public function test_parent_email_is_required_for_student_creation(): void
@@ -746,6 +754,52 @@ class AdminManagementTest extends TestCase
         ]));
 
         $response->assertSessionHasErrors(['admission_no']);
+    }
+
+    public function test_student_admission_number_cannot_duplicate_teacher_staff_id(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'STAFF-UNIQUE-01']);
+        $class = SchoolClass::create(['name' => 'JSS Unique ID']);
+
+        $this->actingAs($admin)
+            ->post('/admin/students', $this->validStudentPayload($class, [
+                'admission_no' => 'staff-unique-01',
+            ]))
+            ->assertSessionHasErrors('admission_no');
+
+        $this->assertDatabaseMissing('students', ['admission_no' => 'staff-unique-01']);
+    }
+
+    public function test_general_account_flow_allows_student_without_email(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $class = SchoolClass::create(['name' => 'JSS Optional Email']);
+
+        $response = $this->actingAs($admin)->post('/admin/accounts', [
+            'type' => 'student',
+            'name' => 'No Email Learner',
+            'class_id' => $class->id,
+        ]);
+
+        $response->assertRedirect(route('admin.accounts.create'));
+        $temporaryPassword = null;
+        $response->assertSessionHas('new_account_credentials', function ($credentials) use (&$temporaryPassword) {
+            $temporaryPassword = $credentials[0]['password'];
+
+            return $credentials[0]['role'] === 'student'
+                && str_starts_with($credentials[0]['login_identifier'], 'ADM-')
+                && strlen($credentials[0]['password']) === 20;
+        });
+
+        $student = Student::with('user')->first();
+        $this->assertNotNull($student);
+        $this->assertNull($student->user->email);
+        $this->assertTrue($student->user->needs_password_change);
+        $this->assertTrue(Hash::check($temporaryPassword, $student->user->password));
+        $this->assertNull(ImportCredential::where('role', 'student')->value('password'));
+        $this->assertSame($temporaryPassword, ImportCredential::where('user_id', $student->user_id)->latest('id')->firstOrFail()->temporary_password);
     }
 
     public function test_admin_can_create_a_student_with_parent(): void
@@ -1194,6 +1248,180 @@ class AdminManagementTest extends TestCase
         $this->assertDatabaseHas('parents', [
             'occupation' => 'Doctor',
         ]);
+        $parent = User::where('email', 'parent.user@example.com')->firstOrFail();
+        $this->assertTrue($parent->needs_password_change);
+        $response->assertSessionHas('new_account_credentials', fn ($credentials) => $credentials[0]['role'] === 'parent'
+            && empty($credentials[0]['password']));
+        $this->assertNull(ImportCredential::where('user_id', $parent->id)->value('temporary_password'));
+        $this->actingAs($admin)->get(route('admin.accounts.credentials'))
+            ->assertSee('Use email password recovery')
+            ->assertDontSee(route('admin.accounts.credentials.password.reveal', $parent));
+    }
+
+    public function test_admin_can_regenerate_and_retrieve_a_student_temporary_password_from_credentials(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $studentUser = User::factory()->create([
+            'role' => 'student',
+            'password' => Hash::make('OldPassword123!'),
+            'needs_password_change' => false,
+        ]);
+        $class = SchoolClass::create(['name' => 'Password Reset Class']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'admission_no' => 'ADM-RESET-01',
+            'class_id' => $class->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.accounts.credentials.password.regenerate', $studentUser));
+
+        $response->assertRedirect(route('admin.accounts.credentials'));
+        $temporaryPassword = null;
+        $response->assertSessionHas('credential_temporary_password', function (array $credentials) use (&$temporaryPassword, $student): bool {
+            $temporaryPassword = $credentials['password'];
+
+            return $credentials['login_identifier'] === $student->admission_no;
+        });
+        $studentUser->refresh();
+        $this->assertTrue($studentUser->needs_password_change);
+        $this->assertTrue(Hash::check($temporaryPassword, $studentUser->password));
+        $this->assertFalse(Hash::check('OldPassword123!', $studentUser->password));
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'account.temporary_password_regenerated',
+            'target_model' => User::class,
+            'target_id' => $studentUser->id,
+        ]);
+        $studentPasswordAudit = \App\Models\AuditLog::where('action', 'account.temporary_password_regenerated')->firstOrFail();
+        $this->assertSame(['role' => 'student'], $studentPasswordAudit->new_value);
+        $storedCredential = ImportCredential::where('user_id', $studentUser->id)->latest('id')->firstOrFail();
+        $this->assertSame($temporaryPassword, $storedCredential->temporary_password);
+        $this->assertNotSame($temporaryPassword, \Illuminate\Support\Facades\DB::table('import_credentials')->where('id', $storedCredential->id)->value('temporary_password'));
+
+        $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
+        $this->post(route('admin.accounts.credentials.password.reveal', $studentUser))->assertRedirect(route('admin.accounts.credentials'));
+        $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
+        $this->get(route('admin.accounts.credentials'))->assertDontSee($temporaryPassword);
+        $this->actingAs($studentUser)->get('/student/dashboard')->assertRedirect('/change-password');
+    }
+
+    public function test_admin_can_regenerate_and_retrieve_a_teacher_temporary_password_from_credentials(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacherUser = User::factory()->create([
+            'role' => 'teacher',
+            'password' => Hash::make('OldPassword123!'),
+            'needs_password_change' => false,
+        ]);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'STAFF-RESET-01',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.accounts.credentials.password.regenerate', $teacherUser));
+
+        $response->assertRedirect(route('admin.accounts.credentials'));
+        $temporaryPassword = null;
+        $response->assertSessionHas('credential_temporary_password', function (array $credentials) use (&$temporaryPassword, $teacher): bool {
+            $temporaryPassword = $credentials['password'];
+
+            return $credentials['login_identifier'] === $teacher->employee_id;
+        });
+        $teacherUser->refresh();
+        $this->assertTrue($teacherUser->needs_password_change);
+        $this->assertTrue(Hash::check($temporaryPassword, $teacherUser->password));
+        $this->assertFalse(Hash::check('OldPassword123!', $teacherUser->password));
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'account.temporary_password_regenerated',
+            'target_model' => User::class,
+            'target_id' => $teacherUser->id,
+        ]);
+        $teacherPasswordAudit = \App\Models\AuditLog::where('action', 'account.temporary_password_regenerated')->firstOrFail();
+        $this->assertSame(['role' => 'teacher'], $teacherPasswordAudit->new_value);
+
+        $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
+        $storedCredential = ImportCredential::where('user_id', $teacherUser->id)->latest('id')->firstOrFail();
+        $this->assertSame($temporaryPassword, $storedCredential->temporary_password);
+        $this->assertNotSame($temporaryPassword, \Illuminate\Support\Facades\DB::table('import_credentials')->where('id', $storedCredential->id)->value('temporary_password'));
+        $this->actingAs($teacherUser)->get('/teacher/dashboard')->assertRedirect('/change-password');
+    }
+
+    public function test_non_admin_cannot_regenerate_or_retrieve_student_or_teacher_passwords(): void
+    {
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $class = SchoolClass::create(['name' => 'Unauthorized Reset Class']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'admission_no' => 'ADM-NO-RESET',
+            'class_id' => $class->id,
+        ]);
+        $teacher = Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'STAFF-NO-RESET']);
+
+        $this->actingAs($teacherUser)
+            ->post(route('admin.accounts.credentials.password.regenerate', $studentUser))
+            ->assertForbidden();
+        $this->post(route('admin.accounts.credentials.password.regenerate', $teacherUser))->assertForbidden();
+        $this->post(route('admin.accounts.credentials.password.reveal', $studentUser))->assertForbidden();
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'account.temporary_password_regenerated']);
+    }
+
+    public function test_password_regeneration_rejects_parent_and_admin_targets(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $parent = User::factory()->create(['role' => 'parent']);
+
+        $this->actingAs($admin)
+            ->post(route('admin.accounts.credentials.password.regenerate', $parent))
+            ->assertNotFound();
+        $this->post(route('admin.accounts.credentials.password.regenerate', $admin))->assertNotFound();
+        $this->assertDatabaseMissing('audit_logs', ['action' => 'account.temporary_password_regenerated']);
+    }
+
+    public function test_password_regeneration_rejects_a_missing_target(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->post('/admin/accounts/credentials/999999/regenerate-password')
+            ->assertNotFound();
+    }
+
+    public function test_credentials_page_searches_all_identifiers_and_filters_role_and_password_status(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $studentUser = User::factory()->create([
+            'name' => 'Unique Credential Student',
+            'email' => 'student.search@example.com',
+            'role' => 'student',
+            'needs_password_change' => true,
+        ]);
+        $teacherUser = User::factory()->create([
+            'name' => 'Unique Credential Teacher',
+            'email' => 'teacher.search@example.com',
+            'role' => 'teacher',
+            'needs_password_change' => false,
+        ]);
+        $parentUser = User::factory()->create([
+            'name' => 'Unique Credential Parent',
+            'email' => 'parent.search@example.com',
+            'role' => 'parent',
+        ]);
+        $class = SchoolClass::create(['name' => 'Credential Search Class']);
+        Student::create(['user_id' => $studentUser->id, 'admission_no' => 'SEARCH-ADM-77', 'class_id' => $class->id]);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'SEARCH-STAFF-88']);
+        $parentProfile = \App\Models\ParentProfile::create(['user_id' => $parentUser->id]);
+
+        $this->actingAs($admin);
+        $this->get(route('admin.accounts.credentials', ['search' => 'SEARCH-ADM-77']))
+            ->assertOk()->assertSee('Unique Credential Student')->assertDontSee('Unique Credential Teacher');
+        $this->get(route('admin.accounts.credentials', ['search' => 'SEARCH-STAFF-88']))
+            ->assertSee('Unique Credential Teacher');
+        $this->get(route('admin.accounts.credentials', ['search' => 'PARENT-'.$parentProfile->id]))
+            ->assertSee('Unique Credential Parent');
+        $this->get(route('admin.accounts.credentials', ['search' => 'teacher.search@example.com', 'role' => 'teacher', 'password_status' => 'changed']))
+            ->assertSee('Unique Credential Teacher')->assertDontSee('Unique Credential Student');
+        $this->get(route('admin.accounts.credentials', ['password_status' => 'required']))
+            ->assertSee('Unique Credential Student')->assertDontSee('Unique Credential Teacher');
     }
 
     public function test_admin_account_store_rejects_invalid_type(): void
@@ -1697,7 +1925,7 @@ class AdminManagementTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin);
 
-        $this->post('/admin/teachers', [
+        $response = $this->post('/admin/teachers', [
             'name' => 'Cred Teacher',
             'email' => 'cred.teacher@example.com',
             'phone' => '08011111111',
@@ -1709,6 +1937,9 @@ class AdminManagementTest extends TestCase
             'email' => 'cred.teacher@example.com',
             'created_by' => $admin->id,
         ]);
+        $teacher = User::where('email', 'cred.teacher@example.com')->firstOrFail();
+        $this->assertTrue($teacher->needs_password_change);
+        $response->assertSessionHas('new_teacher_credentials', fn (array $credentials) => filled($credentials['password']));
     }
 
     public function test_account_creation_persists_credentials(): void
@@ -1732,17 +1963,24 @@ class AdminManagementTest extends TestCase
         ]);
     }
 
-    public function test_credentials_persist_across_sessions(): void
+    public function test_credentials_manager_does_not_reveal_persisted_passwords(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
         $this->actingAs($admin);
+        $teacherUser = User::factory()->create([
+            'name' => 'Persisted Teacher',
+            'email' => 'persisted@example.com',
+            'role' => 'teacher',
+            'needs_password_change' => true,
+        ]);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'PERSISTED-TEACHER']);
 
         ImportCredential::create([
             'role' => 'teacher',
             'name' => 'Persisted Teacher',
             'email' => 'persisted@example.com',
             'password' => 'tempPass123',
-            'user_id' => $admin->id,
+            'user_id' => $teacherUser->id,
             'created_by' => $admin->id,
             'expires_at' => null,
         ]);
@@ -1750,20 +1988,26 @@ class AdminManagementTest extends TestCase
         $response = $this->get(route('admin.accounts.credentials'));
         $response->assertOk();
         $response->assertSee('Persisted Teacher');
-        $response->assertSee('tempPass123');
+        $response->assertDontSee('tempPass123');
     }
 
     public function test_credentials_can_be_downloaded_as_csv(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
         $this->actingAs($admin);
+        $teacherUser = User::factory()->create([
+            'name' => 'CSV Teacher',
+            'email' => 'csv@example.com',
+            'role' => 'teacher',
+        ]);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'CSV-TEACHER']);
 
         ImportCredential::create([
             'role' => 'teacher',
             'name' => 'CSV Teacher',
             'email' => 'csv@example.com',
             'password' => 'csvPass123',
-            'user_id' => $admin->id,
+            'user_id' => $teacherUser->id,
             'created_by' => $admin->id,
             'expires_at' => null,
         ]);
@@ -1772,6 +2016,7 @@ class AdminManagementTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'text/csv; charset=utf-8');
         $response->assertHeader('Content-Disposition', 'attachment; filename="all-credentials.csv"');
+        $response->assertDontSee('csvPass123');
     }
 
     public function test_credentials_show_changed_indicator_when_password_updated(): void
@@ -1798,7 +2043,7 @@ class AdminManagementTest extends TestCase
 
         $response = $this->get(route('admin.accounts.credentials'));
         $response->assertOk();
-        $response->assertSee('[CHANGED]');
+        $response->assertSee('Password Changed');
         $response->assertDontSee('oldPass123');
     }
 
@@ -1806,12 +2051,30 @@ class AdminManagementTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
         $this->actingAs($admin);
+        $teacherUser = User::factory()->create([
+            'name' => 'Filter Teacher',
+            'email' => 'filter.t@example.com',
+            'role' => 'teacher',
+        ]);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'FILTER-TEACHER']);
+        $studentUser = User::factory()->create([
+            'name' => 'Filter Student',
+            'email' => 'filter.s@example.com',
+            'role' => 'student',
+        ]);
+        $class = SchoolClass::create(['name' => 'Filter Credentials Class']);
+        Student::create([
+            'user_id' => $studentUser->id,
+            'admission_no' => 'FILTER-STUDENT',
+            'class_id' => $class->id,
+        ]);
 
         ImportCredential::create([
             'role' => 'teacher',
             'name' => 'Filter Teacher',
             'email' => 'filter.t@example.com',
             'password' => 'tPass',
+            'user_id' => $teacherUser->id,
             'created_by' => $admin->id,
             'expires_at' => null,
         ]);
@@ -1821,6 +2084,7 @@ class AdminManagementTest extends TestCase
             'name' => 'Filter Student',
             'email' => 'filter.s@example.com',
             'password' => 'sPass',
+            'user_id' => $studentUser->id,
             'created_by' => $admin->id,
             'expires_at' => null,
         ]);

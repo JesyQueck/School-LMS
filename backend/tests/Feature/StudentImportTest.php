@@ -515,7 +515,7 @@ class StudentImportTest extends TestCase
             'import_file' => $file,
         ]);
 
-        $this->post(route('admin.students.import.confirm'));
+        $response = $this->post(route('admin.students.import.confirm'));
 
         $this->assertEquals(1, ParentProfile::count());
         $this->assertDatabaseHas('users', [
@@ -904,7 +904,8 @@ class StudentImportTest extends TestCase
             'import_file' => $file,
         ]);
 
-        $this->post(route('admin.students.import.confirm'));
+        $response = $this->post(route('admin.students.import.confirm'));
+        $response->assertSessionHas('import_errors', fn ($errors) => $errors === []);
 
         $student = Student::where('admission_no', 'GAA/2024/DB1')->first();
         $this->assertNotNull($student);
@@ -912,7 +913,7 @@ class StudentImportTest extends TestCase
         $this->assertEquals('2026-09-01', $student->admission_date->format('Y-m-d'));
     }
 
-    public function test_student_without_email_gets_admission_no_as_email(): void
+    public function test_student_without_email_keeps_null_email_and_uses_admission_number(): void
     {
         $this->actingAs($this->admin);
 
@@ -929,7 +930,8 @@ class StudentImportTest extends TestCase
 
         $student = Student::where('admission_no', 'GAA/2024/NOEMAIL')->first();
         $this->assertNotNull($student);
-        $this->assertStringContainsString('GAA/2024/NOEMAIL@', $student->user->email);
+        $this->assertNull($student->user->email);
+        $this->assertSame('GAA/2024/NOEMAIL', $student->user->loginIdentifier());
 
         // Parent email notification should be sent to parent's email
         $parent = ParentProfile::where('phone', '08030000001')->first();
@@ -937,7 +939,30 @@ class StudentImportTest extends TestCase
         $this->assertEquals('ahmed.bello@example.com', $parent->user->email);
     }
 
-    public function test_student_without_email_gets_surname_as_password(): void
+    public function test_parent_without_email_uses_parent_profile_id_not_child_admission_number(): void
+    {
+        $this->actingAs($this->admin);
+        $row = $this->validRow('GAA/2024/PARENT-ID', 'student.parentid@example.com');
+        unset($row['parent_email']);
+
+        $this->post(route('admin.students.import.preview'), [
+            'import_file' => $this->makeCsvFile([$row]),
+        ]);
+        $response = $this->post(route('admin.students.import.confirm'));
+
+        $student = Student::where('admission_no', 'GAA/2024/PARENT-ID')->first();
+        $parent = ParentProfile::where('phone', '08030000001')->first();
+        $this->assertNotNull($student);
+        $this->assertNotNull($parent);
+        $this->assertNull($parent->user->email);
+        $this->assertSame('PARENT-'.$parent->id, $parent->user->loginIdentifier());
+        $this->assertNotSame($student->admission_no, $parent->user->loginIdentifier());
+        $response->assertSessionHas('new_import_credentials', function ($credentials) use ($parent) {
+            return collect($credentials)->firstWhere('role', 'parent')['login_identifier'] === 'PARENT-'.$parent->id;
+        });
+    }
+
+    public function test_imported_student_uses_random_password_and_one_time_admin_handoff(): void
     {
         $this->actingAs($this->admin);
 
@@ -949,16 +974,34 @@ class StudentImportTest extends TestCase
             'import_file' => $file,
         ]);
 
-        $this->post(route('admin.students.import.confirm'));
+        $response = $this->post(route('admin.students.import.confirm'));
+        $response->assertSessionHas('import_errors', fn ($errors) => $errors === []);
 
         $credential = ImportCredential::where('created_by', $this->admin->id)
             ->where('role', 'student')
             ->first();
         $this->assertNotNull($credential);
-        $this->assertEquals('bello', $credential->password);
+        $this->assertNull($credential->password);
+        $this->assertSame('GAA/2024/SURNAME', $credential->login_identifier);
+        $student = Student::where('admission_no', 'GAA/2024/SURNAME')->firstOrFail();
+        $this->assertTrue($student->user->needs_password_change);
+        $this->assertFalse(Hash::check('bello', $student->user->password));
+        $studentCredential = $response->getSession()->get('new_import_credentials')[1];
+        $this->assertSame('student', $studentCredential['role']);
+        $this->assertTrue(Hash::check($studentCredential['password'], $student->user->password));
+        $this->assertNotSame(
+            $studentCredential['password'],
+            \Illuminate\Support\Facades\DB::table('import_credentials')->where('id', $credential->id)->value('temporary_password'),
+        );
+        $response->assertSessionHas('new_import_credentials', function ($credentials) {
+            $studentCredential = collect($credentials)->firstWhere('role', 'student');
+
+            return $studentCredential['login_identifier'] === 'GAA/2024/SURNAME'
+                && strlen($studentCredential['password']) === 20;
+        });
     }
 
-    public function test_parent_without_last_name_gets_random_password(): void
+    public function test_parent_uses_parent_profile_id_and_random_one_time_password(): void
     {
         $this->actingAs($this->admin);
 
@@ -972,13 +1015,22 @@ class StudentImportTest extends TestCase
             'import_file' => $file,
         ]);
 
-        $this->post(route('admin.students.import.confirm'));
+        $response = $this->post(route('admin.students.import.confirm'));
 
         $credential = ImportCredential::where('created_by', $this->admin->id)
             ->where('role', 'parent')
             ->first();
         $this->assertNotNull($credential);
-        $this->assertEquals(12, strlen($credential->password));
+        $this->assertNull($credential->password);
+        $this->assertNull($credential->temporary_password);
+        $this->assertStringStartsWith('PARENT-', $credential->login_identifier);
+        $parent = ParentProfile::where('user_id', $credential->user_id)->firstOrFail();
+        $this->assertTrue($parent->user->needs_password_change);
+        $response->assertSessionHas('new_import_credentials', function ($credentials) {
+            $parentCredential = collect($credentials)->firstWhere('role', 'parent');
+
+            return ! array_key_exists('password', $parentCredential) || empty($parentCredential['password']);
+        });
     }
 
     public function test_credentials_are_stored_in_import_credentials_table(): void

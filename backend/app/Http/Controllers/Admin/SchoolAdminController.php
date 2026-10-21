@@ -158,7 +158,7 @@ class SchoolAdminController extends Controller
     {
         $data = $request->validated();
 
-        $temporaryPassword = $data['password'] ?? Str::random(12);
+        $temporaryPassword = $data['password'] ?? Str::random(20);
 
         $user = User::create([
             'name' => $data['name'],
@@ -170,11 +170,11 @@ class SchoolAdminController extends Controller
             'needs_password_change' => true,
         ]);
 
-        Teacher::create([
+        $teacher = Teacher::create([
             'user_id' => $user->id,
             'qualification' => $data['qualification'],
             'phone' => $data['phone'] ?? null,
-            'employee_id' => 'T-'.Str::upper(Str::random(6)),
+            'employee_id' => $this->generateEmployeeId(),
         ]);
 
         $this->persistImportCredentials(collect([
@@ -182,6 +182,7 @@ class SchoolAdminController extends Controller
                 'role' => 'teacher',
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'login_identifier' => $teacher->employee_id,
                 'password' => $temporaryPassword,
                 'related_to' => null,
                 'user_id' => $user->id,
@@ -189,21 +190,33 @@ class SchoolAdminController extends Controller
         ]), auth()->id());
 
         try {
-            Mail::to($user->email)->send(new EnrollmentNotification($user, $temporaryPassword));
+            Mail::to($user->email)->send(new EnrollmentNotification($user));
         } catch (\Exception $e) {
         }
 
         $this->audit($request, 'teacher.created', Teacher::class, Teacher::query()->latest('id')->value('id'), null, [
             'user_id' => $user->id,
-            'temp_password' => $temporaryPassword,
         ]);
 
-        return redirect()->route('admin.teachers')->with('status', "Teacher created. Temporary password: {$temporaryPassword}")
+        return redirect()->route('admin.teachers')->with('status', 'Teacher created.')
             ->with('new_teacher_credentials', [
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $temporaryPassword,
+                'login_identifier' => $teacher->employee_id,
             ]);
+    }
+
+    protected function generateEmployeeId(): string
+    {
+        do {
+            $employeeId = 'T-'.Str::upper(Str::random(6));
+        } while (Student::whereRaw('LOWER(admission_no) = ?', [mb_strtolower($employeeId)])->exists()
+            || User::whereIn('role', ['admin', 'teacher', 'parent'])
+                ->whereRaw('LOWER(email) = ?', [mb_strtolower($employeeId)])->exists()
+            || Teacher::whereRaw('LOWER(employee_id) = ?', [mb_strtolower($employeeId)])->exists());
+
+        return $employeeId;
     }
 
     public function editTeacher(Teacher $teacher)
@@ -256,11 +269,11 @@ class SchoolAdminController extends Controller
     {
         $data = $request->validated();
 
-        $temporaryPassword = $data['password'] ?? Str::random(12);
+        $temporaryPassword = $data['password'] ?? Str::random(20);
 
         $parent = $this->getOrCreateParent($data['parent_email'], $data);
 
-        $studentEmail = $data['email'] ?? null ?: Str::slug($data['name'], '.').'.'.Str::random(6).'@placeholder.local';
+        $studentEmail = $data['email'] ?? null;
 
         $user = User::create([
             'name' => $data['name'],
@@ -306,33 +319,45 @@ class SchoolAdminController extends Controller
             $student->parents()->attach($parent->id);
         }
 
-        $this->persistImportCredentials(collect([
+        $oneTimeCredentials = collect([
             [
                 'role' => 'student',
                 'name' => $data['name'],
                 'email' => $studentEmail,
+                'login_identifier' => $student->admission_no,
                 'password' => $temporaryPassword,
                 'related_to' => $parent ? ($parent->user->name ?? '') : null,
                 'user_id' => $user->id,
             ],
-        ]), auth()->id());
+        ]);
+
+        if ($parent?->getAttribute('initial_password')) {
+            $oneTimeCredentials->push([
+                'role' => 'parent',
+                'name' => $parent->user->name,
+                'email' => $parent->user->email,
+                'login_identifier' => $parent->user->loginIdentifier(),
+                'password' => null,
+                'related_to' => $data['name'],
+                'user_id' => $parent->user_id,
+            ]);
+        }
+
+        $this->persistImportCredentials($oneTimeCredentials, auth()->id());
 
         try {
-            Mail::to($user->email)->send(new EnrollmentNotification(
-                $user,
-                $temporaryPassword,
-                $parent ? ($parent->user->name ?? '') : '',
-            ));
+            if ($user->email) {
+                Mail::to($user->email)->send(new EnrollmentNotification(
+                    $user,
+                    $parent ? ($parent->user->name ?? '') : '',
+                ));
+            }
         } catch (\Exception $e) {
         }
 
-        if ($parent) {
+        if ($parent && $parent->user->email) {
             try {
-                Mail::to($parent->user->email)->send(new EnrollmentNotification(
-                    $parent->user,
-                    $temporaryPassword,
-                    $data['name'],
-                ));
+                Mail::to($parent->user->email)->send(new EnrollmentNotification($parent->user, $data['name']));
             } catch (\Exception $e) {
             }
         }
@@ -344,16 +369,15 @@ class SchoolAdminController extends Controller
         $this->audit($request, 'student.created', Student::class, $student->id, null, [
             'user_id' => $user->id,
             'admission_no' => $data['admission_no'],
-            'temp_password' => $temporaryPassword,
         ]);
 
         $redirectMessage = 'Student enrolled. Admission No: '.$data['admission_no'];
         if ($parent) {
             $redirectMessage .= ', Parent linked';
         }
-        $redirectMessage .= '. Temporary password: '.$temporaryPassword;
 
-        return redirect()->route('admin.students')->with('status', $redirectMessage);
+        return redirect()->route('admin.students')->with('status', $redirectMessage)
+            ->with('new_student_credentials', $oneTimeCredentials->all());
     }
 
     protected function createStudentContacts(Student $student, array $data): void
@@ -537,14 +561,14 @@ class SchoolAdminController extends Controller
         $parentUser = User::create([
             'name' => $requestData['parent_name'] ?? 'Parent of '.$requestData['name'],
             'email' => $parentEmail,
-            'password' => Hash::make(Str::random(12)),
+            'password' => Hash::make($parentPassword = Str::random(20)),
             'phone' => $requestData['parent_phone'] ?? null,
             'role' => 'parent',
             'is_active' => true,
             'needs_password_change' => true,
         ]);
 
-        return ParentProfile::create([
+        $parent = ParentProfile::create([
             'user_id' => $parentUser->id,
             'occupation' => $requestData['parent_occupation'] ?? null,
             'phone' => $requestData['parent_phone'] ?? null,
@@ -556,6 +580,10 @@ class SchoolAdminController extends Controller
             'city' => $requestData['parent_city'] ?? null,
             'state' => $requestData['parent_state'] ?? null,
         ]);
+
+        $parent->setAttribute('initial_password', $parentPassword);
+
+        return $parent;
     }
 
     public function exportStudents(Request $request)
@@ -682,7 +710,8 @@ class SchoolAdminController extends Controller
             $stats['parents_reused'],
             $stats['errors']->count(),
             $stats['credentials']->count(),
-        ));
+        ))->with('new_import_credentials', $stats['credentials']->values()->all())
+            ->with('import_errors', $stats['errors']->all());
     }
 
     public function viewImportCredentials(Request $request)
@@ -751,12 +780,21 @@ class SchoolAdminController extends Controller
                 'role' => $credential['role'],
                 'name' => $credential['name'],
                 'email' => $credential['email'],
-                'password' => $credential['password'],
+                'login_identifier' => $credential['login_identifier'] ?? null,
+                'password' => null,
                 'related_to' => $credential['related_to'] ?? null,
                 'user_id' => $credential['user_id'] ?? null,
                 'created_by' => $createdBy,
                 'expires_at' => null,
             ]);
+
+            if (in_array($credential['role'], ['student', 'teacher'], true) && ! empty($credential['password'])) {
+                ImportCredential::storeTemporaryPassword(
+                    User::findOrFail($credential['user_id']),
+                    $credential['password'],
+                    $createdBy,
+                );
+            }
         }
     }
 
@@ -776,14 +814,14 @@ class SchoolAdminController extends Controller
 
         $response = Response::stream(function () use ($credentials) {
             $output = fopen('php://output', 'w');
-            fputcsv($output, ['Role', 'Name', 'Email', 'Temporary Password', 'Related Student']);
+            fputcsv($output, ['Role', 'Name', 'Login ID', 'Email', 'Related Student']);
 
             foreach ($credentials as $credential) {
                 fputcsv($output, [
                     $credential->role,
                     $credential->name,
+                    $credential->loginIdentifier() ?? '',
                     $credential->email,
-                    $credential->password,
                     $credential->related_to ?? '',
                 ]);
             }

@@ -28,6 +28,30 @@
             {{ session('status') }}
         </x-ui.alert>
     @endif
+    @if(session('new_import_credentials'))
+        <x-ui.alert type="info" class="mb-6">
+            <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+            @foreach(session('new_import_credentials') as $credential)
+                <p>
+                    {{ ucfirst($credential['role']) }} {{ $credential['name'] }} —
+                    Login ID: <span class="font-mono">{{ $credential['login_identifier'] }}</span>;
+                    @if(!empty($credential['password']))
+                        temporary password: <span class="font-mono">{{ $credential['password'] }}</span>.
+                        Require a password change at first login; admins can retrieve it in Accounts → Credentials until changed.
+                    @elseif($credential['role'] === 'parent')
+                        use email password recovery to set or recover your password.
+                    @endif
+                </p>
+            @endforeach
+        </x-ui.alert>
+    @endif
+    @if(session('import_errors'))
+        <x-ui.alert type="error" class="mb-6">
+            @foreach(session('import_errors') as $importError)
+                <p>{{ $importError['error'] ?? 'Import failed.' }}</p>
+            @endforeach
+        </x-ui.alert>
+    @endif
 
     @if(session('error'))
         <x-ui.alert type="error" class="mb-6">

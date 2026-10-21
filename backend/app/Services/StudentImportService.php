@@ -73,13 +73,29 @@ class StudentImportService
 
         $seenAdmissionNos = [];
         $seenEmails = [];
-        $existingAdmissionNos = Student::pluck('admission_no')->toArray();
+        $existingAdmissionNos = Student::pluck('admission_no')->map(fn ($value) => mb_strtolower(trim($value)))->all();
         $validSessions = AcademicSession::pluck('id', 'name')->toArray();
         $validClasses = SchoolClass::pluck('id', 'name')->toArray();
+        $studentEmails = $rows->pluck('student_email')
+            ->filter(fn ($email) => ! empty($email))
+            ->map(fn ($email) => mb_strtolower(trim((string) $email)))->all();
+        $parentEmails = $rows->pluck('parent_email')
+            ->filter(fn ($email) => ! empty($email))
+            ->map(fn ($email) => mb_strtolower(trim((string) $email)))->all();
 
         foreach ($rows as $index => $row) {
             $rowNumber = $index + 2;
-            $errors = $this->validateRow($row, $rowNumber, $seenAdmissionNos, $seenEmails, $existingAdmissionNos, $validSessions, $validClasses);
+            $errors = $this->validateRow(
+                $row,
+                $rowNumber,
+                $seenAdmissionNos,
+                $seenEmails,
+                $existingAdmissionNos,
+                $validSessions,
+                $validClasses,
+                $studentEmails,
+                $parentEmails,
+            );
 
             if ($errors->isNotEmpty()) {
                 $invalidRows->push([
@@ -94,7 +110,7 @@ class StudentImportService
                 ]);
 
                 if (isset($row['admission_no'])) {
-                    $seenAdmissionNos[] = $row['admission_no'];
+                    $seenAdmissionNos[] = mb_strtolower(trim($row['admission_no']));
                 }
 
                 if (isset($row['student_email']) && ! empty($row['student_email'])) {
@@ -144,16 +160,9 @@ class StudentImportService
 
                 $parent = $this->findOrCreateParent($data, $stats);
 
-                $studentEmail = $data['student_email'] ?? null;
-                $studentProvidedEmail = ! empty($studentEmail);
+                $studentEmail = ! empty($data['student_email']) ? trim($data['student_email']) : null;
 
-                if (empty($studentEmail)) {
-                    $studentEmail = $data['admission_no'].'@'.config('school.email_domain', 'school.local');
-                }
-
-                $existingUser = User::where('email', $studentEmail)->first();
-
-                if ($existingUser) {
+                if ($studentEmail && User::whereRaw('LOWER(email) = ?', [mb_strtolower($studentEmail)])->exists()) {
                     $stats['errors']->push([
                         'row_number' => $row['row_number'],
                         'field' => 'student_email',
@@ -180,10 +189,10 @@ class StudentImportService
                     'role' => 'student',
                     'name' => trim($data['first_name'].' '.$data['last_name']),
                     'email' => $studentEmail,
+                    'login_identifier' => $data['admission_no'],
                     'password' => $temporaryPassword,
                     'related_to' => $parent ? ($parent->user->name ?? '') : null,
                     'user_id' => $user->id,
-                    'was_email_provided' => $studentProvidedEmail,
                 ]);
 
                 $student = Student::create([
@@ -221,11 +230,12 @@ class StudentImportService
                 $studentName = trim($data['first_name'].' '.$data['last_name']);
 
                 try {
-                    Mail::to($user->email)->send(new EnrollmentNotification(
-                        $user,
-                        $temporaryPassword,
-                        $parent ? ($parent->user->name ?? '') : '',
-                    ));
+                    if ($user->email) {
+                        Mail::to($user->email)->send(new EnrollmentNotification(
+                            $user,
+                            $parent ? ($parent->user->name ?? '') : '',
+                        ));
+                    }
                 } catch (\Exception $e) {
                     $stats['errors']->push([
                         'row_number' => $row['row_number'],
@@ -238,21 +248,24 @@ class StudentImportService
                 }
 
                 if ($parent) {
-                    $parentPassword = $stats['credentials']->firstWhere('role', 'parent')['password'] ?? null;
-                    if ($parentPassword) {
+                    $newParentCredential = $stats['credentials']->first(
+                        fn (array $credential) => $credential['role'] === 'parent'
+                            && $credential['user_id'] === $parent->user_id
+                    );
+                    if ($newParentCredential) {
                         try {
-                            Mail::to($parent->user->email)->send(new EnrollmentNotification(
-                                $parent->user,
-                                $parentPassword,
-                                $studentName,
-                            ));
+                            if ($parent->user->email) {
+                                Mail::to($parent->user->email)->send(new EnrollmentNotification($parent->user, $studentName));
+                            }
                         } catch (\Exception $e) {
                             $stats['emails_failed'] = ($stats['emails_failed'] ?? 0) + 1;
                         }
                     }
                 }
 
-                $stats['emails_sent'] = ($stats['emails_sent'] ?? 0) + ($parent ? 2 : 1);
+                $stats['emails_sent'] = ($stats['emails_sent'] ?? 0)
+                    + ($user->email ? 1 : 0)
+                    + ($parent && $parent->user->email ? 1 : 0);
                 $stats['imported']++;
             }
 
@@ -415,7 +428,9 @@ class StudentImportService
         array &$seenEmails,
         array $existingAdmissionNos,
         array $validSessions,
-        array $validClasses
+        array $validClasses,
+        array $studentEmails,
+        array $parentEmails
     ): Collection {
         $errors = collect();
 
@@ -482,26 +497,62 @@ class StudentImportService
                 'error' => 'Invalid email address format',
             ]);
         }
+        if ($parentEmail && User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim($parentEmail))])
+            ->where('role', '!=', 'parent')->exists()) {
+            $errors->push([
+                'field' => 'parent_email',
+                'value' => $parentEmail,
+                'error' => 'Email is already assigned to a non-parent account',
+            ]);
+        }
+        if ($parentEmail && in_array(mb_strtolower(trim($parentEmail)), $studentEmails, true)) {
+            $errors->push([
+                'field' => 'parent_email',
+                'value' => $parentEmail,
+                'error' => 'Parent and student accounts cannot share an email address',
+            ]);
+        }
 
         $admissionNo = $row['admission_no'] ?? null;
         if ($admissionNo) {
-            if (in_array($admissionNo, $seenAdmissionNos, true)) {
+            $normalizedAdmissionNo = mb_strtolower(trim($admissionNo));
+            if (in_array($normalizedAdmissionNo, $seenAdmissionNos, true)) {
                 $errors->push([
                     'field' => 'admission_no',
                     'value' => $admissionNo,
                     'error' => 'Duplicate admission number within this file',
                 ]);
-            } elseif (in_array($admissionNo, $existingAdmissionNos, true)) {
+            } elseif (in_array($normalizedAdmissionNo, $existingAdmissionNos, true)) {
                 $errors->push([
                     'field' => 'admission_no',
                     'value' => $admissionNo,
                     'error' => 'Admission number already exists in the system',
                 ]);
             }
+
+            if (User::whereIn('role', ['admin', 'teacher', 'parent'])
+                ->whereRaw('LOWER(email) = ?', [$normalizedAdmissionNo])
+                ->exists()
+                || \App\Models\Teacher::whereRaw('LOWER(employee_id) = ?', [$normalizedAdmissionNo])->exists()
+                || preg_match('/^parent-\d+$/i', $admissionNo)) {
+                $errors->push([
+                    'field' => 'admission_no',
+                    'value' => $admissionNo,
+                    'error' => 'Admission number conflicts with another login ID',
+                ]);
+            }
         }
 
         $studentEmailLower = $email ? strtolower($email) : null;
         if ($studentEmailLower) {
+            if (in_array($studentEmailLower, $parentEmails, true)) {
+                $errors->push([
+                    'field' => 'student_email',
+                    'value' => $email,
+                    'error' => 'Student and parent accounts cannot share an email address',
+                ]);
+            }
+
             if (in_array($studentEmailLower, $seenEmails, true)) {
                 $errors->push([
                     'field' => 'student_email',
@@ -509,12 +560,11 @@ class StudentImportService
                     'error' => 'Duplicate student email within this file',
                 ]);
             } else {
-                $existingStudent = User::where('email', $studentEmailLower)->where('role', 'student')->first();
-                if ($existingStudent) {
+                if (User::whereRaw('LOWER(email) = ?', [$studentEmailLower])->exists()) {
                     $errors->push([
                         'field' => 'student_email',
                         'value' => $email,
-                        'error' => 'Student email already exists in the system',
+                        'error' => 'Email already exists in the system',
                     ]);
                 }
                 $seenEmails[] = $studentEmailLower;
@@ -587,7 +637,7 @@ class StudentImportService
 
         $parentUser = User::create([
             'name' => $data['parent_name'],
-            'email' => $parentEmail ?? Str::slug($data['parent_name'], '.').'.'.Str::random(6).'@placeholder.local',
+            'email' => $parentEmail,
             'password' => Hash::make($parentPassword),
             'phone' => $parentPhone ?? null,
             'role' => 'parent',
@@ -613,7 +663,7 @@ class StudentImportService
             'role' => 'parent',
             'name' => $data['parent_name'] ?? 'Parent',
             'email' => $parentUser->email,
-            'password' => $parentPassword,
+            'login_identifier' => 'PARENT-'.$parent->id,
             'related_to' => trim($data['first_name'].' '.$data['last_name']),
             'user_id' => $parentUser->id,
         ]);
@@ -623,32 +673,12 @@ class StudentImportService
 
     protected function generateStudentPassword(array $data): string
     {
-        $lastName = strtolower(trim($data['last_name'] ?? ''));
-
-        if (! empty($lastName) && preg_match('/^[a-zA-Z]+$/', $lastName)) {
-            return $lastName;
-        }
-
-        return Str::random(12);
+        return Str::random(20);
     }
 
     protected function generateParentPassword(array $data): string
     {
-        $lastName = strtolower(trim($data['parent_last_name'] ?? ''));
-
-        if (empty($lastName)) {
-            $parentName = $data['parent_name'] ?? '';
-            $parts = explode(' ', trim($parentName));
-            if (count($parts) >= 2) {
-                $lastName = strtolower(end($parts));
-            }
-        }
-
-        if (! empty($lastName) && preg_match('/^[a-zA-Z]+$/', $lastName)) {
-            return $lastName;
-        }
-
-        return Str::random(12);
+        return Str::random(20);
     }
 
     protected function isValidDate(string $date): bool

@@ -18,6 +18,10 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->environment('production')) {
+            throw new \LogicException('DemoSeeder cannot run in production because it provisions known demo credentials.');
+        }
+
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@demo.school'],
             [

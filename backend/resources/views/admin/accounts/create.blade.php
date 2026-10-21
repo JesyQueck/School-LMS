@@ -14,13 +14,20 @@
             $cred = session('new_account_credentials');
         @endphp
         <x-ui.alert type="info" class="mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                    <strong>{{ ucfirst($cred['role']) }}</strong> account created for {{ $cred['name'] }} ({{ $cred['email'] }}).
-                    Temporary password: <span class="font-mono font-medium">{{ $cred['password'] }}</span>.
-                    The user must change their password on first login. This credential is also saved in the <a href="{{ route('admin.students.import.credentials.view') }}" class="underline font-medium">credentials manager</a>.
-                </div>
-            </div>
+            <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+            @foreach($cred as $accountCredential)
+                <p>
+                    <strong>{{ ucfirst($accountCredential['role']) }}</strong> account created for {{ $accountCredential['name'] }}.
+                    Login ID: <span class="font-mono font-medium">{{ $accountCredential['login_identifier'] }}</span>.
+                    @if($accountCredential['email']) Email: {{ $accountCredential['email'] }}. @endif
+                    @if(!empty($accountCredential['password']))
+                        Temporary password: <span class="font-mono font-medium">{{ $accountCredential['password'] }}</span>.
+                        Require a password change at first login. It can also be retrieved from Accounts → Credentials until changed.
+                    @elseif($accountCredential['role'] === 'parent')
+                        Set or recover your password using the email password-recovery flow at <a class="underline" href="{{ url('/forgot-password') }}">{{ url('/forgot-password') }}</a>.
+                    @endif
+                </p>
+            @endforeach
         </x-ui.alert>
     @endif
 
@@ -49,8 +56,8 @@
                     </div>
 
                     <div>
-                        <label for="email" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Email Address <span class="text-danger-500">*</span></label>
-                        <input id="email" name="email" type="email" required placeholder="e.g. john@example.com" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <label id="email-label" for="email" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Email Address</label>
+                        <input id="email" name="email" type="email" placeholder="e.g. john@example.com (optional for students)" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
                     </div>
 
                     <div>
@@ -154,6 +161,9 @@
             document.getElementById('teacher-fields').classList.toggle('hidden', type !== 'teacher');
             document.getElementById('student-fields').classList.toggle('hidden', type !== 'student');
             document.getElementById('parent-fields').classList.toggle('hidden', type !== 'parent');
+            const email = document.getElementById('email');
+            email.required = type !== 'student';
+            document.getElementById('email-label').innerHTML = type === 'student' ? 'Email Address (Optional)' : 'Email Address';
         }
     </script>
 </x-layouts.app>
