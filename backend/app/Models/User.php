@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password', 'role', 'phone', 'profile_photo', 'is_active', 'needs_password_change'])]
 #[Hidden(['password', 'remember_token'])]
@@ -15,6 +16,7 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
+    use Notifiable;
 
     /**
      * Get the attributes that should be cast.
@@ -49,5 +51,16 @@ class User extends Authenticatable
     public function importCredential(): HasOne
     {
         return $this->hasOne(ImportCredential::class);
+    }
+
+    public function loginIdentifier(): ?string
+    {
+        return match ($this->role) {
+            'admin' => $this->email,
+            'teacher' => $this->teacher?->employee_id,
+            'student' => $this->student?->admission_no,
+            'parent' => $this->parentProfile ? 'PARENT-'.$this->parentProfile->id : null,
+            default => null,
+        };
     }
 }

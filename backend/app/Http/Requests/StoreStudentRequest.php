@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\AcademicSession;
+use App\Models\Student;
+use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -20,10 +23,38 @@ class StoreStudentRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                'unique:users,email',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if ($value && User::whereRaw('LOWER(email) = ?', [mb_strtolower(trim((string) $value))])->exists()) {
+                        $fail('This email address is already in use.');
+                    }
+                },
+            ],
             'phone' => ['nullable', 'string', 'max:20'],
             'class_id' => ['required', 'exists:classes,id'],
-            'admission_no' => ['required', 'string', 'max:255', 'unique:students,admission_no'],
+            'admission_no' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:students,admission_no',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $identifier = mb_strtolower(trim((string) $value));
+                    $conflictsWithAccount = User::whereIn('role', ['admin', 'teacher', 'parent'])
+                        ->whereRaw('LOWER(email) = ?', [$identifier])
+                        ->exists();
+                    $conflictsWithStaffId = Teacher::whereRaw('LOWER(employee_id) = ?', [$identifier])->exists();
+                    $duplicateAdmissionNo = Student::whereRaw('LOWER(admission_no) = ?', [$identifier])->exists();
+
+                    if ($conflictsWithAccount || $conflictsWithStaffId || $duplicateAdmissionNo
+                        || preg_match('/^parent-\d+$/i', (string) $value)) {
+                        $fail('This admission number conflicts with another login ID.');
+                    }
+                },
+            ],
             'date_of_birth' => ['required', 'date'],
             'gender' => ['required', 'in:male,female,other'],
             'nationality' => ['nullable', 'string', 'max:100'],
@@ -88,6 +119,18 @@ class StoreStudentRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $data = [];
+
+        if ($this->has('admission_no')) {
+            $data['admission_no'] = trim((string) $this->input('admission_no'));
+        }
+        if ($this->has('email')) {
+            $email = $this->input('email');
+            $data['email'] = filled($email) ? strtolower(trim((string) $email)) : null;
+        }
+        if ($this->has('parent_email')) {
+            $parentEmail = $this->input('parent_email');
+            $data['parent_email'] = filled($parentEmail) ? strtolower(trim((string) $parentEmail)) : null;
+        }
 
         $name = $this->input('name');
 
