@@ -16,16 +16,13 @@ class EnrollmentNotification extends Mailable
 
     public User $user;
 
-    public string $temporaryPassword;
-
     public string $relatedStudent;
 
     public string $schoolName;
 
-    public function __construct(User $user, string $temporaryPassword, string $relatedStudent = '', string $schoolName = '')
+    public function __construct(User $user, string $relatedStudent = '', string $schoolName = '')
     {
         $this->user = $user;
-        $this->temporaryPassword = $temporaryPassword;
         $this->relatedStudent = $relatedStudent;
         $this->schoolName = $schoolName ?: config('school.name', 'School');
     }

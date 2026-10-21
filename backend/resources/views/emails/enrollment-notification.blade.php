@@ -40,14 +40,8 @@
                 <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
                     <tr>
                         <td>
-                            <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin: 0 0 4px; font-weight: 600;">Your Login Email</p>
-                            <p style="font-size: 16px; font-family: 'Courier New', monospace; color: #111827; word-break: break-all;">{{ $user->email }}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding-top: 16px;">
-                            <p style="font-size: 12px; text-transform: uppercase; letter-tracking: 0.5px; color: #6b7280; margin: 0 0 4px; font-weight: 600;">Temporary Password</p>
-                            <p style="font-size: 20px; font-family: 'Courier New', monospace; color: #dc2626; font-weight: 700; letter-spacing: 2px;">{{ $temporaryPassword }}</p>
+                            <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin: 0 0 4px; font-weight: 600;">Your Login ID</p>
+                            <p style="font-size: 16px; font-family: 'Courier New', monospace; color: #111827; word-break: break-all;">{{ $user->loginIdentifier() }}</p>
                         </td>
                     </tr>
                 </table>
@@ -55,7 +49,11 @@
                 <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 4px; padding: 16px 20px; margin-bottom: 24px;">
                     <p style="margin: 0; font-size: 14px; color: #1e40af; line-height: 1.5;">
                         <strong style="display: block; margin-bottom: 4px;">Important:</strong>
-                        You must change your password on first login. After logging in, you will be prompted to create a new password.
+                        @if($isParent)
+                            Set or recover your parent account password using the <a href="{{ config('app.url') }}/forgot-password" style="color: #1e40af; font-weight: 600;">email password recovery page</a>. Your password is never shared with school administrators.
+                        @else
+                            Your initial password is provided separately by the school administrator. You must change it on first login.
+                        @endif
                     </p>
                 </div>
 
@@ -63,7 +61,13 @@
                     <tr>
                         <td width="24"><img src="https://img.icons8.com/ios-filled/24/374159/navigate.png" alt="" width="24" height="24" style="display: block;"></td>
                         <td style="padding-left: 12px;">
-                            <p style="margin: 0; font-size: 14px; color: #374151;">Go to <a href="{{ config('app.url') }}/login" style="color: #3b82f6; font-weight: 600;">the login portal</a> and sign in using the credentials above.</p>
+                            <p style="margin: 0; font-size: 14px; color: #374151;">
+                                @if($isParent)
+                                    Go to <a href="{{ config('app.url') }}/login" style="color: #3b82f6; font-weight: 600;">the login portal</a> and sign in with your email and password.
+                                @else
+                                    Go to <a href="{{ config('app.url') }}/login" style="color: #3b82f6; font-weight: 600;">the login portal</a> and sign in using your login ID and the initial password provided by your school administrator.
+                                @endif
+                            </p>
                         </td>
                     </tr>
                     <tr>
