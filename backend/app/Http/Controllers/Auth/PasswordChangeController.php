@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\ImportCredential;
 use App\Models\User;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -25,15 +27,22 @@ class PasswordChangeController extends Controller
             'password' => ['required', 'confirmed', 'different:current_password', Password::min(8)->mixedCase()->numbers()->symbols()],
         ]);
 
-        $userId = $request->user()->id;
-        $request->user()->update([
-            'password' => Hash::make($request->password),
-            'needs_password_change' => false,
-        ]);
+        $user = DB::transaction(function () use ($request): User {
+            $user = User::query()->lockForUpdate()->findOrFail($request->user()->id);
+            $user->update([
+                'password' => Hash::make($request->password),
+                'needs_password_change' => false,
+            ]);
 
-        $this->audit($request, 'password.reset', User::class, $userId, null, null);
+            ImportCredential::where('user_id', $user->id)->update([
+                'password' => null,
+                'temporary_password' => null,
+            ]);
 
-        $user = $request->user();
+            $this->audit($request, 'password.reset', User::class, $user->id, null, null);
+
+            return $user;
+        });
 
         $redirectRoute = match ($user->role) {
             'admin' => 'admin.dashboard',
