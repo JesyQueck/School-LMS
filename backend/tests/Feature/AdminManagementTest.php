@@ -1255,7 +1255,8 @@ class AdminManagementTest extends TestCase
         $this->assertNull(ImportCredential::where('user_id', $parent->id)->value('temporary_password'));
         $this->actingAs($admin)->get(route('admin.accounts.credentials'))
             ->assertSee('Use email password recovery')
-            ->assertDontSee(route('admin.accounts.credentials.password.reveal', $parent));
+            ->assertDontSee('Generate New Password')
+            ->assertDontSee('Reveal temporary password');
     }
 
     public function test_admin_can_regenerate_and_retrieve_a_student_temporary_password_from_credentials(): void
@@ -1273,15 +1274,13 @@ class AdminManagementTest extends TestCase
             'class_id' => $class->id,
         ]);
 
-        $response = $this->actingAs($admin)->post(route('admin.accounts.credentials.password.regenerate', $studentUser));
-
-        $response->assertRedirect(route('admin.accounts.credentials'));
-        $temporaryPassword = null;
-        $response->assertSessionHas('credential_temporary_password', function (array $credentials) use (&$temporaryPassword, $student): bool {
-            $temporaryPassword = $credentials['password'];
-
-            return $credentials['login_identifier'] === $student->admission_no;
-        });
+        $response = $this->actingAs($admin)->postJson(route('admin.accounts.credentials.password.regenerate', $studentUser));
+        $response->assertOk()
+            ->assertJsonPath('message', 'Temporary password generated successfully.')
+            ->assertJsonPath('password_status', 'Password Change Required')
+            ->assertHeader('Cache-Control', 'no-store, private');
+        $temporaryPassword = $response->json('password');
+        $this->assertNotEmpty($temporaryPassword);
         $studentUser->refresh();
         $this->assertTrue($studentUser->needs_password_change);
         $this->assertTrue(Hash::check($temporaryPassword, $studentUser->password));
@@ -1297,9 +1296,6 @@ class AdminManagementTest extends TestCase
         $this->assertSame($temporaryPassword, $storedCredential->temporary_password);
         $this->assertNotSame($temporaryPassword, \Illuminate\Support\Facades\DB::table('import_credentials')->where('id', $storedCredential->id)->value('temporary_password'));
 
-        $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
-        $this->post(route('admin.accounts.credentials.password.reveal', $studentUser))->assertRedirect(route('admin.accounts.credentials'));
-        $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
         $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
         $this->actingAs($studentUser)->get('/student/dashboard')->assertRedirect('/change-password');
     }
@@ -1317,15 +1313,12 @@ class AdminManagementTest extends TestCase
             'employee_id' => 'STAFF-RESET-01',
         ]);
 
-        $response = $this->actingAs($admin)->post(route('admin.accounts.credentials.password.regenerate', $teacherUser));
-
-        $response->assertRedirect(route('admin.accounts.credentials'));
-        $temporaryPassword = null;
-        $response->assertSessionHas('credential_temporary_password', function (array $credentials) use (&$temporaryPassword, $teacher): bool {
-            $temporaryPassword = $credentials['password'];
-
-            return $credentials['login_identifier'] === $teacher->employee_id;
-        });
+        $response = $this->actingAs($admin)->postJson(route('admin.accounts.credentials.password.regenerate', $teacherUser));
+        $response->assertOk()
+            ->assertJsonPath('message', 'Temporary password generated successfully.')
+            ->assertJsonPath('password_status', 'Password Change Required');
+        $temporaryPassword = $response->json('password');
+        $this->assertNotEmpty($temporaryPassword);
         $teacherUser->refresh();
         $this->assertTrue($teacherUser->needs_password_change);
         $this->assertTrue(Hash::check($temporaryPassword, $teacherUser->password));
@@ -1358,10 +1351,9 @@ class AdminManagementTest extends TestCase
         $teacher = Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'STAFF-NO-RESET']);
 
         $this->actingAs($teacherUser)
-            ->post(route('admin.accounts.credentials.password.regenerate', $studentUser))
+            ->postJson(route('admin.accounts.credentials.password.regenerate', $studentUser))
             ->assertForbidden();
-        $this->post(route('admin.accounts.credentials.password.regenerate', $teacherUser))->assertForbidden();
-        $this->post(route('admin.accounts.credentials.password.reveal', $studentUser))->assertForbidden();
+        $this->postJson(route('admin.accounts.credentials.password.regenerate', $teacherUser))->assertForbidden();
         $this->get(route('admin.accounts.credentials'))->assertForbidden();
         $this->assertDatabaseMissing('audit_logs', ['action' => 'account.temporary_password_regenerated']);
     }
@@ -1465,6 +1457,11 @@ class AdminManagementTest extends TestCase
             ->assertSee('data-copy-temporary-password', false)
             ->assertSee('Copied', false)
             ->assertSee('Copy failed', false)
+            ->assertSee('data-regenerate-password-form', false)
+            ->assertSee("event.preventDefault()", false)
+            ->assertSee("fetch(form.action", false)
+            ->assertSee('data-password-status', false)
+            ->assertDontSee('Reveal temporary password')
             ->assertDontSee('OldStudentTemp123!')
             ->assertDontSee('ParentSecret123!')
             ->assertDontSee('AdminSecret123!');
@@ -1476,9 +1473,10 @@ class AdminManagementTest extends TestCase
         $parent = User::factory()->create(['role' => 'parent']);
 
         $this->actingAs($admin)
-            ->post(route('admin.accounts.credentials.password.regenerate', $parent))
-            ->assertNotFound();
-        $this->post(route('admin.accounts.credentials.password.regenerate', $admin))->assertNotFound();
+            ->postJson(route('admin.accounts.credentials.password.regenerate', $parent))
+            ->assertNotFound()
+            ->assertJsonPath('message', 'Temporary passwords can only be generated for valid student or teacher accounts.');
+        $this->postJson(route('admin.accounts.credentials.password.regenerate', $admin))->assertNotFound();
         $this->assertDatabaseMissing('audit_logs', ['action' => 'account.temporary_password_regenerated']);
     }
 
@@ -1487,7 +1485,7 @@ class AdminManagementTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)
-            ->post('/admin/accounts/credentials/999999/regenerate-password')
+            ->postJson('/admin/accounts/credentials/999999/regenerate-password')
             ->assertNotFound();
     }
 

@@ -162,24 +162,6 @@ class AccountController extends Controller
             })
             ->mapWithKeys(fn (ImportCredential $credential): array => [$credential->user_id => $credential->temporary_password]);
 
-        $temporaryPasswordDisplay = session('credential_temporary_password');
-        if ($temporaryPasswordDisplay) {
-            $displayUser = User::query()->find($temporaryPasswordDisplay['user_id'] ?? null);
-            $storedCredential = $displayUser
-                ? ImportCredential::where('user_id', $displayUser->id)->whereNotNull('temporary_password')->latest('id')->first()
-                : null;
-
-            if (! $displayUser
-                || ! $this->supportsTemporaryCredential($displayUser)
-                || ! $displayUser->needs_password_change
-                || ! $storedCredential
-                || ! Hash::check($temporaryPasswordDisplay['password'] ?? '', $displayUser->password)
-                || $storedCredential->temporary_password !== ($temporaryPasswordDisplay['password'] ?? null)) {
-                $temporaryPasswordDisplay = null;
-                $request->session()->forget('credential_temporary_password');
-            }
-        }
-
         return view('admin.accounts.credentials', [
             'credentials' => $users,
             'currentRole' => $filters['role'],
@@ -192,7 +174,6 @@ class AccountController extends Controller
                 'student' => 'Student',
                 'parent' => 'Parent/Guardian',
             ],
-            'temporaryPasswordDisplay' => $temporaryPasswordDisplay,
             'temporaryPasswords' => $temporaryPasswords,
         ]);
     }
@@ -248,7 +229,13 @@ class AccountController extends Controller
 
     public function regenerateCredentialPassword(Request $request, User $user)
     {
-        abort_unless($this->supportsTemporaryCredential($user), 404);
+        if (! $this->supportsTemporaryCredential($user)) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Temporary passwords can only be generated for valid student or teacher accounts.'], 404);
+            }
+
+            abort(404);
+        }
 
         $temporaryPassword = Str::password(20);
         DB::transaction(function () use ($request, $user, $temporaryPassword): void {
@@ -266,44 +253,16 @@ class AccountController extends Controller
             ]);
         });
 
-        return redirect()->route('admin.accounts.credentials')
-            ->with('status', 'Temporary password regenerated.')
-            ->with('credential_temporary_password', [
-                'user_id' => $user->id,
-                'role' => $user->role,
-                'name' => $user->name,
-                'login_identifier' => $user->loginIdentifier(),
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Temporary password generated successfully.',
                 'password' => $temporaryPassword,
-            ]);
-    }
-
-    public function revealCredentialPassword(Request $request, User $user)
-    {
-        abort_unless($this->supportsTemporaryCredential($user) && $user->needs_password_change, 404);
-
-        $credential = ImportCredential::query()
-            ->where('user_id', $user->id)
-            ->whereNotNull('temporary_password')
-            ->latest('id')
-            ->first();
-
-        if (! $credential) {
-            return redirect()->route('admin.accounts.credentials')
-                ->with('error', 'No retrievable temporary password is available. Regenerate it to issue a new one.');
+                'password_status' => 'Password Change Required',
+            ])->header('Cache-Control', 'no-store, private');
         }
 
-        $this->audit($request, 'account.temporary_password_revealed', User::class, $user->id, null, [
-            'role' => $user->role,
-        ]);
-
         return redirect()->route('admin.accounts.credentials')
-            ->with('credential_temporary_password', [
-                'user_id' => $user->id,
-                'role' => $user->role,
-                'name' => $user->name,
-                'login_identifier' => $user->loginIdentifier(),
-                'password' => $credential->temporary_password,
-            ]);
+            ->with('status', 'Temporary password generated successfully.');
     }
 
     private function supportsTemporaryCredential(User $user): bool
