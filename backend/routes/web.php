@@ -141,6 +141,8 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::post('/accounts', [AccountController::class, 'store'])->name('accounts.store');
         Route::get('/accounts/credentials', [AccountController::class, 'credentials'])->name('accounts.credentials');
         Route::get('/accounts/credentials/download', [AccountController::class, 'downloadAllCredentials'])->name('accounts.credentials.download');
+        Route::post('/accounts/credentials/{user}/regenerate-password', [AccountController::class, 'regenerateCredentialPassword'])->name('accounts.credentials.password.regenerate');
+        Route::post('/accounts/credentials/{user}/reveal-password', [AccountController::class, 'revealCredentialPassword'])->name('accounts.credentials.password.reveal');
         Route::get('/classes', [SchoolAdminController::class, 'classes'])->name('classes');
         Route::post('/classes', [SchoolAdminController::class, 'createClass'])->name('classes.store');
         Route::get('/classes/{class}/edit', [SchoolAdminController::class, 'editClass'])->name('classes.edit');

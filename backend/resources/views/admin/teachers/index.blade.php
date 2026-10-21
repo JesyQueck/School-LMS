@@ -15,9 +15,11 @@
         <x-ui.alert type="info" class="mb-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    Teacher account created for <strong>{{ $cred['name'] }}</strong> ({{ $cred['email'] }}).
+                    Teacher account created for <strong>{{ $cred['name'] }}</strong>.
+                    Staff ID: <span class="font-mono font-medium">{{ $cred['login_identifier'] }}</span>.
+                    Email: {{ $cred['email'] }}.
                     Temporary password: <span class="font-mono font-medium">{{ $cred['password'] }}</span>.
-                    This credential is also saved in the <a href="{{ route('admin.students.import.credentials.view') }}" class="underline font-medium">credentials manager</a>.
+                    The teacher must change it on first login. Admins can retrieve it in Accounts → Credentials until changed.
                 </div>
             </div>
         </x-ui.alert>

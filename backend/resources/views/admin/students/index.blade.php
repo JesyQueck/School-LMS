@@ -31,6 +31,23 @@
         @if($errors->any())
             <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
         @endif
+        @if(session('new_student_credentials'))
+            <x-ui.alert type="info" class="mb-6">
+                <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+                @foreach(session('new_student_credentials') as $credential)
+                    <p>
+                        {{ ucfirst($credential['role']) }} {{ $credential['name'] }} —
+                        Login ID: <span class="font-mono">{{ $credential['login_identifier'] }}</span>;
+                        @if(!empty($credential['password']))
+                            temporary password: <span class="font-mono">{{ $credential['password'] }}</span>.
+                            Require a password change at first login; admins can retrieve it in Accounts → Credentials until changed.
+                        @elseif($credential['role'] === 'parent')
+                            use email password recovery to set or recover your password.
+                        @endif
+                    </p>
+                @endforeach
+            </x-ui.alert>
+        @endif
     </div>
 
     <x-ui.card>
