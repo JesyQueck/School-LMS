@@ -524,3 +524,21 @@ html {
     line-height: 1.4;
     letter-spacing: 0.025em;
 }
+
+.overflow-x-auto {
+    max-width: 100%;
+    min-width: 0;
+    overscroll-behavior-x: contain;
+}
+
+.overflow-x-auto > table {
+    width: max-content;
+    min-width: 100%;
+}
+
+.inline-flex.items-center.rounded-full {
+    flex-shrink: 0;
+    min-height: 1.75rem;
+    padding: 0.375rem 0.75rem;
+    white-space: nowrap;
+}

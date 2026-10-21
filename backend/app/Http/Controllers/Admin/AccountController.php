@@ -131,11 +131,36 @@ class AccountController extends Controller
         ];
         $users = $this->credentialsQuery($filters)
             ->with(['teacher', 'student', 'parentProfile'])
-            ->withExists(['importCredential as has_temporary_password' => fn (Builder $query) => $query->whereNotNull('temporary_password')])
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(25)
             ->withQueryString();
+        $eligibleUsers = $users->getCollection()
+            ->filter(function (User $user): bool {
+                return $user->needs_password_change
+                    && match ($user->role) {
+                        'student' => $user->student !== null,
+                        'teacher' => $user->teacher !== null,
+                        default => false,
+                    };
+            });
+        $eligibleUsersById = $eligibleUsers->keyBy('id');
+        $temporaryPasswords = ImportCredential::query()
+            ->whereIn('user_id', $eligibleUsersById->keys())
+            ->whereIn('role', ['student', 'teacher'])
+            ->whereNotNull('temporary_password')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('user_id')
+            ->filter(function (ImportCredential $credential) use ($eligibleUsersById): bool {
+                $user = $eligibleUsersById->get($credential->user_id);
+
+                return $user !== null
+                    && $credential->role === $user->role
+                    && filled($credential->temporary_password)
+                    && Hash::check($credential->temporary_password, $user->password);
+            })
+            ->mapWithKeys(fn (ImportCredential $credential): array => [$credential->user_id => $credential->temporary_password]);
 
         $temporaryPasswordDisplay = session('credential_temporary_password');
         if ($temporaryPasswordDisplay) {
@@ -168,6 +193,7 @@ class AccountController extends Controller
                 'parent' => 'Parent/Guardian',
             ],
             'temporaryPasswordDisplay' => $temporaryPasswordDisplay,
+            'temporaryPasswords' => $temporaryPasswords,
         ]);
     }
 

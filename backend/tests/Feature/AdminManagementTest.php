@@ -1300,7 +1300,7 @@ class AdminManagementTest extends TestCase
         $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
         $this->post(route('admin.accounts.credentials.password.reveal', $studentUser))->assertRedirect(route('admin.accounts.credentials'));
         $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
-        $this->get(route('admin.accounts.credentials'))->assertDontSee($temporaryPassword);
+        $this->get(route('admin.accounts.credentials'))->assertSee($temporaryPassword);
         $this->actingAs($studentUser)->get('/student/dashboard')->assertRedirect('/change-password');
     }
 
@@ -1362,7 +1362,112 @@ class AdminManagementTest extends TestCase
             ->assertForbidden();
         $this->post(route('admin.accounts.credentials.password.regenerate', $teacherUser))->assertForbidden();
         $this->post(route('admin.accounts.credentials.password.reveal', $studentUser))->assertForbidden();
+        $this->get(route('admin.accounts.credentials'))->assertForbidden();
         $this->assertDatabaseMissing('audit_logs', ['action' => 'account.temporary_password_regenerated']);
+    }
+
+    public function test_credentials_table_displays_only_current_student_and_teacher_temporary_passwords(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $class = SchoolClass::create(['name' => 'Visible Temporary Password Class']);
+        $studentUser = User::factory()->create([
+            'name' => 'Visible Temporary Student',
+            'role' => 'student',
+            'needs_password_change' => true,
+            'password' => Hash::make('StudentTemp123!'),
+        ]);
+        Student::create([
+            'user_id' => $studentUser->id,
+            'admission_no' => 'VISIBLE-TEMP-STUDENT',
+            'class_id' => $class->id,
+        ]);
+        $teacherUser = User::factory()->create([
+            'name' => 'Visible Temporary Teacher',
+            'role' => 'teacher',
+            'needs_password_change' => true,
+            'password' => Hash::make('TeacherTemp123!'),
+        ]);
+        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'VISIBLE-TEMP-TEACHER']);
+        $changedStudent = User::factory()->create([
+            'name' => 'Changed Password Student',
+            'role' => 'student',
+            'needs_password_change' => false,
+            'password' => Hash::make('NewPermanent123!'),
+        ]);
+        Student::create([
+            'user_id' => $changedStudent->id,
+            'admission_no' => 'CHANGED-TEMP-STUDENT',
+            'class_id' => $class->id,
+        ]);
+        $parentUser = User::factory()->create([
+            'name' => 'Parent With Legacy Secret',
+            'role' => 'parent',
+            'needs_password_change' => true,
+        ]);
+        $adminWithLegacySecret = User::factory()->create([
+            'name' => 'Admin With Legacy Secret',
+            'role' => 'admin',
+            'needs_password_change' => true,
+        ]);
+
+        ImportCredential::create([
+            'role' => 'student',
+            'name' => $studentUser->name,
+            'email' => $studentUser->email,
+            'password' => null,
+            'user_id' => $studentUser->id,
+            'created_by' => $admin->id,
+            'temporary_password' => 'StudentTemp123!',
+        ]);
+        ImportCredential::create([
+            'role' => 'teacher',
+            'name' => $teacherUser->name,
+            'email' => $teacherUser->email,
+            'password' => null,
+            'user_id' => $teacherUser->id,
+            'created_by' => $admin->id,
+            'temporary_password' => 'TeacherTemp123!',
+        ]);
+        ImportCredential::create([
+            'role' => 'student',
+            'name' => $changedStudent->name,
+            'email' => $changedStudent->email,
+            'password' => null,
+            'user_id' => $changedStudent->id,
+            'created_by' => $admin->id,
+            'temporary_password' => 'OldStudentTemp123!',
+        ]);
+        ImportCredential::create([
+            'role' => 'parent',
+            'name' => $parentUser->name,
+            'email' => $parentUser->email,
+            'password' => null,
+            'user_id' => $parentUser->id,
+            'created_by' => $admin->id,
+            'temporary_password' => 'ParentSecret123!',
+        ]);
+        ImportCredential::create([
+            'role' => 'admin',
+            'name' => $adminWithLegacySecret->name,
+            'email' => $adminWithLegacySecret->email,
+            'password' => null,
+            'user_id' => $adminWithLegacySecret->id,
+            'created_by' => $admin->id,
+            'temporary_password' => 'AdminSecret123!',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.accounts.credentials'));
+
+        $response->assertOk()
+            ->assertSee('StudentTemp123!')
+            ->assertSee('TeacherTemp123!')
+            ->assertSee('Copy')
+            ->assertSee('data-copy-temporary-password', false)
+            ->assertSee('Copied', false)
+            ->assertSee('Copy failed', false)
+            ->assertDontSee('OldStudentTemp123!')
+            ->assertDontSee('ParentSecret123!')
+            ->assertDontSee('AdminSecret123!');
     }
 
     public function test_password_regeneration_rejects_parent_and_admin_targets(): void

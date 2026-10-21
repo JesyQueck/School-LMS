@@ -82,40 +82,54 @@
         <div class="px-5 py-3 border-b border-neutral-200 dark:border-dark-border text-sm text-neutral-600 dark:text-neutral-300">
             {{ number_format($credentials->total()) }} account{{ $credentials->total() === 1 ? '' : 's' }} found
         </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+        <div class="max-w-full overflow-x-auto">
+            <table class="min-w-[1500px] w-full divide-y divide-neutral-200 dark:divide-dark-border">
                 <thead class="bg-neutral-50 dark:bg-dark-surface">
                     <tr>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Account</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Role</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Login identifier</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Email</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Password status</th>
-                        <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
+                        <th class="min-w-[180px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Account</th>
+                        <th class="min-w-[130px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Role</th>
+                        <th class="min-w-[180px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Login identifier</th>
+                        <th class="min-w-[220px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Email</th>
+                        <th class="min-w-[250px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Temporary Password</th>
+                        <th class="min-w-[250px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Password status</th>
+                        <th class="min-w-[260px] px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                     @forelse($credentials as $user)
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                            <td class="px-5 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $user->name }}</td>
-                            <td class="px-5 py-4 text-sm">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $roleColors[$user->role] ?? '' }}">
+                            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $user->name }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium {{ $roleColors[$user->role] ?? '' }}">
                                     {{ $roleLabels[$user->role] ?? ucfirst($user->role) }}
                                 </span>
                             </td>
-                            <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300 font-mono">{{ $user->loginIdentifier() ?? 'N/A' }}</td>
-                            <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">{{ $user->email ?: '—' }}</td>
-                            <td class="px-5 py-4 text-sm">
-                                @if($user->needs_password_change)
-                                    <span class="inline-flex items-center rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 px-2.5 py-0.5 text-xs font-medium">Password Change Required</span>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm font-mono text-neutral-600 dark:text-neutral-300">{{ $user->loginIdentifier() ?? 'N/A' }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-neutral-600 dark:text-neutral-300">{{ $user->email ?: '—' }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                @if(isset($temporaryPasswords[$user->id]))
+                                    <div class="flex items-center gap-3">
+                                        <span data-temporary-password class="font-mono font-semibold text-neutral-900 dark:text-white">{{ $temporaryPasswords[$user->id] }}</span>
+                                        <button type="button" data-copy-temporary-password class="shrink-0 rounded-md border border-neutral-300 dark:border-dark-border px-3 py-1.5 text-xs font-medium text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-primary-500">
+                                            Copy
+                                        </button>
+                                        <span data-copy-feedback class="min-w-[60px] text-xs text-neutral-500 dark:text-neutral-400" aria-live="polite"></span>
+                                    </div>
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300 px-2.5 py-0.5 text-xs font-medium">Password Changed</span>
+                                    <span class="text-neutral-500 dark:text-neutral-400">—</span>
                                 @endif
                             </td>
-                            <td class="px-5 py-4 text-sm">
+                            <td class="whitespace-nowrap px-6 py-4 text-sm">
+                                @if($user->needs_password_change)
+                                    <span class="inline-flex min-w-[210px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-warning-100 px-4 py-2 text-center text-xs font-medium leading-5 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300">Password Change Required</span>
+                                @else
+                                    <span class="inline-flex min-w-[210px] shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-success-100 px-4 py-2 text-center text-xs font-medium leading-5 text-success-700 dark:bg-success-900/30 dark:text-success-300">Password Changed</span>
+                                @endif
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm">
                                 @if(in_array($user->role, ['student', 'teacher'], true))
-                                    <div class="flex flex-wrap items-center gap-3">
-                                        @if($user->needs_password_change && $user->has_temporary_password)
+                                    <div class="flex items-center gap-4">
+                                        @if($user->needs_password_change && isset($temporaryPasswords[$user->id]))
                                             <form method="POST" action="{{ route('admin.accounts.credentials.password.reveal', $user) }}">
                                                 @csrf
                                                 <button type="submit" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">Reveal temporary password</button>
@@ -135,7 +149,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-5 py-10 text-center text-sm text-neutral-500">No accounts match these filters.</td>
+                            <td colspan="7" class="px-6 py-10 text-center text-sm text-neutral-500">No accounts match these filters.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -147,4 +161,43 @@
             </div>
         @endif
     </x-ui.card>
+    <script>
+    document.addEventListener('click', async (event) => {
+        const button = event.target.closest('[data-copy-temporary-password]');
+        if (!button) return;
+
+        const container = button.parentElement;
+        const password = container.querySelector('[data-temporary-password]').textContent;
+        const feedback = container.querySelector('[data-copy-feedback]');
+        let copied = false;
+
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.writeText) {
+                throw new Error('Clipboard API unavailable');
+            }
+            await navigator.clipboard.writeText(password);
+            copied = true;
+        } catch {
+            const input = document.createElement('textarea');
+            input.value = password;
+            input.setAttribute('readonly', '');
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            try {
+                input.select();
+                copied = document.execCommand('copy');
+            } catch {
+                copied = false;
+            } finally {
+                input.remove();
+            }
+        }
+
+        feedback.textContent = copied ? 'Copied' : 'Copy failed';
+        window.setTimeout(() => {
+            feedback.textContent = '';
+        }, 2000);
+    });
+</script>
 </x-layouts.app>

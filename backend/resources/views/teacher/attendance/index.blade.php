@@ -99,31 +99,33 @@
                         <input type="hidden" name="class_id" value="{{ $classAssignment->class_id }}">
                         <input type="hidden" name="term_id" value="{{ $classAssignment->term_id }}">
 
-                        <table class="w-full divide-y divide-neutral-200 dark:divide-neutral-800">
-                            <thead class="bg-neutral-50 dark:bg-neutral-800">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Student</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Present</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Absent</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white dark:bg-dark-surface divide-y divide-neutral-200 dark:divide-neutral-800">
-                                @foreach($students as $student)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900 dark:text-white">
-                                        {{ $student->full_name ?? $student->name ?? $student->admission_no }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <input type="hidden" name="date" value="{{ $today }}">
-                                        <input type="radio" name="status[{{ $student->id }}]" value="present" class="h-4 w-4 text-primary-600 border-neutral-300 focus:ring-primary-500" checked>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <input type="radio" name="status[{{ $student->id }}]" value="absent" class="h-4 w-4 text-danger-600 border-neutral-300 focus:ring-danger-500">
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto">
+                            <table class="w-full divide-y divide-neutral-200 dark:divide-neutral-800">
+                                <thead class="bg-neutral-50 dark:bg-neutral-800">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Student</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Present</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Absent</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-dark-surface divide-y divide-neutral-200 dark:divide-neutral-800">
+                                    @foreach($students as $student)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900 dark:text-white">
+                                            {{ $student->full_name ?? $student->name ?? $student->admission_no }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <input type="hidden" name="date" value="{{ $today }}">
+                                            <input type="radio" name="status[{{ $student->id }}]" value="present" class="h-4 w-4 text-primary-600 border-neutral-300 focus:ring-primary-500" checked>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <input type="radio" name="status[{{ $student->id }}]" value="absent" class="h-4 w-4 text-danger-600 border-neutral-300 focus:ring-danger-500">
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
 
                         <div class="mt-6 flex justify-end">
                             <button type="submit" class="px-4 py-2 bg-success-600 hover:bg-success-700 text-white rounded-lg font-medium transition-colors">
