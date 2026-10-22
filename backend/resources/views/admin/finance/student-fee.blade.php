@@ -1,13 +1,13 @@
 <x-layouts.app title="Student Fee Details">
-    <x-ui.page-header title="{{ $studentFee->student->full_name }}" subtitle="{{ $studentFee->student->admission_no }} · {{ $studentFee->student->schoolClass->name ?? 'N/A' }}" back-href="{{ route('admin.finance') }}" back-label="Back to finance">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item href="{{ route('admin.finance') }}">Finance</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Fee Details</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-    </x-ui.page-header>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('admin.finance') }}">Finance</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Fee Details</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">{{ $studentFee->student->full_name }}</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $studentFee->student->admission_no }} &middot; {{ $studentFee->student->schoolClass->name ?? 'N/A' }}</p>
+    </div>
 
     <div id="payment-feedback" class="fixed top-20 left-0 right-0 z-50 hidden"></div>
 

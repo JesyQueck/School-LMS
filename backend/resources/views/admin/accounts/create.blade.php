@@ -1,13 +1,13 @@
 <x-layouts.app title="Create Account">
-    <x-ui.page-header title="Create Account" subtitle="Create user accounts for teachers, students, and parents." back-href="{{ route('admin.accounts.index', request()->only('role')) }}" back-label="Back to accounts">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item href="{{ route('admin.accounts.index', request()->only('role')) }}">Accounts</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Create Account</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-    </x-ui.page-header>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="/admin/accounts">Accounts</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Create Account</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Create Account</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Create user accounts for teachers, students, and parents.</p>
+    </div>
 
     @if(session('new_account_credentials'))
         @php
@@ -40,9 +40,6 @@
                 </div>
                 <form method="POST" action="{{ route('admin.accounts.store') }}" class="p-6 space-y-4">
                     @csrf
-                    @if($returnRole)
-                        <input type="hidden" name="return_role" value="{{ $returnRole }}">
-                    @endif
                     <div>
                         <label for="type" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Account Type <span class="text-danger-500">*</span></label>
                         <select id="type" name="type" required onchange="toggleFields()" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">

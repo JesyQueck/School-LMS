@@ -1,18 +1,22 @@
 <x-layouts.app title="Credentials">
-    <x-ui.page-header title="Account Credentials" subtitle="Manage student and teacher temporary passwords." back-href="{{ route('admin.accounts.index') }}" back-label="Back to accounts">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item href="{{ route('admin.accounts.index') }}">Accounts</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Credentials</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-        <x-slot:actions>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="/admin/accounts">Accounts</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Credentials</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-2">
+            <div>
+                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Account Credentials</h1>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                    Search accounts, check password status, and manage student or teacher temporary passwords.
+                </p>
+            </div>
             <a href="{{ route('admin.accounts.credentials.download', request()->query()) }}" class="inline-flex items-center gap-2 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border text-neutral-700 dark:text-dark-text hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
                 Download CSV
             </a>
-        </x-slot:actions>
-    </x-ui.page-header>
+        </div>
+    </div>
 
     @if(session('status'))
         <x-ui.alert type="success" class="mb-4">{{ session('status') }}</x-ui.alert>

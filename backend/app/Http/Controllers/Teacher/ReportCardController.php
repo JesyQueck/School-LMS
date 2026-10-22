@@ -194,11 +194,9 @@ class ReportCardController extends Controller
             ->first();
 
         $attendanceRecords = $student->attendance()
-            ->real()
             ->where('term_id', $term->id)
             ->count();
         $presentDays = $student->attendance()
-            ->real()
             ->where('term_id', $term->id)
             ->where('status', 'present')
             ->count();
@@ -331,7 +329,7 @@ class ReportCardController extends Controller
 
         $attendanceCount = 0;
         if ($totalStudents > 0) {
-            $attendanceCount = Attendance::real()->whereIn('student_id', $students->pluck('id'))
+            $attendanceCount = Attendance::whereIn('student_id', $students->pluck('id'))
                 ->where('term_id', $classAssignment->term_id)
                 ->whereDate('date', '<=', now())
                 ->distinct('student_id')

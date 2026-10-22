@@ -1,12 +1,10 @@
 <x-layouts.app title="Edit Teacher">
     <x-ui.page-header title="Edit Teacher" subtitle="Update {{ $teacher->user->name ?? 'this teacher' }}'s details." back-href="{{ route('admin.teachers') }}" back-label="Back to teachers">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item href="{{ route('admin.teachers') }}">Teachers</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Edit Teacher</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('admin.teachers') }}">Teachers</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Edit Teacher</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
     </x-ui.page-header>
 
     <x-ui.card>

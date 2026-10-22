@@ -1,12 +1,15 @@
 <x-layouts.app title="Students">
-    <x-ui.page-header title="Students" subtitle="Manage student enrollment and records.">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Students</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-        <x-slot:actions>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Students</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-2">
+            <div>
+                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Students</h1>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage student enrollment and records.</p>
+            </div>
+            <div class="flex items-center gap-2">
                 <a href="{{ route('admin.students.export') }}" class="inline-flex items-center gap-2 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border text-neutral-700 dark:text-dark-text hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
@@ -15,36 +18,37 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6a2 2 0 012-2h1.5a2 2 0 110 4H5a2 2 0 01-2-2V6zM3 12h2.5a2 2 0 110 4H3a2 2 0 1 0 0-4zM3 18h2.5a2 2 0 110 4H3a2 2 0 01-2-2v-1a2 2 0 012-2h1.5a2 2 0 110 4z"/></svg>
                     Import Students
                 </a>
-                <a href="{{ route('admin.students.enroll', array_filter(['page' => $students->currentPage() > 1 ? $students->currentPage() : null])) }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm">
+                <a href="{{ route('admin.students.enroll') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     Enroll Student
                 </a>
-        </x-slot:actions>
-    </x-ui.page-header>
+            </div>
+        </div>
 
-    @if(session('status'))
-        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
-    @endif
-    @if($errors->any())
-        <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
-    @endif
-    @if(session('new_student_credentials'))
-        <x-ui.alert type="info" class="mb-6">
-            <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
-            @foreach(session('new_student_credentials') as $credential)
-                <p>
-                    {{ ucfirst($credential['role']) }} {{ $credential['name'] }} —
-                    Login ID: <span class="font-mono">{{ $credential['login_identifier'] }}</span>;
-                    @if(!empty($credential['password']))
-                        temporary password: <span class="font-mono">{{ $credential['password'] }}</span>.
-                        Require a password change at first login; admins can retrieve it in Accounts → Credentials until changed.
-                    @elseif($credential['role'] === 'parent')
-                        use email password recovery to set or recover your password.
-                    @endif
-                </p>
-            @endforeach
-        </x-ui.alert>
-    @endif
+        @if(session('status'))
+            <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
+        @endif
+        @if($errors->any())
+            <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+        @endif
+        @if(session('new_student_credentials'))
+            <x-ui.alert type="info" class="mb-6">
+                <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+                @foreach(session('new_student_credentials') as $credential)
+                    <p>
+                        {{ ucfirst($credential['role']) }} {{ $credential['name'] }} —
+                        Login ID: <span class="font-mono">{{ $credential['login_identifier'] }}</span>;
+                        @if(!empty($credential['password']))
+                            temporary password: <span class="font-mono">{{ $credential['password'] }}</span>.
+                            Require a password change at first login; admins can retrieve it in Accounts → Credentials until changed.
+                        @elseif($credential['role'] === 'parent')
+                            use email password recovery to set or recover your password.
+                        @endif
+                    </p>
+                @endforeach
+            </x-ui.alert>
+        @endif
+    </div>
 
     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
@@ -72,7 +76,7 @@
                                     <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-2.5 py-0.5 text-xs font-medium text-success-700 dark:text-success-300">Active</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <a href="{{ route('admin.students.edit', array_filter(['student' => $student, 'page' => $students->currentPage() > 1 ? $students->currentPage() : null])) }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">Edit</a>
+                                    <a href="{{ route('admin.students.edit', $student) }}" class="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">Edit</a>
                                 </td>
                             </tr>
                     @empty

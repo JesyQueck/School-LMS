@@ -60,6 +60,45 @@ class SchoolAdminController extends Controller
         $finance = ['expected' => 0, 'collected' => 0, 'outstanding' => 0, 'collection_rate' => 0, 'paid' => 0, 'partial' => 0, 'unpaid' => 0];
         $recentActivity = AuditLog::latest()->take(5)->get();
 
+        $actionLabels = [
+            'user.login' => 'User logged in',
+            'user.logout' => 'User logged out',
+            'parent.password_reset' => 'Parent password reset',
+            'account.created' => 'Account created',
+            'account.temporary_password_regenerated' => 'Temporary password regenerated',
+            'password.reset' => 'Password reset',
+            'announcement.created' => 'Announcement created',
+            'announcement.updated' => 'Announcement updated',
+            'announcement.deleted' => 'Announcement deleted',
+            'class.created' => 'Class created',
+            'class.updated' => 'Class updated',
+            'teacher.created' => 'Teacher created',
+            'teacher.updated' => 'Teacher updated',
+            'teacher.deleted' => 'Teacher deleted',
+            'student.created' => 'Student created',
+            'student.updated' => 'Student updated',
+            'class_subject.updated' => 'Class subject updated',
+            'result.created' => 'Result created',
+            'result.locked' => 'Result locked',
+            'subject.created' => 'Subject created',
+            'subject.updated' => 'Subject updated',
+            'subject.deleted' => 'Subject deleted',
+            'subject_assignment.created' => 'Subject assignment created',
+            'class_assignment.created' => 'Class assignment created',
+            'fee_type.created' => 'Fee type created',
+            'payment.created' => 'Payment recorded',
+            'attendance.marked' => 'Attendance marked',
+            'scores.entered' => 'Scores entered',
+            'report_card.comment_added' => 'Report card comment added',
+            'report_card.submitted' => 'Report card submitted',
+            'period_config.saved' => 'Period config saved',
+            'timetable.manual_created' => 'Timetable created',
+            'timetable.updated' => 'Timetable updated',
+            'timetable.deleted' => 'Timetable deleted',
+            'timetable.moved' => 'Timetable moved',
+            'timetable.swapped' => 'Timetable swapped',
+        ];
+
         return view('admin.index', compact(
             'totalStudents',
             'totalTeachers',
@@ -76,6 +115,7 @@ class SchoolAdminController extends Controller
             'resultsPending',
             'finance',
             'recentActivity',
+            'actionLabels',
         ));
     }
 
@@ -95,12 +135,8 @@ class SchoolAdminController extends Controller
         ]);
     }
 
-    public function students(Request $request)
+    public function students()
     {
-        $request->validate([
-            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
-        ]);
-
         return view('admin.students.index', [
             'students' => Student::with(['user', 'schoolClass'])->paginate(15),
             'classes' => SchoolClass::all(),
@@ -108,16 +144,11 @@ class SchoolAdminController extends Controller
         ]);
     }
 
-    public function enrollStudent(Request $request)
+    public function enrollStudent()
     {
-        $navigation = $request->validate([
-            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
-        ]);
-
         return view('admin.students.enroll', [
             'classes' => SchoolClass::orderBy('name')->get(),
             'academicSessions' => AcademicSession::orderBy('start_date', 'desc')->get(),
-            'returnPage' => $navigation['page'] ?? null,
         ]);
     }
 
@@ -277,8 +308,6 @@ class SchoolAdminController extends Controller
     public function createStudent(StoreStudentRequest $request)
     {
         $data = $request->validated();
-        $returnPage = $data['page'] ?? null;
-        unset($data['page']);
 
         $temporaryPassword = $data['password'] ?? Str::random(20);
 
@@ -387,7 +416,7 @@ class SchoolAdminController extends Controller
             $redirectMessage .= ', Parent linked';
         }
 
-        return redirect()->route('admin.students', array_filter(['page' => $returnPage]))->with('status', $redirectMessage)
+        return redirect()->route('admin.students')->with('status', $redirectMessage)
             ->with('new_student_credentials', $oneTimeCredentials->all());
     }
 
@@ -489,25 +518,18 @@ class SchoolAdminController extends Controller
         }
     }
 
-    public function editStudent(Request $request, Student $student)
+    public function editStudent(Student $student)
     {
-        $navigation = $request->validate([
-            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
-        ]);
-
         return view('admin.students.edit', [
             'student' => $student->load('user', 'schoolClass', 'parents.user'),
             'classes' => SchoolClass::orderBy('name')->get(),
             'academicSessions' => AcademicSession::orderBy('start_date', 'desc')->get(),
-            'returnPage' => $navigation['page'] ?? null,
         ]);
     }
 
     public function updateStudent(UpdateStudentRequest $request, Student $student)
     {
         $data = $request->validated();
-        $returnPage = $data['page'] ?? null;
-        unset($data['page']);
 
         $student->user()->update([
             'name' => $data['name'],
@@ -549,7 +571,7 @@ class SchoolAdminController extends Controller
 
         $this->audit($request, 'student.updated', Student::class, $student->id, null, $data);
 
-        return redirect()->route('admin.students', array_filter(['page' => $returnPage]))->with('status', 'Student updated.');
+        return redirect()->route('admin.students')->with('status', 'Student updated.');
     }
 
     protected function getOrCreateParent(string $parentEmail, array $requestData)

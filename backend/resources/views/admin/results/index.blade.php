@@ -1,18 +1,22 @@
 <x-layouts.app title="Results Management">
-    <x-ui.page-header title="Results Management" subtitle="Enter, review, and publish student results.">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Results</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-        <x-slot:actions>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Results</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-2">
+            <div>
+                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Results Management</h1>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Enter, review, and publish student results.</p>
+            </div>
+            <div class="flex items-center gap-2">
                 <a href="{{ route('admin.results.export') }}" class="inline-flex items-center gap-2 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border text-neutral-700 dark:text-dark-text hover:bg-neutral-50 dark:hover:bg-neutral-800 font-medium px-4 py-2 rounded-lg transition-colors text-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
                 </a>
-        </x-slot:actions>
-    </x-ui.page-header>
+            </div>
+        </div>
+    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div class="lg:col-span-4">

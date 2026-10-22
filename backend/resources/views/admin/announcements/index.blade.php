@@ -1,18 +1,20 @@
 <x-layouts.app title="Announcements">
-    <x-ui.page-header title="Announcements" subtitle="Manage school-wide announcements.">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Announcements</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-        <x-slot:actions>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Announcements</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-2">
+            <div>
+                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Announcements</h1>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage school-wide announcements.</p>
+            </div>
             <a href="{{ route('admin.announcements.create') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 New Announcement
             </a>
-        </x-slot:actions>
-    </x-ui.page-header>
+        </div>
+    </div>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>

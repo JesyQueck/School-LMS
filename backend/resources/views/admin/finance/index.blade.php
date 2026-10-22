@@ -1,12 +1,11 @@
 <x-layouts.app title="Finance Management">
-    <x-ui.page-header title="Finance Management" subtitle="Manage fee types, student fees, and payments.">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui-breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui-breadcrumb-item>
-                <x-ui.breadcrumb-item active>Finance</x-ui-breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
-    </x-ui.page-header>
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard" active>Finance</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Finance Management</h1>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage fee types, student fees, and payment records.</p>
+    </div>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
@@ -16,42 +15,51 @@
     @endif
 
     {{-- Finance Summary --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <x-ui.stat-card label="Expected Fees" :value="'₦' . number_format($finance['expected'], 2)" icon="wallet" compact />
-        <x-ui.stat-card label="Collected" :value="'₦' . number_format($finance['collected'], 2)" icon="wallet" compact />
-        <x-ui.stat-card label="Outstanding" :value="'₦' . number_format($finance['outstanding'], 2)" icon="wallet" compact />
-        <x-ui.stat-card label="Collection Rate" :value="$finance['collection_rate'] . '%'" icon="wallet" compact />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <x-ui.stat-card label="Total Expected" :value="'₦' . number_format($finance['expected'], 2)" icon="wallet" />
+        <x-ui.stat-card label="Amount Collected" :value="'₦' . number_format($finance['collected'], 2)" icon="wallet" :trend="['direction' => 'up', 'value' => 'Payments received']" />
+        <x-ui.stat-card label="Still Owed" :value="'₦' . number_format($finance['outstanding'], 2)" icon="wallet" :trend="['direction' => 'down', 'value' => 'Outstanding balance']" />
+        <x-ui.stat-card label="Collection Rate" :value="$finance['collection_rate'] . '%'" icon="chart" :trend="['direction' => $finance['collection_rate'] >= 70 ? 'up' : 'neutral', 'value' => 'of fees collected']" />
     </div>
 
     {{-- Per-Class Breakdown --}}
-    <x-ui.card class="mb-6">
-        <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
-            <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Per-Class Breakdown</h3>
+    <x-ui.card class="mb-6" elevated>
+        <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Fees by Class</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Breakdown of expected, collected, and outstanding amounts per class.</p>
+                </div>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
                 <thead class="bg-neutral-50 dark:bg-dark-surface">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Class</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Students</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Expected</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Collected</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Outstanding</th>
-                        <th class="px-3 py-2 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Rate</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Class</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Students</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Expected</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Collected</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Still Owed</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Rate</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                     @forelse($classSummary as $cs)
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                            <td class="px-3 py-2 text-sm font-medium text-neutral-900 dark:text-white">{{ $cs['class'] }}</td>
-                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $cs['total'] }}</td>
-                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['expected'], 2) }}</td>
-                            <td class="px-3 py-2 text-sm text-success-600 dark:text-success-400 text-right">₦{{ number_format($cs['collected'], 2) }}</td>
-                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['outstanding'], 2) }}</td>
-                            <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400 text-right">{{ $cs['collection_rate'] }}%</td>
+                            <td class="px-6 py-3.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $cs['class'] }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $cs['total'] }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['expected'], 2) }}</td>
+                            <td class="px-6 py-3.5 text-sm text-success-600 dark:text-success-400 text-right">₦{{ number_format($cs['collected'], 2) }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['outstanding'], 2) }}</td>
+                            <td class="px-6 py-3.5 text-right">
+                                <span class="inline-flex items-center rounded-full {{ $cs['collection_rate'] >= 70 ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300' : ($cs['collection_rate'] >= 40 ? 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300' : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300') }} px-2 py-0.5 text-xs font-medium">
+                                    {{ $cs['collection_rate'] }}%
+                                </span>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-3 py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">No classes found.</td></tr>
+                        <tr><td colspan="6" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No classes found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -60,96 +68,96 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-stretch">
         <div class="lg:col-span-6">
-            <x-ui.card class="h-full flex flex-col" padding="false">
-                <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Create Fee Type</h3>
-                    <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Define a new fee type. Student fees are auto-generated for all students in the selected class.</p>
+            <x-ui.card class="h-full flex flex-col" padding="false" elevated>
+                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
+                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Create Fee Type</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Define a new fee type. Student fees are auto-generated for all students in the selected class.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.fee-types.store') }}" class="p-3 flex-1 flex flex-col">
+                <form method="POST" action="{{ route('admin.finance.fee-types.store') }}" class="p-5 flex-1 flex flex-col">
                     @csrf
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Fee Name <span class="text-danger-500">*</span></label>
-                        <input name="name" type="text" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Fee Name <span class="text-danger-500">*</span></label>
+                        <input name="name" type="text" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount (₦) <span class="text-danger-500">*</span></label>
-                            <input name="amount" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount (₦) <span class="text-danger-500">*</span></label>
+                            <input name="amount" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Term <span class="text-danger-500">*</span></label>
-                            <select name="term_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Term <span class="text-danger-500">*</span></label>
+                            <select name="term_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                                 @foreach($terms as $term)
                                     <option value="{{ $term->id }}">{{ $term->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class</label>
-                        <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Class</label>
+                        <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                             <option value="">All Classes</option>
                             @foreach($classes as $class)
                                 <option value="{{ $class->id }}">{{ $class->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Due Date</label>
-                        <input name="due_date" type="date" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Due Date</label>
+                        <input name="due_date" type="date" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Description</label>
-                        <input name="description" type="text" placeholder="Optional note" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Description</label>
+                        <input name="description" type="text" placeholder="Optional note" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
                     <div class="mt-auto">
-                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Save Fee Type</button>
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Save Fee Type</button>
                     </div>
                 </form>
             </x-ui.card>
         </div>
 
         <div class="lg:col-span-6">
-            <x-ui.card class="h-full flex flex-col" padding="false">
-                <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Record Payment</h3>
-                    <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">Select a student fee obligation and enter the payment details.</p>
+            <x-ui.card class="h-full flex flex-col" padding="false" elevated>
+                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
+                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Record Payment</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Select a student fee obligation and enter the payment details.</p>
                 </div>
-                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-3 flex-1 flex flex-col">
+                <form method="POST" action="{{ route('admin.finance.payments.store') }}" class="p-5 flex-1 flex flex-col">
                     @csrf
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Student Identity <span class="text-danger-500">*</span></label>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Student Name / Admission No <span class="text-danger-500">*</span></label>
                         <div class="relative">
                             <input type="text" name="student_search" placeholder="Type student name or admission no..."
-                                class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm focus:ring-1 focus:ring-primary-500"
+                                class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
                                 autocomplete="off">
                             <input type="hidden" name="student_fee_id" id="selected_fee_id">
                             <div id="student_fee_dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border rounded-lg shadow-lg max-h-48 overflow-y-auto hidden"></div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Amount Paid (₦) <span class="text-danger-500">*</span></label>
-                        <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (₦) <span class="text-danger-500">*</span></label>
+                        <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Payment Method</label>
-                        <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Method</label>
+                        <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                             <option value="cash">Cash</option>
                             <option value="bank_transfer">Bank Transfer</option>
                             <option value="card">Card</option>
                             <option value="cheque">Cheque</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Payment Date <span class="text-danger-500">*</span></label>
-                        <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Date <span class="text-danger-500">*</span></label>
+                        <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
-                    <div class="mb-3">
-                        <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Reference</label>
-                        <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-1.5 text-sm">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Reference (optional)</label>
+                        <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
                     <div class="mt-auto">
-                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg shadow-sm text-sm">Record Payment</button>
+                        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Record Payment</button>
                     </div>
                 </form>
             </x-ui.card>
@@ -157,11 +165,12 @@
     </div>
 
     {{-- Student Fees --}}
-    <x-ui.card class="mb-6">
-        <div class="px-4 py-3 border-b border-neutral-200 dark:border-dark-border">
-            <h3 class="text-sm font-semibold text-neutral-900 dark:text-white">Student Fees</h3>
+    <x-ui.card class="mb-6" elevated>
+        <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Student Fees</h3>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">View and filter individual student fee obligations.</p>
         </div>
-         <form method="GET" class="p-4 grid grid-cols-2 sm:grid-cols-5 gap-3 border-b border-neutral-200 dark:border-dark-border">
+        <form method="GET" class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 border-b border-neutral-200 dark:border-dark-border">
             <div>
                 <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
                 <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">

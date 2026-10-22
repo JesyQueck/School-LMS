@@ -22,7 +22,6 @@ class UpdateStudentRequest extends FormRequest
         $student = $this->route('student');
 
         return [
-            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'name' => ['required', 'string', 'max:255'],
             'first_name' => ['required', 'string', 'max:100'],
             'middle_name' => ['nullable', 'string', 'max:100'],

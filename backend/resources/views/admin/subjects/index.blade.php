@@ -1,11 +1,9 @@
 <x-layouts.app title="Subjects">
     <x-ui.page-header title="Subjects" subtitle="Manage subjects and assign them to classes.">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Subjects</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Subjects</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
         <x-slot:actions>
             <a href="{{ route('admin.subjects.create') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">Create Subject</a>
         </x-slot:actions>

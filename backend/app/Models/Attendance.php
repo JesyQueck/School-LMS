@@ -3,9 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Schema;
 
 class Attendance extends Model
 {
@@ -17,13 +15,11 @@ class Attendance extends Model
         'term_id',
         'date',
         'status',
-        'is_synthetic',
         'marked_by',
     ];
 
     protected $casts = [
         'date' => 'date',
-        'is_synthetic' => 'boolean',
     ];
 
     public function student(): BelongsTo
@@ -44,12 +40,5 @@ class Attendance extends Model
     public function markedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'marked_by');
-    }
-
-    public function scopeReal(Builder $query): Builder
-    {
-        return Schema::hasColumn($this->getTable(), 'is_synthetic')
-            ? $query->where('is_synthetic', false)
-            : $query;
     }
 }

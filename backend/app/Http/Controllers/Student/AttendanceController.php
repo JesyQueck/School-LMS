@@ -16,7 +16,6 @@ class AttendanceController extends Controller
         $student->load('schoolClass');
 
         $attendance = $student->attendance()
-            ->real()
             ->with(['term', 'class'])
             ->latest('date')
             ->get();

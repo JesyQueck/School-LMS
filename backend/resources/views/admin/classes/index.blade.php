@@ -1,11 +1,9 @@
 <x-layouts.app title="Classes">
     <x-ui.page-header title="Classes" subtitle="Manage school classes and assign form teachers.">
-        <x-slot:breadcrumbs>
-            <x-ui.breadcrumbs>
-                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
-                <x-ui.breadcrumb-item active>Classes</x-ui.breadcrumb-item>
-            </x-ui.breadcrumbs>
-        </x-slot:breadcrumbs>
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Classes</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
         <x-slot:actions>
             <button type="button" onclick="document.getElementById('add-class-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
                 Add Class

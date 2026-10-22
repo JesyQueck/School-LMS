@@ -296,6 +296,17 @@ class AuthenticatedLayoutTest extends TestCase
         $response->assertRedirect('/login');
     }
 
+    public function test_admin_dashboard_loads_when_no_current_term_is_configured(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/admin/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('Unavailable because no current term is configured.');
+    }
+
     public function test_logout_remains_functional(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

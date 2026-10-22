@@ -568,10 +568,6 @@ class AdminManagementTest extends TestCase
         ]);
 
         $this->actingAs($admin);
-        $enrollResponse = $this->get(route('admin.students.enroll', ['page' => 2]));
-        $enrollResponse->assertOk();
-        $enrollResponse->assertSee('name="page" value="2"', false);
-        $enrollResponse->assertSee(route('admin.students', ['page' => 2]));
 
         $session = AcademicSession::where('is_current', true)->first();
 
@@ -590,14 +586,13 @@ class AdminManagementTest extends TestCase
             'admission_date' => '2024-09-01',
             'academic_session_id' => $session->id,
             'student_type' => 'new',
-            'page' => 2,
             'emergency_1_name' => 'Emergency Contact',
             'emergency_1_relationship' => 'Uncle',
             'emergency_1_phone' => '08098765432',
             'password' => 'Password123!',
         ]);
 
-        $response->assertRedirect(route('admin.students', ['page' => 2]));
+        $response->assertRedirect('/admin/students');
 
         $this->assertDatabaseHas('users', [
             'name' => 'Jane Student',
@@ -957,47 +952,6 @@ class AdminManagementTest extends TestCase
         $response->assertSee('Test Student');
     }
 
-    public function test_student_list_edit_flow_preserves_a_valid_page_number(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
-
-        $class = SchoolClass::create(['name' => 'JSS 1']);
-        $student = null;
-
-        for ($index = 1; $index <= 16; $index++) {
-            $studentUser = User::factory()->create([
-                'name' => "Student {$index}",
-                'role' => 'student',
-            ]);
-            $student = Student::create([
-                'user_id' => $studentUser->id,
-                'admission_no' => sprintf('GRA-PAGE-%03d', $index),
-                'class_id' => $class->id,
-            ]);
-        }
-
-        $listResponse = $this->get(route('admin.students', ['page' => 2]));
-        $listResponse->assertOk();
-        $listResponse->assertSee(route('admin.students.edit', ['student' => $student, 'page' => 2]));
-
-        $editResponse = $this->get(route('admin.students.edit', ['student' => $student, 'page' => 2]));
-        $editResponse->assertOk();
-        $editResponse->assertSee('Back to students');
-        $editResponse->assertSee(route('admin.students', ['page' => 2]));
-        $editResponse->assertSee('name="page" value="2"', false);
-    }
-
-    public function test_student_navigation_rejects_non_numeric_page_context(): void
-    {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
-
-        $response = $this->get(route('admin.students', ['page' => 'https://example.com']));
-
-        $response->assertSessionHasErrors('page');
-    }
-
     public function test_admin_can_update_student(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -1034,10 +988,9 @@ class AdminManagementTest extends TestCase
             'admission_date' => '2024-09-01',
             'academic_session_id' => AcademicSession::where('is_current', true)->value('id'),
             'student_type' => 'returning',
-            'page' => 2,
         ]);
 
-        $response->assertRedirect(route('admin.students', ['page' => 2]));
+        $response->assertRedirect(route('admin.students'));
         $this->assertDatabaseHas('users', [
             'id' => $student->user_id,
             'name' => 'Updated Student',

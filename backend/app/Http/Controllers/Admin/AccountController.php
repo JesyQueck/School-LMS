@@ -43,26 +43,19 @@ class AccountController extends Controller
         ]);
     }
 
-    public function create(Request $request)
+    public function create()
     {
-        $navigation = $request->validate([
-            'role' => ['nullable', Rule::in(['teacher', 'student', 'parent', 'admin'])],
-        ]);
-
         return view('admin.accounts.create', [
             'teachers' => Teacher::with('user')->get(),
             'students' => Student::with(['user', 'schoolClass'])->get(),
             'parents' => ParentProfile::with('user')->get(),
             'classes' => SchoolClass::with('formTeacher')->get(),
-            'returnRole' => $navigation['role'] ?? null,
         ]);
     }
 
     public function store(StoreAccountRequest $request)
     {
         $data = $request->validated();
-        $returnRole = $data['return_role'] ?? null;
-        unset($data['return_role']);
         $temporaryPassword = $data['password'] ?? Str::random(20);
 
         $user = User::create([
@@ -119,7 +112,7 @@ class AccountController extends Controller
             'type' => $data['type'],
         ]);
 
-        return redirect()->route('admin.accounts.create', array_filter(['role' => $returnRole]))
+        return redirect()->route('admin.accounts.create')
             ->with('status', 'Account created successfully.')
             ->with('new_account_credentials', $oneTimeCredentials);
     }

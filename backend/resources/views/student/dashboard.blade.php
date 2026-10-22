@@ -8,7 +8,6 @@
         $classStatus = $totalExpected > 0
             ? ($outstanding <= 0 ? 'Paid' : ($totalPaid > 0 ? 'Partially Paid' : 'Unpaid'))
             : 'No Fees';
-        $resultTrendPayload = json_encode($resultTrend, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
     @endphp
 
     <div class="mb-6">
@@ -19,10 +18,11 @@
         </p>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <x-ui.stat-card label="Class" :value="$student->schoolClass->name ?? 'N/A'" icon="school" compact />
-        <x-ui.stat-card label="Published Average (all terms)" :value="$averageScore !== null ? $averageScore . '%' : 'No results'" icon="clipboard-list" compact />
-        <x-ui.stat-card label="Attendance (all records)" :value="$totalRecords > 0 ? $attendanceRate . '%' : 'No records'" icon="calendar-check" compact />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <x-ui.stat-card label="Class" :value="$student->schoolClass->name ?? 'N/A'" icon="school" />
+        <x-ui.stat-card label="Published Average (all terms)" :value="$averageScore !== null ? $averageScore . '%' : 'No results'" icon="clipboard-list" />
+        <x-ui.stat-card label="Attendance (all records)" :value="$totalRecords > 0 ? $attendanceRate . '%' : 'No records'" icon="calendar-check" />
+        <x-ui.stat-card label="Subjects with published results" :value="$subjectCount" icon="book-open" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -74,7 +74,7 @@
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-neutral-500 dark:text-neutral-400">Attendance Rate</span>
-                    <span class="text-lg font-bold text-neutral-900 dark:text-white">{{ $attendanceRate !== null ? $attendanceRate . '%' : 'N/A' }}</span>
+                    <span class="text-lg font-bold text-neutral-900 dark:text-white">{{ $attendanceRate }}%</span>
                 </div>
                 <div class="mt-4">
                     <a href="{{ route('student.attendance') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Attendance</a>
@@ -86,35 +86,40 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         {{-- My Performance --}}
         <div class="lg:col-span-8">
-            @if(count($resultTrend['rows']) > 0)
-                <x-ui.chart
-                    title="Published average by term"
-                    :description="count($resultTrend['rows']) === 1 ? 'One published term is available; a trend cannot be inferred.' : 'Average score for the most recent four published terms, ordered by academic chronology.'"
-                    height="260"
-                >
-                    <canvas
-                        data-dashboard-chart="performance"
-                        data-chart-data="{{ $resultTrendPayload }}"
-                        role="img"
-                        aria-label="Published average scores by term"
-                    ></canvas>
-                </x-ui.chart>
-                <table class="sr-only">
-                    <caption>Published average score by term</caption>
-                    <thead><tr><th scope="col">Term</th><th scope="col">Average score</th></tr></thead>
-                    <tbody>
-                        @foreach($resultTrend['rows'] as $row)
-                            <tr><th scope="row">{{ $row['label'] }}</th><td>{{ $row['average'] }}%</td></tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <x-ui.card>
-                    <h3 class="text-base font-semibold text-neutral-900 dark:text-white">Published performance</h3>
-                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">No published results are available to chart yet.</p>
-                    <a href="{{ route('student.report-cards') }}" class="mt-4 inline-flex text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">View report cards</a>
-                </x-ui.card>
-            @endif
+            <x-ui.card>
+                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">My Performance</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Your published results.</p>
+                </div>
+                <div class="p-6 space-y-3">
+                    @forelse($publishedResults as $result)
+                        @php $pct = $result->total ?? 0; @endphp
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-neutral-700 dark:text-neutral-300">{{ $result->classSubject->subject->name ?? 'N/A' }}</span>
+                                <span class="font-semibold text-neutral-900 dark:text-white">{{ $pct }}%</span>
+                            </div>
+                            <div class="h-2 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                                <div class="h-full rounded-full bg-primary-500" style="width: {{ min(100, $pct) }}%"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400">No published results yet.</p>
+                    @endforelse
+
+                    @if($subjectCount > 0)
+                        <div class="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-dark-border">
+                            <span class="text-sm font-semibold text-neutral-900 dark:text-white">Overall Average</span>
+                            <span class="text-sm font-bold text-primary-600 dark:text-primary-400">{{ $averageScore }}%</span>
+                        </div>
+                    @endif
+                </div>
+                @if($subjectCount > 0)
+                    <div class="px-6 pb-6">
+                        <a href="{{ route('student.report-cards') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Results</a>
+                    </div>
+                @endif
+            </x-ui.card>
         </div>
 
         {{-- Latest Report Card --}}
