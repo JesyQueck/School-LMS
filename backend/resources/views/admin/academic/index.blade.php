@@ -1,12 +1,12 @@
 <x-layouts.app title="Academic Structure">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Academic</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Academic Structure</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Configure sessions, terms, subjects, and class mappings.</p>
-    </div>
+    <x-ui.page-header title="Academic Structure" subtitle="Configure sessions, terms, subjects, and class mappings.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Academic</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>

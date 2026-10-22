@@ -1,12 +1,15 @@
 <x-layouts.app title="Subjects">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Subjects</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Subjects</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage subjects and assign them to multiple classes.</p>
-    </div>
+    <x-ui.page-header title="Subjects" subtitle="Manage subjects and assign them to classes.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Subjects</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+        <x-slot:actions>
+            <a href="{{ route('admin.subjects.create') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">Create Subject</a>
+        </x-slot:actions>
+    </x-ui.page-header>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
@@ -21,9 +24,6 @@
                 <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">All Subjects</h3>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">{{ $subjects->count() }} subjects defined.</p>
             </div>
-            <a href="{{ route('admin.subjects.create') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
-                Create Subject
-            </a>
         </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">

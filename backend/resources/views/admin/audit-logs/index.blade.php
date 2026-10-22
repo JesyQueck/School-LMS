@@ -1,12 +1,12 @@
 <x-layouts.app title="Audit Logs">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Audit Logs</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Audit Logs</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">A complete record of actions performed in the system.</p>
-    </div>
+    <x-ui.page-header title="Audit Logs" subtitle="A record of actions performed in the system.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Audit Logs</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
@@ -52,10 +52,13 @@
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                     @forelse($logs as $log)
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $log->created_at->format('d M Y H:i') }}</td>
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $log->user->name ?? 'System' }}</td>
-                            <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $log->action }}</td>
-                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $log->target_model ? class_basename($log->target_model) . ' #' . $log->target_id : '—' }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400"><time datetime="{{ $log->created_at->toIso8601String() }}">{{ $log->created_at->format('d M Y H:i') }}</time></td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $auditPresentation[$log->id]['actor'] }}</td>
+                            <td class="px-6 py-4 text-sm text-neutral-900 dark:text-white">
+                                <span class="font-medium">{{ $auditPresentation[$log->id]['action'] }}</span>
+                                <span class="mt-0.5 block text-xs text-neutral-500 dark:text-neutral-400">{{ $log->action }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $auditPresentation[$log->id]['target'] }}</td>
                             <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $log->ip_address ?? '—' }}</td>
                         </tr>
                     @empty

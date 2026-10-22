@@ -1,13 +1,13 @@
 <x-layouts.app title="Edit Subject">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
+    <x-ui.page-header title="Edit Subject" subtitle="Update subject details and class assignments." back-href="{{ route('admin.subjects.index') }}" back-label="Back to subjects">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
             <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item href="{{ route('admin.subjects.index') }}">Subjects</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item active>Edit Subject</x-ui-breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Edit Subject</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Update subject details and class assignments.</p>
-    </div>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     <x-ui.card>
         <form method="POST" action="{{ route('admin.subjects.update', $subject) }}" class="p-6 space-y-6">

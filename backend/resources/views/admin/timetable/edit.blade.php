@@ -1,14 +1,13 @@
 <x-layouts.app title="Edit Timetable Entry">
-    <x-ui.breadcrumbs>
-        <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-        <x-ui.breadcrumb-item href="{{ route('admin.timetable.index') }}">Timetable</x-ui.breadcrumb-item>
-        <x-ui.breadcrumb-item active>Edit Entry</x-ui.breadcrumb-item>
-    </x-ui.breadcrumbs>
-
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Edit Timetable Entry</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Update this schedule entry.</p>
-    </div>
+    <x-ui.page-header title="Edit Timetable Entry" subtitle="Update this schedule entry." back-href="{{ route('admin.timetable.index') }}" back-label="Back to timetable">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.timetable.index') }}">Timetable</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Edit Entry</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">

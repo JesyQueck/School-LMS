@@ -1,13 +1,13 @@
 <x-layouts.app title="Edit Class">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.classes') }}">Classes</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Edit Class</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Edit Class</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Update the class name and assign a form teacher.</p>
-    </div>
+    <x-ui.page-header title="Edit Class" subtitle="Update the class name and assign a form teacher." back-href="{{ route('admin.classes') }}" back-label="Back to classes">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.classes') }}">Classes</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Edit Class</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     <x-ui.card>
         <form method="POST" action="{{ route('admin.classes.update', $class) }}" class="p-6 space-y-6">

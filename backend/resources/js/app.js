@@ -170,11 +170,14 @@ function initializeDashboardCharts() {
             return;
         }
 
-        if (!Array.isArray(data.labels) || data.labels.length === 0) {
+        const type = canvas.dataset.dashboardChart;
+        const hasChartData = type === 'enrollment'
+            ? Array.isArray(data.rows) && data.rows.length > 0
+            : Array.isArray(data.labels) && data.labels.length > 0;
+        if (!hasChartData) {
             return;
         }
 
-        const type = canvas.dataset.dashboardChart;
         const colors = dashboardChartColors();
         let config;
 
@@ -195,16 +198,115 @@ function initializeDashboardCharts() {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { color: colors.text, usePointStyle: true } },
-                        tooltip: { mode: 'index', intersect: false },
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: colors.text, usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: 16, font: { size: 11 } },
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y} recorded entries`,
+                            },
+                        },
                     },
                     scales: {
-                        x: { stacked: true, ticks: { color: colors.text }, grid: { display: false } },
+                        x: {
+                            stacked: true,
+                            title: { display: true, text: 'Date', color: colors.text, font: { size: 11, weight: '600' } },
+                            ticks: { color: colors.text, autoSkip: true, maxTicksLimit: 8, maxRotation: 0, minRotation: 0 },
+                            grid: { display: false },
+                        },
                         y: {
                             stacked: true,
                             beginAtZero: true,
-                            ticks: { color: colors.text, precision: 0 },
+                            title: { display: true, text: 'Recorded student entries', color: colors.text, font: { size: 11, weight: '600' } },
+                            ticks: { color: colors.text, precision: 0, maxTicksLimit: 6 },
                             grid: { color: colors.grid },
+                        },
+                    },
+                },
+            };
+        } else if (type === 'attendance-classes') {
+            const datasets = Array.isArray(data.datasets) ? data.datasets : [];
+            config = {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: datasets.map((dataset) => ({
+                        ...dataset,
+                        backgroundColor: chartStatusColors[String(dataset.label).toLowerCase()] || chartStatusColors.other,
+                        borderRadius: 3,
+                        maxBarThickness: 28,
+                    })),
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: colors.text, usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: 16, font: { size: 11 } },
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.parsed.x} recorded entries`,
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: { display: true, text: 'Recorded student entries', color: colors.text, font: { size: 11, weight: '600' } },
+                            ticks: { color: colors.text, precision: 0, maxTicksLimit: 6 },
+                            grid: { color: colors.grid },
+                        },
+                        y: {
+                            stacked: true,
+                            title: { display: true, text: 'Class', color: colors.text, font: { size: 11, weight: '600' } },
+                            ticks: { color: colors.text, autoSkip: false },
+                            grid: { display: false },
+                        },
+                    },
+                },
+            };
+        } else if (type === 'enrollment') {
+            const rows = Array.isArray(data.rows) ? data.rows : [];
+            config = {
+                type: 'bar',
+                data: {
+                    labels: rows.map((row) => row.label),
+                    datasets: [{
+                        label: 'Active students',
+                        data: rows.map((row) => row.count),
+                        backgroundColor: colors.primary,
+                        borderRadius: 3,
+                        maxBarThickness: 28,
+                    }],
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (context) => `${context.parsed.x} active students` } },
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Active students', color: colors.text, font: { size: 11, weight: '600' } },
+                            ticks: { color: colors.text, precision: 0, maxTicksLimit: 6 },
+                            grid: { color: colors.grid },
+                        },
+                        y: {
+                            title: { display: true, text: 'Class', color: colors.text, font: { size: 11, weight: '600' } },
+                            ticks: { color: colors.text, autoSkip: false },
+                            grid: { display: false },
                         },
                     },
                 },
@@ -265,9 +367,17 @@ function refreshDashboardCharts() {
         chart.options.scales.x.ticks.color = colors.text;
         chart.options.scales.y.ticks.color = colors.text;
         chart.options.scales.y.grid.color = colors.grid;
+        if (chart.options.scales.x.title) {
+            chart.options.scales.x.title.color = colors.text;
+        }
+        if (chart.options.scales.y.title) {
+            chart.options.scales.y.title.color = colors.text;
+        }
 
         if (chart.config.type === 'bar') {
-            chart.options.plugins.legend.labels.color = colors.text;
+            if (chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = colors.text;
+            }
         } else {
             chart.data.datasets[0].borderColor = colors.primary;
             chart.data.datasets[0].backgroundColor = `${colors.primary}20`;

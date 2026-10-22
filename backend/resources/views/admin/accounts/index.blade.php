@@ -1,19 +1,13 @@
 <x-layouts.app title="Accounts">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Accounts</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mt-2">
-            <div>
-                <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">All Accounts</h1>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-                    Manage user accounts.
-                    {{ $users->total() }} total accounts.
-                </p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('admin.accounts.create') }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
+    <x-ui.page-header title="All Accounts" subtitle="{{ $users->total() }} total accounts.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Accounts</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+        <x-slot:actions>
+                <a href="{{ route('admin.accounts.create', request()->only('role')) }}" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     Create Account
                 </a>
@@ -21,8 +15,8 @@
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13.202c.019.77.38 1.503 1.066 2.04l3.584 2.87a2 2 0 001.397.54h1.343a2 2 0 001.99-2.21l-.333-2.221a.75.75 0 01.47-1.33l2.04-1.225a2 2 0 00.47-1.15v-2.222a2 2 0 00-.47-1.15l-2.04-1.225a.75.75 0 01-.47-1.33l.333-2.221A2 2 0 0018.25 8.417v-1.16a2 2 0 00-.894-1.664l-3.221-1.866a2 2 0 00-1.69-.227l-.585.164M9 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     Credentials
                 </a>
-            </div>
-        </div>
+            </x-slot:actions>
+        </x-ui.page-header>
 
         @if(session('status'))
             <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>

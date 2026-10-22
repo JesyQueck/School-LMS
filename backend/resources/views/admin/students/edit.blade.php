@@ -1,13 +1,13 @@
 <x-layouts.app title="Edit Student">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.students') }}">Students</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Edit Student</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Edit Student</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Update {{ $student->user->name ?? 'this student' }}'s details.</p>
-    </div>
+    <x-ui.page-header title="Edit Student" subtitle="Update {{ $student->user->name ?? 'this student' }}'s details." back-href="{{ route('admin.students', array_filter(['page' => $returnPage])) }}" back-label="Back to students">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.students', array_filter(['page' => $returnPage])) }}">Students</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Edit Student</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     <x-ui.card>
         <div class="p-6">
@@ -30,6 +30,9 @@
         <form method="POST" action="{{ route('admin.students.update', $student) }}" class="p-6 space-y-6">
             @csrf
             @method('PUT')
+            @if($returnPage)
+                <input type="hidden" name="page" value="{{ $returnPage }}">
+            @endif
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

@@ -1,4 +1,4 @@
-@props(['label' => '', 'value' => '', 'trend' => null, 'icon' => '', 'compact' => false])
+@props(['label' => '', 'value' => '', 'trend' => null, 'icon' => '', 'compact' => false, 'refined' => false, 'supportingText' => null])
 
 @php
     $trendColors = [
@@ -29,7 +29,31 @@
     ];
 @endphp
 
- <div class="{{ $compact ? 'bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-3 shadow-sm' : 'bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-4 shadow-sm' }}">
+ @if($refined)
+     <div {{ $attributes->merge(['class' => 'relative h-full overflow-hidden rounded-xl border border-neutral-200 border-l-4 border-l-primary-700 bg-white p-4 shadow-sm dark:border-dark-border dark:border-l-primary-400 dark:bg-dark-surface sm:p-5']) }}>
+         <div class="flex items-start justify-between gap-3">
+             <div class="min-w-0">
+                 <p class="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500 dark:text-neutral-400">{{ $label }}</p>
+                 <p class="mt-2 text-2xl font-bold tracking-tight text-neutral-950 dark:text-white sm:text-3xl">{{ $value }}</p>
+             </div>
+             @if($icon)
+                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-800 ring-1 ring-primary-100 dark:bg-primary-900/30 dark:text-primary-200 dark:ring-primary-800/50">
+                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
+                 </div>
+             @endif
+         </div>
+         @if($supportingText)
+             <p class="mt-3 text-xs leading-5 text-neutral-600 dark:text-neutral-400">{{ $supportingText }}</p>
+         @endif
+         @if($trend)
+             <p class="mt-2 flex items-center gap-1.5 text-sm font-semibold {{ $trendColors[$trend['direction']] ?? 'text-neutral-500' }}">
+                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ $trend['direction'] === 'up' ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3' }}"/></svg>
+                 {{ $trend['value'] }}
+             </p>
+         @endif
+     </div>
+ @else
+ <div {{ $attributes->merge(['class' => $compact ? 'bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-3 shadow-sm' : 'bg-white dark:bg-dark-surface rounded-xl border border-neutral-200 dark:border-dark-border p-4 shadow-sm']) }}>
      <div class="flex flex-col">
          <p class="{{ $compact ? 'text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase' : 'text-sm font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide' }}">{{ $label }}</p>
           <div class="mt-1 flex items-center justify-between gap-2">
@@ -38,13 +62,14 @@
                   <div class="{{ $compact ? 'h-6 w-6 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center shrink-0' : 'h-10 w-10 rounded-xl bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center shrink-0' }}">
                      <svg class="{{ $compact ? 'h-3 w-3' : 'h-5 w-5' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconPaths[$icon] ?? $icon }}"/></svg>
                  </div>
-             @endif
+                 @endif
          </div>
          @if($trend)
              <p class="mt-2 flex items-center gap-1.5 text-sm font-semibold {{ $trendColors[$trend['direction']] ?? 'text-neutral-500' }}">
-                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ $trend['direction'] === 'up' ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3' }}"/></svg>
-                 {{ $trend['value'] }}
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="{{ $trend['direction'] === 'up' ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3' }}"/></svg>
+                  {{ $trend['value'] }}
              </p>
          @endif
      </div>
  </div>
+ @endif

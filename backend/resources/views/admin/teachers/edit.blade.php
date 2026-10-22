@@ -1,13 +1,13 @@
 <x-layouts.app title="Edit Teacher">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.teachers') }}">Teachers</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Edit Teacher</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Edit Teacher</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Update {{ $teacher->user->name ?? 'this teacher' }}'s details.</p>
-    </div>
+    <x-ui.page-header title="Edit Teacher" subtitle="Update {{ $teacher->user->name ?? 'this teacher' }}'s details." back-href="{{ route('admin.teachers') }}" back-label="Back to teachers">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.teachers') }}">Teachers</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Edit Teacher</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     <x-ui.card>
         <form method="POST" action="{{ route('admin.teachers.update', $teacher) }}" class="p-6 space-y-6">

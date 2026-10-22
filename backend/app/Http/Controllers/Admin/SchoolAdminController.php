@@ -95,8 +95,12 @@ class SchoolAdminController extends Controller
         ]);
     }
 
-    public function students()
+    public function students(Request $request)
     {
+        $request->validate([
+            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+        ]);
+
         return view('admin.students.index', [
             'students' => Student::with(['user', 'schoolClass'])->paginate(15),
             'classes' => SchoolClass::all(),
@@ -104,11 +108,16 @@ class SchoolAdminController extends Controller
         ]);
     }
 
-    public function enrollStudent()
+    public function enrollStudent(Request $request)
     {
+        $navigation = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+        ]);
+
         return view('admin.students.enroll', [
             'classes' => SchoolClass::orderBy('name')->get(),
             'academicSessions' => AcademicSession::orderBy('start_date', 'desc')->get(),
+            'returnPage' => $navigation['page'] ?? null,
         ]);
     }
 
@@ -268,6 +277,8 @@ class SchoolAdminController extends Controller
     public function createStudent(StoreStudentRequest $request)
     {
         $data = $request->validated();
+        $returnPage = $data['page'] ?? null;
+        unset($data['page']);
 
         $temporaryPassword = $data['password'] ?? Str::random(20);
 
@@ -376,7 +387,7 @@ class SchoolAdminController extends Controller
             $redirectMessage .= ', Parent linked';
         }
 
-        return redirect()->route('admin.students')->with('status', $redirectMessage)
+        return redirect()->route('admin.students', array_filter(['page' => $returnPage]))->with('status', $redirectMessage)
             ->with('new_student_credentials', $oneTimeCredentials->all());
     }
 
@@ -478,18 +489,25 @@ class SchoolAdminController extends Controller
         }
     }
 
-    public function editStudent(Student $student)
+    public function editStudent(Request $request, Student $student)
     {
+        $navigation = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+        ]);
+
         return view('admin.students.edit', [
             'student' => $student->load('user', 'schoolClass', 'parents.user'),
             'classes' => SchoolClass::orderBy('name')->get(),
             'academicSessions' => AcademicSession::orderBy('start_date', 'desc')->get(),
+            'returnPage' => $navigation['page'] ?? null,
         ]);
     }
 
     public function updateStudent(UpdateStudentRequest $request, Student $student)
     {
         $data = $request->validated();
+        $returnPage = $data['page'] ?? null;
+        unset($data['page']);
 
         $student->user()->update([
             'name' => $data['name'],
@@ -531,7 +549,7 @@ class SchoolAdminController extends Controller
 
         $this->audit($request, 'student.updated', Student::class, $student->id, null, $data);
 
-        return redirect()->route('admin.students')->with('status', 'Student updated.');
+        return redirect()->route('admin.students', array_filter(['page' => $returnPage]))->with('status', 'Student updated.');
     }
 
     protected function getOrCreateParent(string $parentEmail, array $requestData)

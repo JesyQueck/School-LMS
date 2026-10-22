@@ -1,13 +1,12 @@
 <x-layouts.app title="Timetable">
-    <x-ui.breadcrumbs>
-        <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-        <x-ui.breadcrumb-item active>Timetable</x-ui.breadcrumb-item>
-    </x-ui.breadcrumbs>
-
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Timetable</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Configure periods, generate schedules, and manage class timetables.</p>
-    </div>
+    <x-ui.page-header title="Timetable" subtitle="Configure periods and manage class schedules.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Timetable</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>

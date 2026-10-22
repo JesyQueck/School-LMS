@@ -27,6 +27,7 @@ class StoreAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'return_role' => ['nullable', Rule::in(['teacher', 'student', 'parent', 'admin'])],
             'type' => ['required', 'in:teacher,student,parent'],
             'name' => ['required', 'string', 'max:255'],
             'email' => [

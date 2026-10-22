@@ -1,13 +1,13 @@
 <x-layouts.app title="Edit Announcement">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+    <x-ui.page-header title="Edit Announcement" subtitle="Update announcement details." back-href="{{ route('admin.announcements') }}" back-label="Back to announcements">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item href="{{ route('admin.announcements') }}">Announcements</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item active>Edit Announcement</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Edit Announcement</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Update announcement details.</p>
-    </div>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>

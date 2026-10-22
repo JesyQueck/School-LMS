@@ -1,12 +1,17 @@
 <x-layouts.app title="Teachers">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Teachers</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Teachers</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Manage teaching staff and their assignments.</p>
-    </div>
+    <x-ui.page-header title="Teachers" subtitle="Manage teaching staff and their assignments.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Teachers</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+        <x-slot:actions>
+            <button type="button" onclick="document.getElementById('add-teacher-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
+                Add Teacher
+            </button>
+        </x-slot:actions>
+    </x-ui.page-header>
 
     @if(session('new_teacher_credentials'))
         @php
@@ -24,13 +29,6 @@
             </div>
         </x-ui.alert>
     @endif
-
-    <div class="mb-6">
-        <button type="button" onclick="document.getElementById('add-teacher-modal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors text-sm">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-            Add Teacher
-        </button>
-    </div>
 
     <x-ui.card>
         <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">

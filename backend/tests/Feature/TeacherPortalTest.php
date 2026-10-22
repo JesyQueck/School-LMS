@@ -89,6 +89,67 @@ class TeacherPortalTest extends TestCase
         $this->assertDatabaseHas('attendances', ['student_id' => $student->id, 'status' => 'present']);
     }
 
+    public function test_teacher_cannot_overwrite_synthetic_demo_attendance(): void
+    {
+        $teacherUser = User::factory()->create(['role' => 'teacher']);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-SYNTH-1',
+        ]);
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-18',
+            'is_current' => true,
+        ]);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        ClassAssignment::create([
+            'teacher_id' => $teacher->id,
+            'class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]);
+        $student = Student::create([
+            'user_id' => User::factory()->create(['role' => 'student'])->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-SYNTH-1',
+            'status' => 'active',
+        ]);
+        Attendance::create([
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+            'date' => '2026-09-15',
+            'status' => 'present',
+            'marked_by' => $teacherUser->id,
+            'is_synthetic' => true,
+        ]);
+
+        $this->actingAs($teacherUser)
+            ->post('/teacher/attendance', [
+                'student_id' => $student->id,
+                'class_id' => $class->id,
+                'term_id' => $term->id,
+                'date' => '2026-09-15',
+                'status' => 'absent',
+            ])
+            ->assertStatus(409);
+
+        $savedAttendance = Attendance::query()
+            ->where('student_id', $student->id)
+            ->whereDate('date', '2026-09-15')
+            ->firstOrFail();
+        $this->assertSame('present', $savedAttendance->status);
+        $this->assertTrue($savedAttendance->is_synthetic);
+    }
+
     public function test_teacher_dashboard_reports_current_term_attendance_records_against_roster_without_counting_unmarked_as_absent(): void
     {
         $teacherUser = User::factory()->create(['role' => 'teacher']);

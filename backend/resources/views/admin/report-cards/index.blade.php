@@ -1,10 +1,12 @@
 <x-layouts.app title="Report Cards">
-    <div class="mb-6 flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Principal Review</h1>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400">Review and approve report cards submitted by class teachers.</p>
-        </div>
-    </div>
+    <x-ui.page-header title="Principal Review" subtitle="Review and approve report cards submitted by class teachers.">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui-breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui-breadcrumb-item>
+                <x-ui.breadcrumb-item active>Report Cards</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">

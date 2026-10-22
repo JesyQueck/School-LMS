@@ -1,16 +1,19 @@
 <x-layouts.app title="Enroll Student">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.students') }}">Students</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Enroll Student</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Enroll Student</h1>
-        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Enroll a new student with complete information including parent/guardian, emergency contacts, and documents.</p>
-    </div>
+    <x-ui.page-header title="Enroll Student" subtitle="Enroll a new student with complete information including parent/guardian, emergency contacts, and documents." back-href="{{ route('admin.students', array_filter(['page' => $returnPage])) }}" back-label="Back to students">
+        <x-slot:breadcrumbs>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.students', array_filter(['page' => $returnPage])) }}">Students</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Enroll Student</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
+        </x-slot:breadcrumbs>
+    </x-ui.page-header>
 
     <form method="POST" action="{{ route('admin.students.store') }}" enctype="multipart/form-data" class="space-y-8">
         @csrf
+        @if($returnPage)
+            <input type="hidden" name="page" value="{{ $returnPage }}">
+        @endif
 
         <!-- 1. Student Information -->
         <x-ui.card>

@@ -109,7 +109,7 @@ class TeacherPortalController extends Controller
         $attendanceRecordedCount = 0;
         if ($currentTerm && $attendanceClassIds->isNotEmpty()) {
             $attendanceExpectedCount = Student::whereIn('class_id', $attendanceClassIds)->count();
-            $attendanceRecordedCount = Attendance::whereIn('class_id', $attendanceClassIds)
+            $attendanceRecordedCount = Attendance::real()->whereIn('class_id', $attendanceClassIds)
                 ->where('term_id', $currentTerm->id)
                 ->whereDate('date', now()->toDateString())
                 ->distinct('student_id')
@@ -194,6 +194,8 @@ class TeacherPortalController extends Controller
                     abort(403, 'You are not authorized to mark attendance for this student.');
                 }
 
+                $this->preventSyntheticAttendanceOverwrite($studentId, $date, $termId);
+
                 Attendance::updateOrCreate(
                     [
                         'student_id' => $studentId,
@@ -217,6 +219,8 @@ class TeacherPortalController extends Controller
                 if (! in_array($studentId, $classStudentIds, true)) {
                     abort(403, 'You are not authorized to mark attendance for this student.');
                 }
+
+                $this->preventSyntheticAttendanceOverwrite($studentId, $date, $termId);
 
                 Attendance::updateOrCreate(
                     [
@@ -274,7 +278,7 @@ class TeacherPortalController extends Controller
                     'user',
                     'fees',
                     'attendances' => function ($query) use ($activeClassAssignment) {
-                        $query->where('term_id', $activeClassAssignment->term_id);
+                        $query->real()->where('term_id', $activeClassAssignment->term_id);
                     },
                 ])
                 ->get();
@@ -315,7 +319,7 @@ class TeacherPortalController extends Controller
                 ->get();
 
             $today = now()->toDateString();
-            $todayAttendances = Attendance::where('class_id', $activeClassAssignment->class_id)
+            $todayAttendances = Attendance::real()->where('class_id', $activeClassAssignment->class_id)
                 ->where('term_id', $activeClassAssignment->term_id)
                 ->whereDate('date', $today)
                 ->with('student')
@@ -676,5 +680,17 @@ class TeacherPortalController extends Controller
         }
 
         return $teacher;
+    }
+
+    private function preventSyntheticAttendanceOverwrite(int $studentId, string $date, int $termId): void
+    {
+        if (Attendance::query()
+            ->where('student_id', $studentId)
+            ->whereDate('date', $date)
+            ->where('term_id', $termId)
+            ->where('is_synthetic', true)
+            ->exists()) {
+            abort(409, 'Synthetic demo attendance cannot be changed through the teacher attendance form.');
+        }
     }
 }

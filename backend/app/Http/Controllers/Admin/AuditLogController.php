@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Services\AuditLogFormatter;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, AuditLogFormatter $formatter)
     {
         $query = AuditLog::with('user');
 
@@ -26,8 +27,9 @@ class AuditLogController extends Controller
         }
 
         $logs = $query->latest()->paginate(25)->withQueryString();
+        $auditPresentation = $formatter->format($logs->getCollection());
 
-        return view('admin.audit-logs.index', compact('logs'));
+        return view('admin.audit-logs.index', compact('logs', 'auditPresentation'));
     }
 
     public function show(AuditLog $auditLog)

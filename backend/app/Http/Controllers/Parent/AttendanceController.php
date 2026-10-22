@@ -23,6 +23,7 @@ class AttendanceController extends Controller
             ->first();
 
         $attendanceQuery = $student->attendance()
+            ->real()
             ->with(['term', 'class'])
             ->latest('date');
 
@@ -31,7 +32,7 @@ class AttendanceController extends Controller
         }
 
         $attendance = $attendanceQuery->get();
-        $hasAnyAttendance = $student->attendance()->exists();
+        $hasAnyAttendance = $student->attendance()->real()->exists();
 
         return view('parent.attendance', compact('student', 'attendance', 'currentTerm', 'hasAnyAttendance'));
     }
