@@ -125,9 +125,70 @@ class TimetableGeneratorService
             }
         }
 
-        // Round-robin scheduling: each round gives every remaining task one slot
-        // This spreads subjects evenly across all days and periods
-        $totalSlots = count($days) * count($teachingPeriods);
+        // STEP 1: Reserve day-rule override slots first
+        // These slots are taken by day rules and must NOT be filled by round-robin
+        foreach ($days as $day) {
+            $dayRule = $this->periodConfig->getDayRule($day);
+            if (! $dayRule || ! isset($dayRule['period_overrides'])) {
+                continue;
+            }
+
+            foreach ($dayRule['period_overrides'] as $periodNumber => $override) {
+                $period = $teachingPeriods->first(fn ($p) => $p->period_number == $periodNumber);
+                if (! $period) {
+                    continue;
+                }
+
+                // Check day end override
+                $dayEndTime = $this->getDayEndTime($day);
+                if ($dayEndTime && Carbon::parse($period->end_time)->gt(Carbon::parse($dayEndTime))) {
+                    continue;
+                }
+
+                $slotKey = "{$day}-{$period->period_number}";
+
+                $periodName = $override['name'] ?? $period->name ?? 'Period ' . $period->period_number;
+                $subjectName = $override['subject'] ?? $period->name ?? 'Period ' . $period->period_number;
+                $teacherName = $override['teacher'] ?? 'TBD';
+
+                // Create override entries for each class that has subjects
+                foreach ($classSubjects as $classSubject) {
+                    $classId = $classSubject->id;
+                    if (isset($classSlots[$classId][$slotKey])) {
+                        continue;
+                    }
+
+                    $teacherAssignment = $classSubject->teacherAssignments
+                        ->where('is_active', true)
+                        ->first();
+
+                    $entry = [
+                        'class_subject_id' => $classSubject->id,
+                        'teacher_id' => $teacherAssignment?->teacher_id ?? null,
+                        'day' => $day,
+                        'start_time' => Carbon::parse($period->start_time)->format('H:i:s'),
+                        'end_time' => Carbon::parse($period->end_time)->format('H:i:s'),
+                        'term_id' => $this->periodConfig->term_id,
+                        'academic_session_id' => $this->periodConfig->academic_session_id,
+                        'period_config_id' => $this->periodConfig->id,
+                        'is_locked' => true,
+                        'is_manual' => false,
+                        'subject' => $subjectName,
+                        'class_name' => $classSubject->class->name ?? 'N/A',
+                        'period_number' => $period->period_number,
+                        'period_name' => $periodName,
+                        'teacher_name' => $teacherName,
+                        'has_teacher' => true,
+                        'day_rule' => 'day_override',
+                    ];
+
+                    $generated[] = $entry;
+                    $classSlots[$classId][$slotKey] = true;
+                }
+            }
+        }
+
+        // STEP 2: Round-robin schedule remaining tasks into remaining slots
         $dayIndex = 0;
         $periodIndex = 0;
         $round = 0;
@@ -145,7 +206,7 @@ class TimetableGeneratorService
                     $dayIdx = ($dayIndex + $d) % $dayCount;
                     $day = $days[$dayIdx];
 
-                    // Check day end override
+                    // Check day end override - skip periods extending past day end
                     $dayEndTime = $this->getDayEndTime($day);
 
                     for ($p = 0; $p < count($teachingPeriods); $p++) {
@@ -157,13 +218,9 @@ class TimetableGeneratorService
                             continue;
                         }
 
-                        // Check day-specific period override
-                        $periodOverride = $this->getDayPeriodOverride($day, $period->period_number);
-
+                        // Skip slots reserved for day-rule overrides
                         $slotKey = "{$day}-{$period->period_number}";
-                        $classId = $task['class_id'];
-
-                        if (isset($classSlots[$classId][$slotKey])) {
+                        if (isset($classSlots[$task['class_id']][$slotKey])) {
                             continue;
                         }
 
@@ -175,12 +232,6 @@ class TimetableGeneratorService
                         $periodName = $period->name ?? 'Period ' . $period->period_number;
                         $subjectName = $task['subject'];
                         $teacherName = $task['teacher_name'];
-
-                        if ($periodOverride) {
-                            $periodName = $periodOverride['name'] ?? $periodName;
-                            $subjectName = $periodOverride['subject'] ?? $subjectName;
-                            $teacherName = $periodOverride['teacher'] ?? $teacherName;
-                        }
 
                         $entry = [
                             'class_subject_id' => $task['class_subject_id'],
@@ -199,12 +250,12 @@ class TimetableGeneratorService
                             'period_name' => $periodName,
                             'teacher_name' => $teacherName,
                             'has_teacher' => true,
-                            'day_rule' => $periodOverride ? 'day_override' : null,
+                            'day_rule' => null,
                         ];
 
                         $generated[] = $entry;
 
-                        $classSlots[$classId][$slotKey] = true;
+                        $classSlots[$task['class_id']][$slotKey] = true;
                         if ($teacherId) {
                             $teacherSlots[$teacherId][$slotKey] = true;
                         }
@@ -270,8 +321,8 @@ class TimetableGeneratorService
                 'period_config_id' => $entry['period_config_id'],
                 'period_number' => $entry['period_number'] ?? null,
                 'period_name_override' => $entry['period_name'] ?? null,
-                'is_locked' => false,
-                'is_manual' => false,
+                'is_locked' => $entry['is_locked'] ?? false,
+                'is_manual' => $entry['is_manual'] ?? false,
             ]);
         }
     }
