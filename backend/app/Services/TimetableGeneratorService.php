@@ -57,7 +57,7 @@ class TimetableGeneratorService
             ->get();
 
         $periods = $this->periodConfig->periods;
-        $teachingPeriods = $periods->where('is_break', false);
+        $teachingPeriods = $periods->where('is_break', false)->values();
         $days = $this->periodConfig->dayLabels();
         $dayCount = count($days);
 
