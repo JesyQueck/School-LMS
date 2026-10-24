@@ -222,6 +222,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/results/export', [ResultsController::class, 'exportResults'])->name('results.export');
 
         Route::get('/report-cards', [ReportCardController::class, 'index'])->name('report-cards.index');
+        Route::get('/report-cards/{reportCard}', [ReportCardController::class, 'show'])->name('report-cards.show');
         Route::post('/report-cards', [ReportCardController::class, 'store'])->name('report-cards.store');
         Route::post('/report-cards/{reportCard}/publish', [ReportCardController::class, 'publish'])->name('report-cards.publish');
         Route::post('/report-cards/{reportCard}/unpublish', [ReportCardController::class, 'unpublish'])->name('report-cards.unpublish');

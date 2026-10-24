@@ -41,7 +41,7 @@ class TimetableController extends Controller
             ['term_id' => $currentTerm->id],
             [
                 'academic_session_id' => $currentTerm->academic_session_id,
-                'periods_per_day' => 8,
+                'periods_per_day' => 10,
                 'start_day' => 'Monday',
                 'end_day' => 'Friday',
             ]
@@ -55,15 +55,16 @@ class TimetableController extends Controller
         }
 
         $defaultPeriods = [
-            ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:45', 'is_break' => false],
-            ['period_number' => 2, 'name' => 'Period 2', 'start_time' => '08:45', 'end_time' => '09:30', 'is_break' => false],
-            ['period_number' => 3, 'name' => 'Period 3', 'start_time' => '09:30', 'end_time' => '10:15', 'is_break' => false],
-            ['period_number' => 4, 'name' => 'Period 4', 'start_time' => '10:15', 'end_time' => '11:00', 'is_break' => false],
-            ['period_number' => 5, 'name' => 'Break', 'start_time' => '11:00', 'end_time' => '11:30', 'is_break' => true],
-            ['period_number' => 6, 'name' => 'Period 5', 'start_time' => '11:30', 'end_time' => '12:15', 'is_break' => false],
-            ['period_number' => 7, 'name' => 'Period 6', 'start_time' => '12:15', 'end_time' => '13:00', 'is_break' => false],
-            ['period_number' => 8, 'name' => 'Period 7', 'start_time' => '13:00', 'end_time' => '13:45', 'is_break' => false],
-            ['period_number' => 9, 'name' => 'Period 8', 'start_time' => '13:45', 'end_time' => '14:30', 'is_break' => false],
+            ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false],
+            ['period_number' => 2, 'name' => 'Period 2', 'start_time' => '08:40', 'end_time' => '09:20', 'is_break' => false],
+            ['period_number' => 3, 'name' => 'Period 3', 'start_time' => '09:20', 'end_time' => '10:00', 'is_break' => false],
+            ['period_number' => 4, 'name' => 'Break', 'start_time' => '10:00', 'end_time' => '10:10', 'is_break' => true],
+            ['period_number' => 5, 'name' => 'Period 4', 'start_time' => '10:10', 'end_time' => '10:50', 'is_break' => false],
+            ['period_number' => 6, 'name' => 'Period 5', 'start_time' => '10:50', 'end_time' => '11:30', 'is_break' => false],
+            ['period_number' => 7, 'name' => 'Break', 'start_time' => '11:30', 'end_time' => '12:00', 'is_break' => true],
+            ['period_number' => 8, 'name' => 'Period 6', 'start_time' => '12:00', 'end_time' => '12:40', 'is_break' => false],
+            ['period_number' => 9, 'name' => 'Period 7', 'start_time' => '12:40', 'end_time' => '13:20', 'is_break' => false],
+            ['period_number' => 10, 'name' => 'Period 8', 'start_time' => '13:20', 'end_time' => '14:00', 'is_break' => false],
         ];
 
         $slice = $config->periods_per_day + 1;
@@ -197,6 +198,10 @@ class TimetableController extends Controller
             'periods.*.start_time' => ['required', 'date_format:H:i'],
             'periods.*.end_time' => ['required', 'date_format:H:i'],
             'periods.*.is_break' => ['nullable', 'boolean'],
+            'day_rules' => ['nullable', 'array'],
+            'day_rules.*.end_override' => ['nullable', 'date_format:H:i'],
+            'day_rules.*.period_overrides' => ['nullable', 'array'],
+            'day_rules.*.note' => ['nullable', 'string', 'max:255'],
         ]);
 
         $generator = new TimetableGeneratorService(
@@ -210,6 +215,20 @@ class TimetableController extends Controller
             return redirect()->route('admin.timetable.index')->withErrors($errors->toArray());
         }
 
+        // Preprocess day_rules: parse period_overrides JSON strings into arrays
+        $dayRules = $validated['day_rules'] ?? [];
+        foreach ($dayRules as $day => &$rule) {
+            if (isset($rule['period_overrides']) && is_string($rule['period_overrides']) && trim($rule['period_overrides']) !== '') {
+                $decoded = json_decode($rule['period_overrides'], true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $rule['period_overrides'] = $decoded;
+                } else {
+                    unset($rule['period_overrides']);
+                }
+            }
+        }
+        $validated['day_rules'] = $dayRules;
+
         $config = PeriodConfig::updateOrCreate(
             ['term_id' => $currentTerm->id],
             [
@@ -217,6 +236,7 @@ class TimetableController extends Controller
                 'periods_per_day' => $validated['periods_per_day'],
                 'start_day' => $validated['start_day'],
                 'end_day' => $validated['end_day'],
+                'day_rules' => $validated['day_rules'] ?? null,
             ]
         );
 
@@ -337,7 +357,7 @@ class TimetableController extends Controller
 
         $periodConfig = PeriodConfig::firstOrCreate(
             ['term_id' => $currentTerm->id],
-            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 10, 'start_day' => 'Monday', 'end_day' => 'Friday']
         );
 
         $generator = new TimetableGeneratorService($periodConfig);
@@ -391,7 +411,7 @@ class TimetableController extends Controller
 
         $periodConfig = PeriodConfig::firstOrCreate(
             ['term_id' => $currentTerm->id],
-            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 8, 'start_day' => 'Monday', 'end_day' => 'Friday']
+            ['academic_session_id' => $currentTerm?->academic_session_id, 'periods_per_day' => 10, 'start_day' => 'Monday', 'end_day' => 'Friday']
         );
 
         $generator = new TimetableGeneratorService($periodConfig);

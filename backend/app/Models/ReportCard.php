@@ -46,6 +46,8 @@ class ReportCard extends Model
         'published_by',
         'published_at',
         'generated_at',
+        'review_date',
+        'principal_signature',
     ];
 
     protected $attributes = [
@@ -55,6 +57,7 @@ class ReportCard extends Model
     protected $casts = [
         'generated_at' => 'datetime',
         'next_term_begins' => 'date',
+        'review_date' => 'date',
         'published_at' => 'datetime',
         'status' => 'string',
     ];

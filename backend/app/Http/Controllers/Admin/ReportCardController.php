@@ -34,6 +34,22 @@ class ReportCardController extends Controller
         ]);
     }
 
+    public function show(ReportCard $reportCard)
+    {
+        $reportCard->load([
+            'student.user',
+            'student.schoolClass',
+            'term',
+            'student.results' => function ($query) use ($reportCard) {
+                $query->where('term_id', $reportCard->term_id)->with('classSubject.subject');
+            },
+        ]);
+
+        return view('admin.report-cards.show', [
+            'reportCard' => $reportCard,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -106,6 +122,8 @@ class ReportCardController extends Controller
             'position_in_class' => ['nullable', 'integer', 'min:1'],
             'total_students_in_class' => ['nullable', 'integer', 'min:1'],
             'next_term_begins' => ['nullable', 'date'],
+            'review_date' => ['nullable', 'date'],
+            'principal_signature' => ['nullable', 'string', 'max:255'],
         ]);
 
         if (! empty($validated['position_in_class']) && ! empty($validated['total_students_in_class'])) {
@@ -120,6 +138,8 @@ class ReportCardController extends Controller
             'position_in_class' => $validated['position_in_class'] ?? $reportCard->position_in_class,
             'total_students_in_class' => $validated['total_students_in_class'] ?? $reportCard->total_students_in_class,
             'next_term_begins' => $validated['next_term_begins'] ?? $reportCard->next_term_begins,
+            'review_date' => $validated['review_date'] ?? $reportCard->review_date,
+            'principal_signature' => $validated['principal_signature'] ?? $reportCard->principal_signature,
         ]);
 
         $oldStatus = $reportCard->status;

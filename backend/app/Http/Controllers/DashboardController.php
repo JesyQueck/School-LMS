@@ -45,6 +45,7 @@ class DashboardController extends Controller
         }
 
         $totalAnnouncements = Announcement::count();
+        $recentAnnouncements = Announcement::latest()->limit(2)->get();
 
         $finance = $feeService->financeSummary();
 
@@ -107,7 +108,8 @@ class DashboardController extends Controller
             'finance',
             'recentActivity',
             'actionLabels',
-            'totalAnnouncements'
+            'totalAnnouncements',
+            'recentAnnouncements'
         ));
     }
 

@@ -21,6 +21,31 @@ class TimetableGeneratorService
         return $this->periodConfig;
     }
 
+    /**
+     * Get the effective end time for a given day, respecting day rules.
+     */
+    public function getDayEndTime(string $day): ?string
+    {
+        $dayRule = $this->periodConfig->getDayRule($day);
+        if ($dayRule && isset($dayRule['end_override'])) {
+            return $dayRule['end_override'];
+        }
+        return null;
+    }
+
+    /**
+     * Get the event/activity override for a given period on a given day.
+     */
+    public function getDayPeriodOverride(string $day, int $periodNumber): ?array
+    {
+        $dayRule = $this->periodConfig->getDayRule($day);
+        if (! $dayRule || ! isset($dayRule['period_overrides'])) {
+            return null;
+        }
+
+        return $dayRule['period_overrides'][$periodNumber] ?? null;
+    }
+
     public function generate(): Collection
     {
         $classSubjects = ClassSubject::with([
@@ -36,6 +61,18 @@ class TimetableGeneratorService
         $days = $this->periodConfig->dayLabels();
         $dayCount = count($days);
 
+        // Compute max periods per week across all tasks for loop bound
+        $periodsPerWeekMax = 0;
+        foreach ($classSubjects as $classSubject) {
+            $pw = (int) ($classSubject->periods_per_week ?? 1);
+            if ($pw < 1) {
+                $pw = 1;
+            }
+            if ($pw > $periodsPerWeekMax) {
+                $periodsPerWeekMax = $pw;
+            }
+        }
+
         $generated = collect();
         $warnings = collect();
         $conflicts = collect();
@@ -43,94 +80,167 @@ class TimetableGeneratorService
         $teacherSlots = [];
         $classSlots = [];
 
-        $dayRotation = 0;
+        // Build a list of all scheduling tasks: each class-subject needs N periods per week
+        $tasks = [];
+        foreach ($classSubjects as $classSubject) {
+            $periodsPerWeek = (int) ($classSubject->periods_per_week ?? 1);
+            if ($periodsPerWeek < 1) {
+                $periodsPerWeek = 1;
+            }
 
-        $classSubjectsByClass = $classSubjects->groupBy('class_id');
+            $teacherAssignment = $classSubject->teacherAssignments
+                ->where('is_active', true)
+                ->first();
 
-        foreach ($classSubjectsByClass as $classId => $subjectsInClass) {
-            foreach ($subjectsInClass as $classSubject) {
-                $periodsPerWeek = $classSubject->periods_per_week ?? 1;
+            if (! $teacherAssignment) {
+                $warnings[] = [
+                    'class' => $classSubject->class->name ?? 'Unknown',
+                    'subject' => $classSubject->subject->name ?? 'Unknown',
+                    'message' => 'No active teacher assigned for this class-subject combination.',
+                ];
+                continue;
+            }
 
-                $teacherAssignment = $classSubject->teacherAssignments
-                    ->where('is_active', true)
-                    ->first();
+            for ($p = 0; $p < $periodsPerWeek; $p++) {
+                $tasks[] = [
+                    'class_subject_id' => $classSubject->id,
+                    'class_id' => $classSubject->class_id,
+                    'teacher_id' => $teacherAssignment->teacher_id,
+                    'day' => null,
+                    'start_time' => null,
+                    'end_time' => null,
+                    'term_id' => $this->periodConfig->term_id,
+                    'academic_session_id' => $this->periodConfig->academic_session_id,
+                    'period_config_id' => $this->periodConfig->id,
+                    'is_locked' => false,
+                    'is_manual' => false,
+                    'subject' => $classSubject->subject->name ?? 'N/A',
+                    'class_name' => $classSubject->class->name ?? 'N/A',
+                    'period_number' => null,
+                    'period_name' => null,
+                    'teacher_name' => $teacherAssignment->teacher->user->name ?? 'Not assigned',
+                    'has_teacher' => true,
+                    'day_rule' => null,
+                ];
+            }
+        }
 
-                if (! $teacherAssignment) {
-                    $warnings[] = [
-                        'class' => $classSubject->class->name ?? 'Unknown',
-                        'subject' => $classSubject->subject->name ?? 'Unknown',
-                        'message' => 'No active teacher assigned for this class-subject combination.',
-                    ];
-                }
+        // Round-robin scheduling: each round gives every remaining task one slot
+        // This spreads subjects evenly across all days and periods
+        $totalSlots = count($days) * count($teachingPeriods);
+        $dayIndex = 0;
+        $periodIndex = 0;
+        $round = 0;
 
-                $teacherId = $teacherAssignment?->teacher_id;
-                $slotsFilled = 0;
+        while (count($tasks) > 0 && $round < $periodsPerWeekMax) {
+            $round++;
+            $remainingTasks = $tasks;
+            $tasks = [];
 
-                for ($p = 0; $p < $periodsPerWeek; $p++) {
-                    $assigned = false;
+            foreach ($remainingTasks as $task) {
+                $assigned = false;
 
-                    for ($dayOffset = 0; $dayOffset < $dayCount; $dayOffset++) {
-                        $dayIdx = ($dayRotation + $dayOffset) % $dayCount;
-                        $day = $days[$dayIdx];
+                // Try to find a slot for this task, scanning days and periods
+                for ($d = 0; $d < $dayCount; $d++) {
+                    $dayIdx = ($dayIndex + $d) % $dayCount;
+                    $day = $days[$dayIdx];
 
-                        foreach ($teachingPeriods as $period) {
-                            $slotKey = "{$day}-{$period->period_number}";
+                    // Check day end override
+                    $dayEndTime = $this->getDayEndTime($day);
 
-                            if (isset($classSlots[$classId][$slotKey])) {
-                                continue;
-                            }
+                    for ($p = 0; $p < count($teachingPeriods); $p++) {
+                        $periodIdx = ($periodIndex + $p) % count($teachingPeriods);
+                        $period = $teachingPeriods[$periodIdx];
 
-                            if ($teacherId && isset($teacherSlots[$teacherId][$slotKey])) {
-                                continue;
-                            }
-
-                            $entry = [
-                                'class_subject_id' => $classSubject->id,
-                                'teacher_id' => $teacherId,
-                                'day' => $day,
-                                'start_time' => Carbon::parse($period->start_time)->format('H:i:s'),
-                                'end_time' => Carbon::parse($period->end_time)->format('H:i:s'),
-                                'term_id' => $this->periodConfig->term_id,
-                                'academic_session_id' => $this->periodConfig->academic_session_id,
-                                'period_config_id' => $this->periodConfig->id,
-                                'is_locked' => false,
-                                'is_manual' => false,
-                                'subject' => $classSubject->subject->name ?? 'N/A',
-                                'class_name' => $classSubject->class->name ?? 'N/A',
-                                'period_number' => $period->period_number,
-                                'period_name' => $period->name ?? 'Period '.$period->period_number,
-                                'teacher_name' => $teacherAssignment?->teacher?->user?->name ?? 'Not assigned',
-                                'has_teacher' => $teacherAssignment !== null,
-                            ];
-
-                            $generated[] = $entry;
-
-                            $classSlots[$classId][$slotKey] = true;
-                            if ($teacherId) {
-                                $teacherSlots[$teacherId][$slotKey] = true;
-                            }
-
-                            $slotsFilled++;
-                            $dayRotation = ($dayRotation + 1) % $dayCount;
-                            $assigned = true;
-                            break;
+                        // Skip periods extending past day end override
+                        if ($dayEndTime && Carbon::parse($period->end_time)->gt(Carbon::parse($dayEndTime))) {
+                            continue;
                         }
 
-                        if ($assigned) {
-                            break;
+                        // Check day-specific period override
+                        $periodOverride = $this->getDayPeriodOverride($day, $period->period_number);
+
+                        $slotKey = "{$day}-{$period->period_number}";
+                        $classId = $task['class_id'];
+
+                        if (isset($classSlots[$classId][$slotKey])) {
+                            continue;
                         }
+
+                        $teacherId = $task['teacher_id'];
+                        if ($teacherId && isset($teacherSlots[$teacherId][$slotKey])) {
+                            continue;
+                        }
+
+                        $periodName = $period->name ?? 'Period ' . $period->period_number;
+                        $subjectName = $task['subject'];
+                        $teacherName = $task['teacher_name'];
+
+                        if ($periodOverride) {
+                            $periodName = $periodOverride['name'] ?? $periodName;
+                            $subjectName = $periodOverride['subject'] ?? $subjectName;
+                            $teacherName = $periodOverride['teacher'] ?? $teacherName;
+                        }
+
+                        $entry = [
+                            'class_subject_id' => $task['class_subject_id'],
+                            'teacher_id' => $teacherId,
+                            'day' => $day,
+                            'start_time' => Carbon::parse($period->start_time)->format('H:i:s'),
+                            'end_time' => Carbon::parse($period->end_time)->format('H:i:s'),
+                            'term_id' => $task['term_id'],
+                            'academic_session_id' => $task['academic_session_id'],
+                            'period_config_id' => $task['period_config_id'],
+                            'is_locked' => false,
+                            'is_manual' => false,
+                            'subject' => $subjectName,
+                            'class_name' => $task['class_name'],
+                            'period_number' => $period->period_number,
+                            'period_name' => $periodName,
+                            'teacher_name' => $teacherName,
+                            'has_teacher' => true,
+                            'day_rule' => $periodOverride ? 'day_override' : null,
+                        ];
+
+                        $generated[] = $entry;
+
+                        $classSlots[$classId][$slotKey] = true;
+                        if ($teacherId) {
+                            $teacherSlots[$teacherId][$slotKey] = true;
+                        }
+
+                        // Advance pointers for next task
+                        $dayIndex = ($dayIndex + $d + 1) % $dayCount;
+                        $periodIndex = ($periodIndex + $p + 1) % count($teachingPeriods);
+
+                        $assigned = true;
+                        break;
                     }
 
-                    if (! $assigned) {
-                        $warnings[] = [
-                            'class' => $classSubject->class->name ?? 'Unknown',
-                            'subject' => $classSubject->subject->name ?? 'Unknown',
-                            'message' => 'Could not schedule all periods for this class-subject combination.',
-                        ];
+                    if ($assigned) {
                         break;
                     }
                 }
+
+                if (! $assigned) {
+                    // Could not schedule this task, keep it for next round or warn
+                    $tasks[] = $task;
+                }
             }
+
+            // Prevent infinite loop if no progress
+            if (count($tasks) === count($remainingTasks)) {
+                break;
+            }
+        }
+
+        // Warn about unassigned tasks
+        foreach ($tasks as $task) {
+            $warnings[] = [
+                'class' => $task['class_name'],
+                'subject' => $task['subject'],
+                'message' => 'Could not schedule all periods for this class-subject combination.',
+            ];
         }
 
         return collect([
@@ -159,6 +269,7 @@ class TimetableGeneratorService
                 'academic_session_id' => $entry['academic_session_id'],
                 'period_config_id' => $entry['period_config_id'],
                 'period_number' => $entry['period_number'] ?? null,
+                'period_name_override' => $entry['period_name'] ?? null,
                 'is_locked' => false,
                 'is_manual' => false,
             ]);
