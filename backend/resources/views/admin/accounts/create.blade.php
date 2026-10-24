@@ -13,21 +13,26 @@
         @php
             $cred = session('new_account_credentials');
         @endphp
-        <x-ui.alert type="info" class="mb-6">
-            <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
-            @foreach($cred as $accountCredential)
-                <p>
-                    <strong>{{ ucfirst($accountCredential['role']) }}</strong> account created for {{ $accountCredential['name'] }}.
-                    Login ID: <span class="font-mono font-medium">{{ $accountCredential['login_identifier'] }}</span>.
-                    @if($accountCredential['email']) Email: {{ $accountCredential['email'] }}. @endif
-                    @if(!empty($accountCredential['password']))
-                        Temporary password: <span class="font-mono font-medium">{{ $accountCredential['password'] }}</span>.
-                        Require a password change at first login. It can also be retrieved from Accounts → Credentials until changed.
-                    @elseif($accountCredential['role'] === 'parent')
-                        Set or recover your password using the email password-recovery flow at <a class="underline" href="{{ url('/forgot-password') }}">{{ url('/forgot-password') }}</a>.
-                    @endif
-                </p>
-            @endforeach
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
+                    <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+                    @foreach($cred as $accountCredential)
+                        <p>
+                            <strong>{{ ucfirst($accountCredential['role']) }}</strong> account created for {{ $accountCredential['name'] }}.
+                            Login ID: <span class="font-mono font-medium">{{ $accountCredential['login_identifier'] }}</span>.
+                            @if($accountCredential['email']) Email: {{ $accountCredential['email'] }}. @endif
+                            @if(!empty($accountCredential['password']))
+                                Temporary password: <span class="font-mono font-medium">{{ $accountCredential['password'] }}</span>.
+                                Require a password change at first login. It can also be retrieved from Accounts → Credentials until changed.
+                            @elseif($accountCredential['role'] === 'parent')
+                                Set or recover your password using the email password-recovery flow at <a class="underline" href="{{ url('/forgot-password') }}">{{ url('/forgot-password') }}</a>.
+                            @endif
+                        </p>
+                    @endforeach
+                </div>
+            </div>
         </x-ui.alert>
     @endif
 

@@ -8,7 +8,14 @@
                 </div>
 
                 @if($errors->any())
-                    <x-ui.alert variant="danger" class="mb-4">{{ $errors->first() }}</x-ui.alert>
+                    <x-ui.alert variant="danger" class="mb-4">
+                        <div class="flex flex-col gap-2">
+                            <h4 class="text-xs font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Please fix the following errors:</h4>
+                            <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                                <li>{{ $errors->first() }}</li>
+                            </ul>
+                        </div>
+                    </x-ui.alert>
                 @endif
 
                 <form method="POST" action="{{ route('password.update') }}" class="space-y-6">

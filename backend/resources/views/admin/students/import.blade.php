@@ -24,45 +24,69 @@
     </div>
 
     @if(session('status'))
-        <x-ui.alert type="success" class="mb-6">
-            {{ session('status') }}
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
+            </div>
         </x-ui.alert>
     @endif
     @if(session('new_import_credentials'))
-        <x-ui.alert type="info" class="mb-6">
-            <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
-            @foreach(session('new_import_credentials') as $credential)
-                <p>
-                    {{ ucfirst($credential['role']) }} {{ $credential['name'] }} —
-                    Login ID: <span class="font-mono">{{ $credential['login_identifier'] }}</span>;
-                    @if(!empty($credential['password']))
-                        temporary password: <span class="font-mono">{{ $credential['password'] }}</span>.
-                        Require a password change at first login; admins can retrieve it in Accounts → Credentials until changed.
-                    @elseif($credential['role'] === 'parent')
-                        use email password recovery to set or recover your password.
-                    @endif
-                </p>
-            @endforeach
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
+                    <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+                    @foreach(session('new_import_credentials') as $credential)
+                        <p>
+                            {{ ucfirst($credential['role']) }} {{ $credential['name'] }} —
+                            Login ID: <span class="font-mono">{{ $credential['login_identifier'] }}</span>;
+                            @if(!empty($credential['password']))
+                                temporary password: <span class="font-mono">{{ $credential['password'] }}</span>.
+                                Require a password change at first login; admins can retrieve it in Accounts → Credentials until changed.
+                            @elseif($credential['role'] === 'parent')
+                                use email password recovery to set or recover your password.
+                            @endif
+                        </p>
+                    @endforeach
+                </div>
+            </div>
         </x-ui.alert>
     @endif
     @if(session('import_errors'))
-        <x-ui.alert type="error" class="mb-6">
-            @foreach(session('import_errors') as $importError)
-                <p>{{ $importError['error'] ?? 'Import failed.' }}</p>
-            @endforeach
+        <x-ui.alert variant="danger" class="mb-6">
+            <div class="flex flex-col gap-2">
+                <h4 class="text-xs font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Import Errors</h4>
+                <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                    @foreach(session('import_errors') as $importError)
+                        <li>{{ $importError['error'] ?? 'Import failed.' }}</li>
+                    @endforeach
+                </ul>
+            </div>
         </x-ui.alert>
     @endif
 
     @if(session('error'))
-        <x-ui.alert type="error" class="mb-6">
-            {{ session('error') }}
+        <x-ui.alert variant="danger" class="mb-6">
+            <div class="flex flex-col gap-2">
+                <h4 class="text-xs font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Error</h4>
+                <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                    <li>{{ session('error') }}</li>
+                </ul>
+            </div>
         </x-ui.alert>
     @endif
 
     @if(isset($pendingCredentialsCount) && $pendingCredentialsCount > 0)
-        <x-ui.alert type="info" class="mb-6">
-            <div class="flex items-center justify-between">
-                <span>{{ $pendingCredentialsCount }} set(s) of login credentials are available. <a href="{{ route('admin.accounts.credentials') }}" class="font-medium underline">View credentials</a>.</span>
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
+                    <div class="flex items-center justify-between">
+                        <span>{{ $pendingCredentialsCount }} set(s) of login credentials are available.</span>
+                        <a href="{{ route('admin.accounts.credentials') }}" class="font-medium underline">View credentials</a>.
+                    </div>
+                </div>
             </div>
         </x-ui.alert>
     @endif

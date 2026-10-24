@@ -8,11 +8,21 @@
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">
-            {{ session('status') }}
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
+            </div>
         </x-ui.alert>
     @endif
     @if($errors->any())
-        <x-ui.alert variant="danger" class="mb-6">{{ $errors->first() }}</x-ui.alert>
+        <x-ui.alert variant="danger" class="mb-6">
+            <div class="flex flex-col gap-2">
+                <h4 class="text-xs font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Please fix the following errors:</h4>
+                <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                    <li>{{ $errors->first() }}</li>
+                </ul>
+            </div>
+        </x-ui.alert>
     @endif
 
     <div class="space-y-6">
@@ -47,6 +57,9 @@
                         </div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-semibold text-blue-600 dark:text-blue-400">Approved</span>
+                        <a href="{{ route('admin.report-cards.show', $reportCard) }}" class="text-xs px-2 py-1 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-dark-border rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                            View
+                        </a>
                         <button type="button" onclick="openReviewModal({{ $reportCard->id }}, '{{ $reportCard->student->full_name ?? $reportCard->student->admission_no }}', '{{ $reportCard->student->admission_no ?? '' }}', {{ json_encode($reportCard) }})" class="text-xs px-2 py-1 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-dark-border rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
                             Review
                         </button>
@@ -79,9 +92,12 @@
                                 <span class="text-xs font-semibold text-purple-600 dark:text-purple-400">
                                     Published
                                 </span>
-                                <a href="{{ route('admin.report-cards.download', $reportCard->id) }}" class="text-xs px-2 py-1 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-dark-border rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                                    Download
-                                </a>
+                                 <a href="{{ route('admin.report-cards.show', $reportCard) }}" class="text-xs px-2 py-1 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-dark-border rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                                     View
+                                 </a>
+                                 <a href="{{ route('admin.report-cards.download', $reportCard->id) }}" class="text-xs px-2 py-1 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-dark-border rounded hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                                     Download
+                                 </a>
                                 <form method="POST" action="{{ route('admin.report-cards.unpublish', $reportCard->id) }}" onsubmit="return confirm('Unpublish this report card for {{ $reportCard->student->full_name ?? $reportCard->student->admission_no }}? This will allow corrections.');" style="display: inline;">
                                     @csrf
                                     <button type="submit" class="text-xs px-2 py-1 text-white bg-red-600 hover:bg-red-700 rounded">

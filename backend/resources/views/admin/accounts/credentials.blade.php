@@ -19,10 +19,22 @@
     </div>
 
     @if(session('status'))
-        <x-ui.alert type="success" class="mb-4">{{ session('status') }}</x-ui.alert>
+        <x-ui.alert variant="success" class="mb-4">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
+            </div>
+        </x-ui.alert>
     @endif
     @if(session('error'))
-        <x-ui.alert type="error" class="mb-4">{{ session('error') }}</x-ui.alert>
+        <x-ui.alert variant="danger" class="mb-4">
+            <div class="flex flex-col gap-2">
+                <h4 class="text-xs font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Error</h4>
+                <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                    <li>{{ session('error') }}</li>
+                </ul>
+            </div>
+        </x-ui.alert>
     @endif
     <div id="credentials-feedback" class="mb-4" role="status" aria-live="polite"></div>
 

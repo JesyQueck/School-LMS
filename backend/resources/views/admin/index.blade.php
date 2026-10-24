@@ -11,7 +11,12 @@
     </div>
 
     @if(session('status'))
-        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
+            </div>
+        </x-ui.alert>
     @endif
 
     {{-- School Statistics --}}
@@ -22,10 +27,10 @@
         <x-ui.stat-card label="Parents" :value="number_format($totalParents)" icon="user-check" />
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-start">
-        {{-- Academic Overview --}}
-        <div class="lg:col-span-8 h-full">
-            <x-ui.card class="h-full flex flex-col">
+    <div class="flex flex-col lg:flex-row gap-6 mb-6 items-stretch">
+        <div class="flex-1 flex flex-col gap-6">
+            {{-- Academic Overview --}}
+            <x-ui.card>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Academic Overview</h3>
                 </div>
@@ -43,113 +48,89 @@
                         <p class="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{{ $teachersAssigned }}/{{ max(1, $totalTeachersForAssignment) }}</p>
                     </div>
                 </div>
-                <div class="px-6 pb-6">
-                    <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">
-                        Current term result records
-                    </p>
-                    @if($resultMetrics)
-                        <dl class="grid grid-cols-3 gap-3 text-sm">
-                            <div>
-                                <dt class="text-neutral-500 dark:text-neutral-400">Recorded</dt>
-                                <dd class="font-semibold text-neutral-900 dark:text-white">{{ number_format($resultMetrics['recorded']) }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-neutral-500 dark:text-neutral-400">Locked</dt>
-                                <dd class="font-semibold text-neutral-900 dark:text-white">{{ number_format($resultMetrics['locked']) }}</dd>
-                            </div>
-                            <div>
-                                <dt class="text-neutral-500 dark:text-neutral-400">Unlocked</dt>
-                                <dd class="font-semibold text-neutral-900 dark:text-white">{{ number_format($resultMetrics['unlocked']) }}</dd>
-                            </div>
-                        </dl>
-                    @else
-                        <p class="text-sm text-neutral-500 dark:text-neutral-400">No current term is set up yet, so there are no result records to show.</p>
-                    @endif
-                </div>
             </x-ui.card>
-        </div>
 
-        {{-- Announcements --}}
-        <div class="lg:col-span-8">
-            <x-ui.card>
+            {{-- Announcements --}}
+            <x-ui.card class="flex-1 flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Announcements</h3>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Overview of school announcements.</p>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Latest school announcements.</p>
                 </div>
-                <div class="p-6 grid grid-cols-2 gap-4">
-                    <div>
-                        <p class="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Total</p>
-                        <p class="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{{ number_format($totalAnnouncements) }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Recent (7 days)</p>
-                        <p class="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{{ \App\Models\Announcement::where('created_at', '>=', now()->subDays(7))->count() }}</p>
-                    </div>
+                <div class="p-6 flex-1 space-y-3">
+                    @forelse($recentAnnouncements as $announcement)
+                        <a href="{{ route('admin.announcements.edit', $announcement) }}" class="block border-b border-neutral-200 dark:border-dark-border last:border-0 pb-3 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-2 px-2 rounded transition-colors">
+                            <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $announcement->title }}</p>
+                            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 line-clamp-2">{{ Str::limit($announcement->body, 80) }}</p>
+                            <p class="text-xs text-neutral-400 dark:text-neutral-500 mt-1">{{ $announcement->created_at->diffForHumans() }}</p>
+                        </a>
+                    @empty
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400">No announcements yet.</p>
+                    @endforelse
                 </div>
             </x-ui.card>
         </div>
 
         {{-- Finance Overview --}}
-        <div class="lg:col-span-4 lg:row-span-2 h-full">
-            <x-ui.card class="h-full flex flex-col">
-        <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-            <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Finance Overview</h3>
-        </div>
-        <div class="p-6 flex-1 space-y-4">
-            <div>
-                <div class="flex justify-between text-sm mb-1.5">
-                    <span class="text-neutral-500 dark:text-neutral-400">Expected Fees</span>
-                    <span class="font-semibold text-neutral-900 dark:text-white">₦{{ number_format($finance['expected'], 2) }}</span>
+        <div class="lg:w-1/3 flex">
+            <x-ui.card class="flex-1 flex flex-col">
+                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Finance Overview</h3>
                 </div>
-                <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                    <div class="h-full rounded-full bg-primary-600 dark:bg-primary-500" style="width: 100%"></div>
+                <div class="p-6 flex-1 space-y-6 flex flex-col justify-around">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-neutral-500 dark:text-neutral-400">Expected Fees</span>
+                            <span class="font-semibold text-neutral-900 dark:text-white">₦{{ number_format($finance['expected'], 2) }}</span>
+                        </div>
+                        <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                            <div class="h-full rounded-full bg-primary-600 dark:bg-primary-500" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-neutral-500 dark:text-neutral-400">Collected</span>
+                            <span class="font-semibold text-success-600 dark:text-success-400">₦{{ number_format($finance['collected'], 2) }}</span>
+                        </div>
+                        <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                            <div class="h-full rounded-full bg-success-600 dark:bg-success-500" style="width: {{ $finance['expected'] > 0 ? min(100, ($finance['collected'] / $finance['expected']) * 100) : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-neutral-500 dark:text-neutral-400">Outstanding</span>
+                            <span class="font-semibold {{ $finance['outstanding'] > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">₦{{ number_format($finance['outstanding'], 2) }}</span>
+                        </div>
+                        <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                            <div class="h-full rounded-full {{ $finance['outstanding'] > 0 ? 'bg-danger-600 dark:bg-danger-500' : 'bg-success-600 dark:bg-success-500' }}" style="width: {{ $finance['expected'] > 0 ? min(100, ($finance['outstanding'] / $finance['expected']) * 100) : 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-neutral-200 dark:border-dark-border">
+                        <div class="flex justify-between text-sm mb-1.5">
+                            <span class="text-neutral-500 dark:text-neutral-400 font-medium">Collection Rate</span>
+                            <span class="font-bold text-neutral-900 dark:text-white">{{ $finance['collection_rate'] }}%</span>
+                        </div>
+                        <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                            <div class="h-full rounded-full bg-primary-600 dark:bg-primary-500" style="width: {{ $finance['collection_rate'] }}%"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1.5">
-                    <span class="text-neutral-500 dark:text-neutral-400">Collected</span>
-                    <span class="font-semibold text-success-600 dark:text-success-400">₦{{ number_format($finance['collected'], 2) }}</span>
+                <div class="px-6 pb-6 grid grid-cols-3 gap-4 text-center mt-auto">
+                    <div class="rounded-lg bg-success-200 dark:bg-success-900/20 p-2">
+                        <p class="text-lg font-bold text-success-700 dark:text-success-300">{{ $finance['paid'] }}</p>
+                        <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Paid</p>
+                    </div>
+                    <div class="rounded-lg bg-warning-200 dark:bg-warning-900/20 p-2">
+                        <p class="text-lg font-bold text-warning-700 dark:text-warning-300">{{ $finance['partial'] }}</p>
+                        <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Partial</p>
+                    </div>
+                    <div class="rounded-lg bg-danger-200 dark:bg-danger-900/20 p-2">
+                        <p class="text-lg font-bold text-danger-700 dark:text-danger-300">{{ $finance['unpaid'] }}</p>
+                        <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Unpaid</p>
+                    </div>
                 </div>
-                <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                    <div class="h-full rounded-full bg-success-600 dark:bg-success-500" style="width: {{ $finance['expected'] > 0 ? min(100, ($finance['collected'] / $finance['expected']) * 100) : 0 }}%"></div>
+                <div class="px-6 pb-6">
+                    <a href="{{ route('admin.finance') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Manage Fees</a>
                 </div>
-            </div>
-            <div>
-                <div class="flex justify-between text-sm mb-1.5">
-                    <span class="text-neutral-500 dark:text-neutral-400">Outstanding</span>
-                    <span class="font-semibold {{ $finance['outstanding'] > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">₦{{ number_format($finance['outstanding'], 2) }}</span>
-                </div>
-                <div class="h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                    <div class="h-full rounded-full {{ $finance['outstanding'] > 0 ? 'bg-danger-600 dark:bg-danger-500' : 'bg-success-600 dark:bg-success-500' }}" style="width: {{ $finance['expected'] > 0 ? min(100, ($finance['outstanding'] / $finance['expected']) * 100) : 0 }}%"></div>
-                </div>
-            </div>
-            <div class="pt-3 border-t border-neutral-200 dark:border-dark-border">
-                <div class="flex justify-between text-sm mb-1.5">
-                    <span class="text-neutral-500 dark:text-neutral-400 font-medium">Collection Rate</span>
-                    <span class="font-bold text-neutral-900 dark:text-white">{{ $finance['collection_rate'] }}%</span>
-                </div>
-                <div class="h-2 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                    <div class="h-full rounded-full bg-primary-600 dark:bg-primary-500" style="width: {{ $finance['collection_rate'] }}%"></div>
-                </div>
-            </div>
-        </div>
-        <div class="px-6 pb-6 grid grid-cols-3 gap-2 text-center">
-            <div class="rounded-lg bg-success-200 dark:bg-success-900/20 p-2">
-                <p class="text-lg font-bold text-success-700 dark:text-success-300">{{ $finance['paid'] }}</p>
-                <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Paid</p>
-            </div>
-            <div class="rounded-lg bg-warning-200 dark:bg-warning-900/20 p-2">
-                <p class="text-lg font-bold text-warning-700 dark:text-warning-300">{{ $finance['partial'] }}</p>
-                <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Partial</p>
-            </div>
-            <div class="rounded-lg bg-danger-200 dark:bg-danger-900/20 p-2">
-                <p class="text-lg font-bold text-danger-700 dark:text-danger-300">{{ $finance['unpaid'] }}</p>
-                <p class="text-[10px] font-bold text-neutral-900 dark:text-neutral-200 uppercase">Unpaid</p>
-            </div>
-        </div>
-        <div class="px-6 pb-6">
-            <a href="{{ route('admin.finance') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">Manage Fees</a>
-        </div>
             </x-ui.card>
         </div>
     </div>

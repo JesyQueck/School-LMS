@@ -10,7 +10,12 @@
     </div>
 
     @if(session('status'))
-        <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
+            </div>
+        </x-ui.alert>
     @endif
 
     <form method="POST" action="{{ route('admin.announcements.update', $announcement) }}" enctype="multipart/form-data" class="space-y-6" x-data="{ isEvent: {{ $announcement->is_event ? 'true' : 'false' }} }">

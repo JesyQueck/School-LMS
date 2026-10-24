@@ -15,9 +15,10 @@
         @php
             $cred = session('new_teacher_credentials');
         @endphp
-        <x-ui.alert type="info" class="mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
+        <x-ui.alert variant="success" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
                     Teacher account created for <strong>{{ $cred['name'] }}</strong>.
                     Staff ID: <span class="font-mono font-medium">{{ $cred['login_identifier'] }}</span>.
                     Email: {{ $cred['email'] }}.
