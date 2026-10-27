@@ -4,12 +4,18 @@
         <x-ui.breadcrumb-item active>Timetable</x-ui.breadcrumb-item>
     </x-ui.breadcrumbs>
 
-<div class="mb-6">
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">School Timetable</h1>
+<div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">School Timetable</h1>
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             View and manage all classes across every day. Click any empty cell to assign a subject and teacher.
         </p>
     </div>
+<a href="{{ route('admin.timetable.config') }}" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0a2.34 2.34 0 0 0 3.319 1.915a2.34 2.34 0 0 1 2.33 4.033a2.34 2.34 0 0 0 0 3.831a2.34 2.34 0 0 1-2.33 4.033a2.34 2.34 0 0 0-3.319 1.915a2.34 2.34 0 0 1-4.659 0a2.34 2.34 0 0 0-3.32-1.915a2.34 2.34 0 0 1-2.33-4.033a2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915z"/><circle cx="12" cy="12" r="3"/></g></svg>
+        Configure Timetable
+    </a>
+</div>
 
     @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">{{ session('status') }}</x-ui.alert>
@@ -29,11 +35,11 @@
 
     <div class="space-y-4">
         {{-- B. Filters --}}
-        <x-ui.card class="p-3">
-            <form method="GET" action="{{ route('admin.timetable.index') }}" class="flex flex-wrap gap-3 items-end">
+<x-ui.card class="p-3">
+            <form method="GET" action="{{ route('admin.timetable.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 items-end">
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Session</label>
-                    <select name="session_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="session_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($sessions as $s)
                             <option value="{{ $s->id }}" {{ $request->input('session_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
@@ -42,7 +48,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Term</label>
-                    <select name="term_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="term_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($terms as $t)
                             <option value="{{ $t->id }}" {{ $request->input('term_id', $currentTerm?->id) == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
@@ -51,7 +57,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Class</label>
-                    <select name="class_id" class="w-36 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="class_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($classes as $c)
                             <option value="{{ $c->id }}" {{ $request->input('class_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -60,7 +66,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Teacher</label>
-                    <select name="teacher_id" class="w-40 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="teacher_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($teachers as $t)
                             <option value="{{ $t->id }}" {{ $request->input('teacher_id') == $t->id ? 'selected' : '' }}>{{ $t->user?->name ?? 'Unnamed' }}</option>
@@ -69,7 +75,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Subject</label>
-                    <select name="subject_id" class="w-40 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="subject_id" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach($subjects as $s)
                             <option value="{{ $s->id }}" {{ $request->input('subject_id') == $s->id ? 'selected' : '' }}>{{ $s->name }}</option>
@@ -78,15 +84,15 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-0.5">Day</label>
-                    <select name="day" class="w-32 rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
+                    <select name="day" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1 text-sm">
                         <option value="">All</option>
                         @foreach(App\Http\Controllers\Admin\TimetableController::DAYS as $d)
                             <option value="{{ $d }}" {{ $request->input('day') == $d ? 'selected' : '' }}>{{ $d }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="flex gap-1 h-8">
-                 -   <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm h-8 text-sm">Apply</button>
+                <div class="flex gap-1 h-8 sm:col-span-1 md:col-span-1 lg:col-span-1">
+                    <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1 rounded shadow-sm h-8 text-sm">Apply</button>
                     <button type="button" onclick="window.location.href='{{ route('admin.timetable.index') }}'" class="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 h-8 px-2">Clear</button>
                 </div>
             </form>
@@ -94,12 +100,12 @@
 
         {{-- D. Whole School Timetable --}}
         <x-ui.card class="p-3">
-            <div class="py-2 border-b border-neutral-200 dark:border-dark-border mb-2">
-<div class="flex items-center justify-between">
-                 <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Whole School Timetable</h3>
-                 <button type="button" id="refresh-timetable" class="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 font-medium">Refresh</button>
-                 <a href="{{ route('admin.timetable.config') }}" class="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 font-medium">Configure Timetable</a>
-             </div>
+<div class="flex items-center justify-between mb-3">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Whole School Timetable</h3>
+                    <button type="button" id="refresh-timetable" class="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 border border-neutral-300 dark:border-dark-border rounded px-2 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        Refresh
+                    </button>
+                </div>
             </div>
             <div class="p-2" id="class-grids">
                 @php
@@ -113,7 +119,18 @@
                 @endphp
 
                 @if($timetable->isEmpty())
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-8">No timetable entries found. Use the 'Add Entry Manually' option to add a subject and teacher.</p>
+                    <div class="text-center py-12">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 mb-4">
+                            <svg class="h-8 w-8 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 9h10m-10 4h10M8 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+                        </div>
+                        <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-4">No timetable entries found yet. Configure your timetable structure to get started.</p>
+                        <div class="flex justify-center">
+                            <a href="{{ route('admin.timetable.config') }}" class="inline-flex items-center justify-center gap-2 bg-success-600 hover:bg-success-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0a2.34 2.34 0 0 0 3.319 1.915a2.34 2.34 0 0 1 2.33 4.033a2.34 2.34 0 0 0 0 3.831a2.34 2.34 0 0 1-2.33 4.033a2.34 2.34 0 0 0-3.319 1.915a2.34 2.34 0 0 1-4.659 0a2.34 2.34 0 0 0-3.32-1.915a2.34 2.34 0 0 1-2.33-4.033a2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915z"/><circle cx="12" cy="12" r="3"/></g></svg>
+                                Configure Timetable
+                            </a>
+                        </div>
+                    </div>
                 @else
                     @php
                         $allDays = App\Http\Controllers\Admin\TimetableController::DAYS;
