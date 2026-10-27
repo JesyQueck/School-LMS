@@ -237,11 +237,12 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/timetable/{timetable}/edit', [TimetableController::class, 'edit'])->name('timetable.edit');
         Route::put('/timetable/{timetable}', [TimetableController::class, 'update'])->name('timetable.update');
         Route::delete('/timetable/{timetable}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
-        Route::post('/timetable/periods', [TimetableController::class, 'savePeriodConfig'])->name('timetable.periods.store');
-        Route::post('/timetable/generate', [TimetableController::class, 'generate'])->name('timetable.generate');
-        Route::get('/timetable/preview', [TimetableController::class, 'preview'])->name('timetable.preview');
-        Route::post('/timetable/confirm-generate', [TimetableController::class, 'confirmGenerate'])->name('timetable.confirm-generate');
         Route::post('/timetable/{timetable}/move', [TimetableController::class, 'move'])->name('timetable.move');
         Route::post('/timetable/swap', [TimetableController::class, 'swap'])->name('timetable.swap');
+        Route::get('/timetable/config', [TimetableController::class, 'config'])->name('timetable.config');
+        Route::post('/timetable/config', [TimetableController::class, 'saveConfig'])->name('timetable.config.save');
+        Route::post('/timetable/cell', [TimetableController::class, 'storeCell'])->name('timetable.cell.store');
+        Route::put('/timetable/cell/{timetable}', [TimetableController::class, 'updateCell'])->name('timetable.cell.update');
+        Route::delete('/timetable/cell/{timetable}', [TimetableController::class, 'destroyCell'])->name('timetable.cell.destroy');
     });
 });

@@ -14,12 +14,9 @@ class PeriodConfig extends Model
         'periods_per_day',
         'start_day',
         'end_day',
-        'day_rules',
     ];
 
-    protected $casts = [
-        'day_rules' => 'array',
-    ];
+    protected $casts = [];
 
     public function academicSession(): BelongsTo
     {
@@ -48,26 +45,5 @@ class PeriodConfig extends Model
         }
 
         return array_slice($allDays, $start, $end - $start + 1);
-    }
-
-    /**
-     * Get day-specific rules for a given day.
-     * Returns null if no rules defined for that day.
-     */
-    public function getDayRule(string $day): ?array
-    {
-        if (! is_array($this->day_rules)) {
-            return null;
-        }
-
-        return $this->day_rules[$day] ?? null;
-    }
-
-    /**
-     * Get all day rules.
-     */
-    public function getDayRules(): array
-    {
-        return is_array($this->day_rules) ? $this->day_rules : [];
     }
 }
