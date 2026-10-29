@@ -20,7 +20,7 @@ class TimetableController extends Controller
 {
     use AuditsActions;
 
-    public const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    public const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     private function resolveCurrentTerm(): ?Term
     {
@@ -39,30 +39,77 @@ class TimetableController extends Controller
 
         $periods = $config->periods()->orderBy('sort_order')->get();
 
-        $currentTime = '08:00';
-
         foreach ($periods as $period) {
             $periodKey = 'period_' . $period->period_number;
 
             $times[$periodKey] = [
-                'start' => $currentTime,
+                'start' => $period->start_time,
                 'end' => $period->end_time,
                 'name' => $period->name,
                 'is_break' => $period->is_break,
                 'period_number' => $period->period_number,
+                'type' => $period->type ?? 'teaching',
             ];
-
-            // Move to next period time
-            if (! $period->is_break) {
-                $currentTime = $period->end_time;
-            } else {
-                // For breaks, the next period starts after the break ends
-                // The break end_time is already set, so just use it
-                $currentTime = $period->end_time;
-            }
         }
 
         return $times;
+    }
+
+    private function calculatePeriodTimesForDay(?PeriodConfig $config, string $day): array
+    {
+        if (! $config) {
+            return [];
+        }
+
+        $dayConfig = $this->resolveConfigForDay($config, $day);
+
+        return $this->calculatePeriodTimes($dayConfig);
+    }
+
+    private function getActivePeriodsForDay($configs, string $day): \Illuminate\Support\Collection
+    {
+        foreach ($configs as $cfg) {
+            if ($cfg->day_of_week === null || $cfg->day_of_week === $day) {
+                $dayConfig = $cfg;
+                break;
+            }
+            if ($cfg->day_rules && is_array($cfg->day_rules) && in_array($day, $cfg->day_rules)) {
+                $dayConfig = $cfg;
+                break;
+            }
+        }
+
+        if (! isset($dayConfig)) {
+            $dayConfig = $configs->first();
+        }
+
+        return $dayConfig?->periods ?? collect();
+    }
+
+    private function detectConflicts($timetable): array
+    {
+        $conflicts = [];
+        $seen = [];
+
+        foreach ($timetable as $entry) {
+            $classId = optional($entry->classSubject)->class_id ?? 0;
+            $key = $day = $entry->day . '|' . $classId . '|' . \Carbon\Carbon::parse($entry->start_time)->format('H:i');
+
+            if (isset($seen[$key])) {
+                $existing = $seen[$key];
+                $conflicts[] = [
+                    'day' => $entry->day,
+                    'class' => optional($entry->classSubject)->class->name ?? 'Unknown',
+                    'period' => $entry->classSubject->subject->name ?? 'Unknown',
+                    'existing_period' => $existing->classSubject->subject->name ?? 'Unknown',
+                    'time' => \Carbon\Carbon::parse($entry->start_time)->format('g:i A') . ' - ' . \Carbon\Carbon::parse($entry->end_time)->format('g:i A'),
+                ];
+            } else {
+                $seen[$key] = $entry;
+            }
+        }
+
+        return $conflicts;
     }
 
     private function resolveConfig(?Term $currentTerm): ?PeriodConfig
@@ -71,15 +118,84 @@ class TimetableController extends Controller
             return null;
         }
 
-        return PeriodConfig::firstOrCreate(
-            ['term_id' => $currentTerm->id],
-            [
+        $config = PeriodConfig::where('term_id', $currentTerm->id)
+            ->where(function ($q) {
+                $q->whereNull('day_of_week')
+                    ->orWhere('day_of_week', 'Monday');
+            })
+            ->with('periods')
+            ->first();
+
+        if (! $config) {
+            $configs = PeriodConfig::where('term_id', $currentTerm->id)
+                ->whereNotNull('day_rules')
+                ->with('periods')
+                ->get();
+
+            foreach ($configs as $c) {
+                $dayRules = $c->day_rules;
+                if (is_string($dayRules)) {
+                    $dayRules = json_decode($dayRules, true);
+                }
+                if (is_array($dayRules) && in_array('Monday', $dayRules)) {
+                    $config = $c;
+                    break;
+                }
+            }
+        }
+
+        if (! $config) {
+            $config = PeriodConfig::where('term_id', $currentTerm->id)
+                ->with('periods')
+                ->first();
+        }
+
+        if (! $config) {
+            $config = PeriodConfig::create([
                 'academic_session_id' => $currentTerm->academic_session_id,
-                'periods_per_day' => 10,
+                'term_id' => $currentTerm->id,
+                'periods_per_day' => 8,
                 'start_day' => 'Monday',
                 'end_day' => 'Friday',
-            ]
-        );
+                'schedule_name' => 'Standard Day',
+            ]);
+            $this->ensurePeriods($config);
+            $config->load('periods');
+        }
+
+        return $config;
+    }
+
+    private function getAllConfigs(?Term $currentTerm): \Illuminate\Support\Collection
+    {
+        if (! $currentTerm) {
+            return collect();
+        }
+
+        return PeriodConfig::where('term_id', $currentTerm->id)
+            ->with('periods')
+            ->get();
+    }
+
+    private function resolveConfigForDay(PeriodConfig $config, string $day): ?PeriodConfig
+    {
+        if ($config->day_of_week === null || $config->day_of_week === $day) {
+            return $config;
+        }
+
+        if ($config->day_rules && is_array($config->day_rules) && in_array($day, $config->day_rules)) {
+            return $config;
+        }
+
+        $dayConfig = PeriodConfig::where('term_id', $config->term_id)
+            ->where(function ($q) use ($day) {
+                $q->where('day_of_week', $day)
+                    ->orWhereNull('day_of_week');
+            })
+            ->with('periods')
+            ->first();
+
+        return $dayConfig ?? $config;
     }
 
     private function ensurePeriods(PeriodConfig $config): void
@@ -111,6 +227,7 @@ class TimetableController extends Controller
                 'start_time' => $p['start_time'],
                 'end_time' => $p['end_time'],
                 'is_break' => $p['is_break'],
+                'type' => $p['is_break'] ? 'break' : 'teaching',
                 'sort_order' => $index,
             ]);
         }
@@ -145,6 +262,13 @@ class TimetableController extends Controller
 
         $classSubjects = ClassSubject::with(['class', 'subject', 'teacherAssignments.teacher.user'])->get();
 
+        $configs = null;
+        if ($currentTerm) {
+            $configs = PeriodConfig::where('term_id', $currentTerm->id)
+                ->with('periods')
+                ->get();
+        }
+
         return compact(
             'classes',
             'teachers',
@@ -153,6 +277,7 @@ class TimetableController extends Controller
             'subjects',
             'currentTerm',
             'config',
+            'configs',
             'periodConfigs',
             'classSubjects'
         );
@@ -216,7 +341,14 @@ class TimetableController extends Controller
 
         $timetable = $query->get();
 
+        $configs = $this->getAllConfigs($currentTerm);
+
         $periodTimes = $this->calculatePeriodTimes($config);
+
+        $periodTimesByDay = [];
+        foreach (self::DAYS as $day) {
+            $periodTimesByDay[$day] = $this->calculatePeriodTimesForDay($config, $day);
+        }
 
         $gridData = [];
         foreach ($timetable as $entry) {
@@ -225,10 +357,38 @@ class TimetableController extends Controller
             $gridData[$entry->day][$classIdKey][$periodStart] = $entry;
         }
 
+        $periodsByDay = [];
+        foreach (self::DAYS as $day) {
+            $dayConfig = null;
+            if ($configs) {
+                foreach ($configs as $c) {
+                    $dayRules = $c->day_rules;
+                    if (is_string($dayRules)) {
+                        $dayRules = json_decode($dayRules, true);
+                        $dayRules = is_array($dayRules) ? $dayRules : null;
+                    }
+                    if ($c->day_of_week === null || $c->day_of_week === $day || (is_array($dayRules) && in_array($day, $dayRules))) {
+                        $dayConfig = $c;
+                        break;
+                    }
+                }
+            }
+            if (! $dayConfig) {
+                $dayConfig = $config;
+            }
+            $periodsByDay[$day] = $dayConfig ? $dayConfig->periods->where('is_break', false)->sortBy('sort_order') : collect();
+        }
+
+        $conflicts = $this->detectConflicts($timetable);
+
         $data = $this->loadData($config, $currentTerm);
         $data['timetable'] = $timetable;
         $data['gridData'] = $gridData;
         $data['periodTimes'] = $periodTimes;
+        $data['periodTimesByDay'] = $periodTimesByDay;
+        $data['periodsByDay'] = $periodsByDay;
+        $data['conflicts'] = $conflicts;
+        $data['configs'] = $configs;
         $data['request'] = $request;
 
         return view('admin.timetable.index', $data);
@@ -237,21 +397,45 @@ class TimetableController extends Controller
     public function config(Request $request)
     {
         $currentTerm = $this->resolveCurrentTerm();
-        $config = PeriodConfig::with('periods')->where('term_id', $currentTerm?->id)->first();
+        $configs = $this->getAllConfigs($currentTerm);
 
-        if (! $config) {
-            $config = PeriodConfig::firstOrCreate(
-                ['term_id' => $currentTerm->id],
-                [
-                    'academic_session_id' => $currentTerm->academic_session_id,
-                    'periods_per_day' => 8,
-                    'start_day' => 'Monday',
-                    'end_day' => 'Friday',
-                ]
-            );
+        $config = null;
+        if ($configs->isNotEmpty()) {
+            $config = $configs->first(fn ($c) => $c->day_of_week === null);
+
+            if (! $config) {
+                $config = $configs->firstWhere('day_of_week', 'Monday');
+            }
+
+            if (! $config) {
+                foreach ($configs as $c) {
+                    if ($c->belongsToDay('Monday')) {
+                        $config = $c;
+                        break;
+                    }
+                }
+            }
+
+            if (! $config) {
+                $config = $configs->first();
+            }
         }
 
-        if ($config->periods()->count() === 0) {
+        if (! $config && $currentTerm) {
+            $config = PeriodConfig::create([
+                'academic_session_id' => $currentTerm?->academic_session_id,
+                'term_id' => $currentTerm?->id,
+                'periods_per_day' => 8,
+                'start_day' => 'Monday',
+                'end_day' => 'Friday',
+                'schedule_name' => 'Standard Day',
+            ]);
+            $this->ensurePeriods($config);
+            $config->load('periods');
+            $configs = $this->getAllConfigs($currentTerm);
+        }
+
+        if ($config && $config->periods()->count() === 0) {
             $this->ensurePeriods($config);
             $config->load('periods');
         }
@@ -261,6 +445,7 @@ class TimetableController extends Controller
 
         return view('admin.timetable.config', compact(
             'config',
+            'configs',
             'currentTerm',
             'sessions',
             'terms'
@@ -272,10 +457,29 @@ class TimetableController extends Controller
         $currentTerm = $this->resolveCurrentTerm();
 
         $validated = $request->validate([
-            'periods_per_day' => ['required', 'integer', 'min:1', 'max:20'],
-            'start_day' => ['required', 'in:'.implode(',', self::DAYS)],
-            'end_day' => ['required', 'in:'.implode(',', self::DAYS)],
-            'periods' => ['required', 'array', 'min:1'],
+            'academic_session_id' => ['required', 'exists:academic_sessions,id'],
+            'term_id' => ['required', 'exists:terms,id'],
+            'schedule_name' => ['nullable', 'string', 'max:255'],
+            'periods_per_day' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'start_day' => ['nullable', 'in:'.implode(',', self::DAYS)],
+            'end_day' => ['nullable', 'in:'.implode(',', self::DAYS)],
+            'active_days' => ['nullable', 'array'],
+            'active_days.*' => ['in:'.implode(',', self::DAYS)],
+            'schedules' => ['nullable', 'array'],
+            'schedules.*.name' => ['required', 'string', 'max:255'],
+            'schedules.*.day_of_week' => ['nullable', 'string', 'max:255'],
+            'schedules.*.days' => ['nullable', 'array'],
+            'schedules.*.days.*' => ['in:'.implode(',', self::DAYS)],
+            'schedules.*.select_all_days' => ['nullable', 'boolean'],
+            'schedules.*.periods' => ['required', 'array', 'min:1'],
+            'schedules.*.periods.*.period_number' => ['required', 'integer', 'min:1'],
+            'schedules.*.periods.*.name' => ['required', 'string', 'max:255'],
+            'schedules.*.periods.*.start_time' => ['required', 'date_format:H:i'],
+            'schedules.*.periods.*.end_time' => ['required', 'date_format:H:i', 'after:start_time'],
+            'schedules.*.periods.*.is_break' => ['nullable', 'boolean'],
+            'schedules.*.periods.*.type' => ['nullable', 'in:teaching,break,activity'],
+            'schedules.*.periods.*.sort_order' => ['required', 'integer', 'min:0'],
+            'periods' => ['nullable', 'array'],
             'periods.*.period_number' => ['required', 'integer', 'min:1'],
             'periods.*.name' => ['required', 'string', 'max:255'],
             'periods.*.start_time' => ['required', 'date_format:H:i'],
@@ -284,17 +488,117 @@ class TimetableController extends Controller
             'periods.*.sort_order' => ['required', 'integer', 'min:0'],
         ]);
 
-        DB::transaction(function () use ($currentTerm, $validated) {
-            $config = PeriodConfig::updateOrCreate(
-                ['term_id' => $currentTerm->id],
-                [
-                    'academic_session_id' => $currentTerm->academic_session_id,
-                    'periods_per_day' => $validated['periods_per_day'],
-                    'start_day' => $validated['start_day'],
-                    'end_day' => $validated['end_day'],
-                ]
-            );
+        DB::transaction(function () use ($currentTerm, $validated, $request) {
+            $termId = $validated['term_id'] ?? $currentTerm?->id;
+            $sessionId = $validated['academic_session_id'] ?? $currentTerm?->academic_session_id;
 
+            if (isset($validated['schedules']) && count($validated['schedules']) > 0) {
+                $this->saveSchedules($termId, $sessionId, $validated['schedules']);
+            } else {
+                $this->saveSingleConfig($termId, $sessionId, $validated);
+            }
+
+            $this->audit($request, 'timetable.config.saved', PeriodConfig::class, null, null, $validated);
+        });
+
+        return redirect()->route('admin.timetable.index')->with('status', 'Timetable configuration saved successfully.');
+    }
+
+    private function saveSchedules(int $termId, int $sessionId, array $schedules): void
+    {
+        $existingConfigIds = [];
+
+        foreach ($schedules as $scheduleData) {
+            $selectAlldays = $scheduleData['select_all_days'] ?? false;
+            $days = $scheduleData['days'] ?? null;
+
+            $days = is_array($days)
+                ? array_values(array_filter($days, fn ($v) => is_string($v) && in_array($v, self::DAYS)))
+                : $days;
+
+            if ($selectAlldays) {
+                $days = [];
+            }
+
+            if (is_array($days) && count($days) > 0) {
+                $dayOfWeek = null;
+                $dayRules = $days;
+            } elseif (isset($scheduleData['day_of_week']) && $scheduleData['day_of_week'] !== 'all' && !empty($scheduleData['day_of_week'])) {
+                $dayOfWeek = $scheduleData['day_of_week'];
+                $dayRules = null;
+            } else {
+                $dayOfWeek = null;
+                $dayRules = null;
+            }
+
+            $configData = [
+                'academic_session_id' => $sessionId,
+                'term_id' => $termId,
+                'schedule_name' => $scheduleData['name'],
+                'day_of_week' => $dayOfWeek,
+                'periods_per_day' => count($scheduleData['periods']),
+                'start_day' => $dayOfWeek ?? (is_array($days) && count($days) > 0 ? $days[0] : 'Monday'),
+                'end_day' => $dayOfWeek ?? (is_array($days) && count($days) > 0 ? $days[0] : 'Friday'),
+            ];
+
+            if ($dayRules !== null) {
+                $configData['day_rules'] = $dayRules;
+            }
+
+            $config = PeriodConfig::firstOrNew([
+                'term_id' => $termId,
+                'schedule_name' => $scheduleData['name'],
+            ]);
+
+            $config->fill($configData);
+            $config->save();
+
+            $existingConfigIds[] = $config->id;
+
+            $config->periods()->delete();
+
+            usort($scheduleData['periods'], fn ($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
+
+            foreach ($scheduleData['periods'] as $index => $p) {
+                $isBreak = $p['is_break'] ?? false;
+                $type = $p['type'] ?? ($isBreak ? 'break' : 'teaching');
+
+                $config->periods()->create([
+                    'period_number' => $p['period_number'],
+                    'name' => $p['name'],
+                    'start_time' => $p['start_time'],
+                    'end_time' => $p['end_time'],
+                    'is_break' => $isBreak,
+                    'type' => $type,
+                    'sort_order' => $p['sort_order'] ?? $index,
+                ]);
+            }
+        }
+
+        $configsToDelete = PeriodConfig::where('term_id', $termId)
+            ->when(! empty($existingConfigIds), fn ($q) => $q->whereNotIn('id', $existingConfigIds))
+            ->get();
+
+        foreach ($configsToDelete as $configToDelete) {
+            $configToDelete->periods()->delete();
+            $configToDelete->delete();
+        }
+    }
+
+    private function saveSingleConfig(int $termId, int $sessionId, array $validated): void
+    {
+        $config = PeriodConfig::updateOrCreate(
+            ['term_id' => $termId],
+            [
+                'academic_session_id' => $sessionId,
+                'periods_per_day' => $validated['periods_per_day'] ?? 8,
+                'start_day' => $validated['start_day'] ?? 'Monday',
+                'end_day' => $validated['end_day'] ?? 'Friday',
+                'schedule_name' => $validated['schedule_name'] ?? 'Standard Day',
+            ]
+        );
+
+        if (isset($validated['periods'])) {
             $config->periods()->delete();
 
             usort($validated['periods'], fn ($a, $b) => ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0));
@@ -306,6 +610,7 @@ class TimetableController extends Controller
                     'start_time' => $p['start_time'],
                     'end_time' => $p['end_time'],
                     'is_break' => $p['is_break'] ?? false,
+                    'type' => $p['is_break'] ? 'break' : 'teaching',
                     'sort_order' => $p['sort_order'] ?? $index,
                 ]);
             }
@@ -323,11 +628,7 @@ class TimetableController extends Controller
                     ]);
                 }
             }
-
-            $this->audit($request, 'timetable.config.saved', PeriodConfig::class, $config->id, null, $validated);
-        });
-
-        return redirect()->route('admin.timetable.index')->with('status', 'Timetable configuration saved successfully.');
+        }
     }
 
     public function storeCell(Request $request)

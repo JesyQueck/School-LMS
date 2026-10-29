@@ -335,6 +335,8 @@ class TimetableManagementTest extends TestCase
         ];
 
         $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
             'periods_per_day' => 4,
             'start_day' => 'Monday',
             'end_day' => 'Friday',
@@ -349,18 +351,594 @@ class TimetableManagementTest extends TestCase
             'start_day' => 'Monday',
             'end_day' => 'Friday',
         ]);
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
         $this->assertDatabaseHas('periods', [
-            'period_config_id' => PeriodConfig::where('term_id', $this->term->id)->first()->id,
+            'period_config_id' => $config->id,
             'period_number' => 1,
             'name' => 'Period 1',
             'is_break' => false,
+            'type' => 'teaching',
         ]);
         $this->assertDatabaseHas('periods', [
-            'period_config_id' => PeriodConfig::where('term_id', $this->term->id)->first()->id,
+            'period_config_id' => $config->id,
             'period_number' => 3,
             'name' => 'Break',
             'is_break' => true,
+            'type' => 'break',
         ]);
+    }
+
+    public function test_admin_can_save_multi_schedule_configuration(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Standard Day',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Period 2', 'start_time' => '08:40', 'end_time' => '09:20', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+                    ],
+                ],
+                [
+                    'name' => 'Assembly Day',
+                    'days' => ['Monday'],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Assembly', 'start_time' => '08:00', 'end_time' => '08:30', 'is_break' => false, 'type' => 'activity', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Period 1', 'start_time' => '08:30', 'end_time' => '09:10', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $response->assertSessionHas('status');
+
+        $this->assertDatabaseHas('period_configs', [
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Standard Day',
+            'day_of_week' => null,
+        ]);
+
+        $this->assertDatabaseHas('period_configs', [
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Assembly Day',
+            'day_of_week' => null,
+        ]);
+
+        $standardConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Standard Day')
+            ->first();
+        $this->assertDatabaseHas('periods', [
+            'period_config_id' => $standardConfig->id,
+            'name' => 'Period 1',
+            'type' => 'teaching',
+        ]);
+
+        $mondayConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Assembly Day')
+            ->first();
+        $this->assertDatabaseHas('periods', [
+            'period_config_id' => $mondayConfig->id,
+            'name' => 'Assembly',
+            'type' => 'activity',
+        ]);
+    }
+
+    public function test_admin_can_save_activity_period(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Standard Day',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Break', 'start_time' => '08:40', 'end_time' => '09:00', 'is_break' => true, 'type' => 'break', 'sort_order' => 1],
+                        ['period_number' => 3, 'name' => 'Morning Assembly', 'start_time' => '09:00', 'end_time' => '09:30', 'is_break' => false, 'type' => 'activity', 'sort_order' => 2],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
+        $this->assertDatabaseHas('periods', [
+            'period_config_id' => $config->id,
+            'name' => 'Morning Assembly',
+            'type' => 'activity',
+            'is_break' => false,
+        ]);
+    }
+
+    public function test_multiple_days_per_schedule_save_and_reload(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Standard Day',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Period 2', 'start_time' => '08:40', 'end_time' => '09:20', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+                    ],
+                ],
+                [
+                    'name' => 'Monday Assembly',
+                    'days' => ['Monday'],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Assembly', 'start_time' => '08:00', 'end_time' => '08:30', 'is_break' => false, 'type' => 'activity', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Period 1', 'start_time' => '08:30', 'end_time' => '09:10', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+                    ],
+                ],
+                [
+                    'name' => 'Friday Sports',
+                    'days' => ['Friday'],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Sports', 'start_time' => '08:40', 'end_time' => '09:40', 'is_break' => false, 'type' => 'activity', 'sort_order' => 1],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+
+        $standardConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Standard Day')
+            ->first();
+        $this->assertNotNull($standardConfig);
+        $this->assertNull($standardConfig->day_of_week);
+        $this->assertNull($standardConfig->day_rules);
+
+        $mondayConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Monday Assembly')
+            ->first();
+        $this->assertNotNull($mondayConfig);
+        $this->assertNull($mondayConfig->day_of_week);
+        $this->assertEquals(['Monday'], $mondayConfig->day_rules);
+
+        $fridayConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Friday Sports')
+            ->first();
+        $this->assertNotNull($fridayConfig);
+        $this->assertNull($fridayConfig->day_of_week);
+        $this->assertEquals(['Friday'], $fridayConfig->day_rules);
+
+        $configs = PeriodConfig::where('term_id', $this->term->id)->get();
+        $this->assertCount(3, $configs);
+    }
+
+    public function test_partial_day_selection_via_checkboxes(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Weekdays Only',
+                    'days' => ['Monday', 'Wednesday', 'Friday'],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+
+        $config = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Weekdays Only')
+            ->first();
+
+        $this->assertNotNull($config);
+        $this->assertEquals(['Monday', 'Wednesday', 'Friday'], $config->day_rules);
+    }
+
+    public function test_save_with_select_all_days_checkbox(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'All Days Schedule',
+                    'select_all_days' => '1',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
+        $this->assertNotNull($config);
+        $this->assertNull($config->day_of_week);
+        $this->assertNull($config->day_rules);
+    }
+
+    public function test_save_multiple_schedules_with_different_days_and_settings(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Standard Day',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Break', 'start_time' => '08:40', 'end_time' => '09:00', 'is_break' => true, 'type' => 'break', 'sort_order' => 1],
+                        ['period_number' => 3, 'name' => 'Period 2', 'start_time' => '09:00', 'end_time' => '09:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 2],
+                    ],
+                ],
+                [
+                    'name' => 'Monday Assembly',
+                    'days' => ['Monday'],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Assembly', 'start_time' => '08:00', 'end_time' => '08:30', 'is_break' => false, 'type' => 'activity', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Period 1', 'start_time' => '08:30', 'end_time' => '09:10', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+                    ],
+                ],
+                [
+                    'name' => 'Friday Sports',
+                    'days' => ['Friday'],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Sports', 'start_time' => '08:40', 'end_time' => '09:40', 'is_break' => false, 'type' => 'activity', 'sort_order' => 1],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $response->assertSessionHas('status');
+
+        $standardConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Standard Day')
+            ->first();
+        $this->assertNotNull($standardConfig);
+        $this->assertNull($standardConfig->day_of_week);
+        $this->assertNull($standardConfig->day_rules);
+        $this->assertDatabaseHas('periods', ['period_config_id' => $standardConfig->id, 'name' => 'Break', 'is_break' => true, 'type' => 'break']);
+        $this->assertDatabaseHas('periods', ['period_config_id' => $standardConfig->id, 'name' => 'Period 1', 'type' => 'teaching']);
+
+        $mondayConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Monday Assembly')
+            ->first();
+        $this->assertNotNull($mondayConfig);
+        $this->assertNull($mondayConfig->day_of_week);
+        $this->assertEquals(['Monday'], $mondayConfig->day_rules);
+        $this->assertDatabaseHas('periods', ['period_config_id' => $mondayConfig->id, 'name' => 'Assembly', 'type' => 'activity']);
+
+        $fridayConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Friday Sports')
+            ->first();
+        $this->assertNotNull($fridayConfig);
+        $this->assertNull($fridayConfig->day_of_week);
+        $this->assertEquals(['Friday'], $fridayConfig->day_rules);
+        $this->assertDatabaseHas('periods', ['period_config_id' => $fridayConfig->id, 'name' => 'Sports', 'type' => 'activity']);
+
+        $this->assertCount(3, PeriodConfig::where('term_id', $this->term->id)->get());
+    }
+
+    public function test_update_existing_schedule_preserves_timetable_assignments(): void
+    {
+        $config = PeriodConfig::create([
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Standard Day',
+            'day_of_week' => null,
+            'day_rules' => null,
+            'periods_per_day' => 2,
+            'start_day' => 'Monday',
+            'end_day' => 'Friday',
+        ]);
+
+        $config->periods()->createMany([
+            ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+            ['period_number' => 2, 'name' => 'Period 2', 'start_time' => '08:40', 'end_time' => '09:20', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+        ]);
+
+        $timetable = Timetable::create([
+            'class_subject_id' => $this->classSubject->id,
+            'teacher_id' => $this->teacher->id,
+            'day' => 'Monday',
+            'start_time' => '08:00',
+            'end_time' => '08:40',
+            'term_id' => $this->term->id,
+            'period_config_id' => $config->id,
+        ]);
+
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Standard Day',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:45', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Lunch', 'start_time' => '08:45', 'end_time' => '09:30', 'is_break' => true, 'type' => 'break', 'sort_order' => 1],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+
+        $this->assertDatabaseHas('period_configs', ['schedule_name' => 'Standard Day', 'term_id' => $this->term->id]);
+
+        $updatedConfig = PeriodConfig::where('term_id', $this->term->id)->first();
+        $this->assertDatabaseHas('periods', ['period_config_id' => $updatedConfig->id, 'name' => 'Lunch', 'is_break' => true]);
+        $this->assertDatabaseMissing('periods', ['period_config_id' => $config->id, 'name' => 'Period 2']);
+
+        $this->assertDatabaseHas('timetables', ['id' => $timetable->id, 'class_subject_id' => $this->classSubject->id]);
+    }
+
+    public function test_empty_days_means_all_days(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'All Days Schedule',
+                    'days' => [],
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
+        $this->assertNull($config->day_of_week);
+        $this->assertNull($config->day_rules);
+
+        $allDays = \App\Http\Controllers\Admin\TimetableController::DAYS;
+        foreach ($allDays as $day) {
+            $this->assertTrue($config->belongsToDay($day));
+        }
+    }
+
+    public function test_config_view_renders_with_multi_day_schedule(): void
+    {
+        PeriodConfig::create([
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Assembly Day',
+            'day_of_week' => null,
+            'day_rules' => ['Monday', 'Wednesday', 'Friday'],
+            'periods_per_day' => 3,
+            'start_day' => 'Monday',
+            'end_day' => 'Friday',
+        ]);
+
+        PeriodConfig::where('term_id', $this->term->id)->first()->periods()->createMany([
+            ['period_number' => 1, 'name' => 'Assembly', 'start_time' => '08:00', 'end_time' => '08:30', 'is_break' => false, 'type' => 'activity', 'sort_order' => 0],
+            ['period_number' => 2, 'name' => 'Period 1', 'start_time' => '08:30', 'end_time' => '09:10', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+        ]);
+
+        PeriodConfig::create([
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Standard Day',
+            'day_of_week' => null,
+            'day_rules' => null,
+            'periods_per_day' => 2,
+            'start_day' => 'Monday',
+            'end_day' => 'Friday',
+        ]);
+
+        $response = $this->get(route('admin.timetable.config'));
+
+        $response->assertOk();
+        $response->assertViewIs('admin.timetable.config');
+        $response->assertViewHasAll(['config', 'configs', 'currentTerm', 'sessions', 'terms']);
+    }
+
+    public function test_config_view_form_has_valid_period_numbers(): void
+    {
+        $response = $this->get(route('admin.timetable.config'));
+
+        $response->assertOk();
+        $response->assertViewIs('admin.timetable.config');
+        $response->assertSee('name="schedules[0][periods]', false);
+    }
+
+    public function test_save_config_with_select_all_flag_and_empty_days(): void
+    {
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'select_all_days' => '1',
+                    'days' => [],
+                    'name' => 'Standard Day',
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Period 1', 'start_time' => '08:00', 'end_time' => '08:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Break', 'start_time' => '08:40', 'end_time' => '09:00', 'is_break' => true, 'type' => 'break', 'sort_order' => 1],
+                        ['period_number' => 3, 'name' => 'Period 2', 'start_time' => '09:00', 'end_time' => '09:40', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 2],
+                    ],
+                ],
+                [
+                    'days' => ['Monday'],
+                    'name' => 'Monday Special',
+                    'periods' => [
+                        ['period_number' => 1, 'name' => 'Assembly', 'start_time' => '08:00', 'end_time' => '08:30', 'is_break' => false, 'type' => 'activity', 'sort_order' => 0],
+                        ['period_number' => 2, 'name' => 'Period 1', 'start_time' => '08:30', 'end_time' => '09:10', 'is_break' => false, 'type' => 'teaching', 'sort_order' => 1],
+                    ],
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $response->assertSessionHas('status');
+
+        $this->assertDatabaseHas('period_configs', [
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Standard Day',
+            'day_of_week' => null,
+            'day_rules' => null,
+        ]);
+
+        $this->assertDatabaseHas('period_configs', [
+            'term_id' => $this->term->id,
+            'schedule_name' => 'Monday Special',
+            'day_of_week' => null,
+        ]);
+
+        $monConfig = PeriodConfig::where('schedule_name', 'Monday Special')->first();
+        $this->assertEquals(['Monday'], $monConfig->day_rules);
+
+        $this->assertCount(2, PeriodConfig::where('term_id', $this->term->id)->get());
+    }
+
+    public function test_save_config_simulates_browser_form_without_is_break(): void
+    {
+        $this->get(route('admin.timetable.config'));
+
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
+
+        $periods = [];
+        foreach ($config->periods as $idx => $period) {
+            $periodData = [
+                'period_number' => $period->period_number,
+                'name' => $period->name,
+                'start_time' => \Carbon\Carbon::parse($period->start_time)->format('H:i'),
+                'end_time' => \Carbon\Carbon::parse($period->end_time)->format('H:i'),
+                'type' => $period->type,
+                'sort_order' => $period->sort_order,
+            ];
+
+            if ($period->is_break) {
+                $periodData['is_break'] = '1';
+            }
+
+            $periods[] = $periodData;
+        }
+
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Standard Day',
+                    'days' => [],
+                    'periods' => $periods,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $response->assertSessionHas('status');
+
+        $updatedConfig = PeriodConfig::where('term_id', $this->term->id)->first();
+        $this->assertNotNull($updatedConfig);
+        $this->assertEquals('Standard Day', $updatedConfig->schedule_name);
+    }
+
+    public function test_save_config_with_select_all_unchecked_and_specific_days(): void
+    {
+        $this->get(route('admin.timetable.config'));
+
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
+
+        $periods = [];
+        foreach ($config->periods as $idx => $period) {
+            $periodData = [
+                'period_number' => $period->period_number,
+                'name' => $period->name,
+                'start_time' => \Carbon\Carbon::parse($period->start_time)->format('H:i'),
+                'end_time' => \Carbon\Carbon::parse($period->end_time)->format('H:i'),
+                'type' => $period->type,
+                'sort_order' => $period->sort_order,
+            ];
+
+            if ($period->is_break) {
+                $periodData['is_break'] = '1';
+            }
+
+            $periods[] = $periodData;
+        }
+
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'name' => 'Weekday Schedule',
+                    'days' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                    'periods' => $periods,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $response->assertSessionHas('status');
+
+        $updatedConfig = PeriodConfig::where('term_id', $this->term->id)
+            ->where('schedule_name', 'Weekday Schedule')
+            ->first();
+        $this->assertNotNull($updatedConfig);
+        $this->assertEquals(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], $updatedConfig->day_rules);
+    }
+
+    public function test_save_after_loading_config_page_auto_creates_default(): void
+    {
+        $this->get(route('admin.timetable.config'));
+
+        $this->assertDatabaseHas('period_configs', ['term_id' => $this->term->id, 'schedule_name' => 'Standard Day']);
+
+        $config = PeriodConfig::where('term_id', $this->term->id)->first();
+
+        $periods = [];
+        foreach ($config->periods as $idx => $period) {
+            $periods[] = [
+                'period_number' => $period->period_number,
+                'name' => $period->name,
+                'start_time' => \Carbon\Carbon::parse($period->start_time)->format('H:i'),
+                'end_time' => \Carbon\Carbon::parse($period->end_time)->format('H:i'),
+                'is_break' => $period->is_break,
+                'type' => $period->type,
+                'sort_order' => $period->sort_order,
+            ];
+        }
+
+        $response = $this->post(route('admin.timetable.config.save'), [
+            'academic_session_id' => $this->session->id,
+            'term_id' => $this->term->id,
+            'schedules' => [
+                [
+                    'select_all_days' => '1',
+                    'days' => [],
+                    'name' => 'Standard Day',
+                    'periods' => $periods,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect(route('admin.timetable.index'));
+        $response->assertSessionHas('status');
+
+        $updatedConfig = PeriodConfig::where('term_id', $this->term->id)->first();
+        $this->assertNotNull($updatedConfig);
+        $this->assertEquals('Standard Day', $updatedConfig->schedule_name);
+        $this->assertCount(count($periods), $updatedConfig->periods);
     }
 
     /*
@@ -371,7 +949,7 @@ class TimetableManagementTest extends TestCase
 
     public function test_admin_can_create_cell_via_ajax(): void
     {
-        $response = $this->post(route('timetable.cell.store'), [
+        $response = $this->post(route('admin.timetable.cell.store'), [
             'class_subject_id' => $this->classSubject->id,
             'teacher_id' => $this->teacher->id,
             'day' => 'Monday',
@@ -407,7 +985,7 @@ class TimetableManagementTest extends TestCase
             'term_id' => $this->term->id,
         ]);
 
-        $response = $this->put(route('timetable.cell.update', $timetable->id), [
+        $response = $this->put(route('admin.timetable.cell.update', $timetable->id), [
             'class_subject_id' => $this->classSubject->id,
             'teacher_id' => $this->teacher->id,
             'day' => 'Tuesday',
@@ -440,7 +1018,7 @@ class TimetableManagementTest extends TestCase
             'term_id' => $this->term->id,
         ]);
 
-        $response = $this->post(route('timetable.cell.store'), [
+        $response = $this->post(route('admin.timetable.cell.store'), [
             'class_subject_id' => $this->classSubject->id,
             'day' => 'Monday',
             'start_time' => '08:00',
@@ -464,7 +1042,7 @@ class TimetableManagementTest extends TestCase
             'term_id' => $this->term->id,
         ]);
 
-        $response = $this->delete(route('timetable.cell.destroy', $timetable->id), [], [
+        $response = $this->delete(route('admin.timetable.cell.destroy', $timetable->id), [], [
             'X-Requested-With' => 'XMLHttpRequest',
         ]);
 

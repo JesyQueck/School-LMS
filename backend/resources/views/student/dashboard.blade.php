@@ -92,7 +92,7 @@
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Your published results.</p>
                 </div>
                 <div class="p-6 space-y-3">
-                    @forelse($publishedResults as $result)
+                    @forelse($results as $result)
                         @php $pct = $result->total ?? 0; @endphp
                         <div>
                             <div class="flex justify-between text-sm mb-1">

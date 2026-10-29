@@ -1,6 +1,6 @@
 <x-layouts.app title="Timetable Configuration">
     <x-ui.breadcrumbs>
-        <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+        <x-ui.breadcrumb-item href="{{ route('admin.dashboard') }}">Admin</x-ui.breadcrumb-item>
         <x-ui.breadcrumb-item href="{{ route('admin.timetable.index') }}">Timetable</x-ui.breadcrumb-item>
         <x-ui.breadcrumb-item active>Configuration</x-ui.breadcrumb-item>
     </x-ui.breadcrumbs>
@@ -8,7 +8,7 @@
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Timetable Configuration</h1>
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
-            Configure school days, periods, times, and breaks for the selected term.
+            Create multiple named schedules with different lesson durations, day assignments, breaks, and activities.
         </p>
     </div>
 
@@ -43,7 +43,7 @@
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-2">Academic Session</label>
                     <select name="academic_session_id" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary-500">
                         @foreach($sessions as $session)
-                            <option value="{{ $session->id }}" {{ ($config->academic_session_id ?? $currentTerm?->academic_session_id) == $session->id ? 'selected' : '' }}>
+                            <option value="{{ $session->id }}" {{ $session->id == $currentTerm?->academic_session_id ? 'selected' : '' }}>
                                 {{ $session->name }}
                             </option>
                         @endforeach
@@ -54,7 +54,7 @@
                     <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-2">Term</label>
                     <select name="term_id" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-all focus:outline-none focus:ring-2 focus:ring-primary-500">
                         @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ ($config->term_id ?? $currentTerm?->id) == $term->id ? 'selected' : '' }}>
+                            <option value="{{ $term->id }}" {{ $term->id == $currentTerm?->id ? 'selected' : '' }}>
                                 {{ $term->name }} ({{ $term->academicSession?->name ?? '' }})
                             </option>
                         @endforeach
@@ -68,143 +68,211 @@
                 </div>
             </div>
 
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">School Days</h3>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                    @php
-                        $allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-                        $startDay = $config->start_day ?? 'Monday';
-                        $endDay = $config->end_day ?? 'Friday';
-                        $startIdx = array_search($startDay, $allDays) ?? 0;
-                        $endIdx = array_search($endDay, $allDays) ?? 4;
-                        $activeDays = array_slice($allDays, $startIdx, $endIdx - $startIdx + 1);
-                    @endphp
-                    @foreach($allDays as $day)
-                        <label class="flex items-center gap-2 p-3 rounded-xl border-2 {{ in_array($day, $activeDays) ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-neutral-200 dark:border-dark-border hover:border-primary-300' }} cursor-pointer transition-all">
-                            <input type="checkbox" name="active_days[]" value="{{ $day }}" {{ in_array($day, $activeDays) ? 'checked' : '' }} class="rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500">
-                            <span class="text-sm font-medium {{ in_array($day, $activeDays) ? 'text-primary-700 dark:text-primary-400 font-bold' : 'text-neutral-600 dark:text-neutral-400' }}">{{ $day }}</span>
-                        </label>
-                    @endforeach
-                </div>
-            </div>
+            @php
+                $allDays = \App\Http\Controllers\Admin\TimetableController::DAYS;
+                $configs = $configs ?? collect([$config]);
+                $configs = $configs->values();
+            @endphp
 
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Periods</h3>
-                    <button type="button" id="add-period-row" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
-                        + Add Period
+            <div class="mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">School Schedules</h3>
+                    <button type="button" id="add-schedule-btn"
+                        class="inline-flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-xl shadow-sm text-sm md:text-xs w-full sm:w-auto">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Add Schedule
                     </button>
                 </div>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                    Create multiple named schedules. Each schedule can apply to specific days of the week or all days. The first matching schedule (in order) is used for each day.
+                </p>
+            </div>
 
-                <div id="period-rows" class="space-y-3">
-                    @php
-                        $periods = $config->periods->sortBy('sort_order');
-                        $periodIndex = 0;
-                    @endphp
-                    @foreach($periods as $period)
-                        @include('admin.timetable.partials.config-period-row', ['period' => $period, 'index' => $periodIndex++])
+            <div id="schedules-container" class="space-y-6">
+                @if($configs && $configs->isNotEmpty())
+                    @foreach($configs as $scheduleIndex => $schedule)
+                        @include('admin.timetable.partials.config-schedule-card', ['index' => $scheduleIndex, 'schedule' => $schedule, 'allDays' => $allDays])
                     @endforeach
-                </div>
-
-                <input type="hidden" name="periods_per_day" value="{{ $config->periods->count() }}">
-                <input type="hidden" name="start_day" value="{{ $config->start_day ?? 'Monday' }}">
-                <input type="hidden" name="end_day" value="{{ $config->end_day ?? 'Friday' }}">
+                @endif
             </div>
 
-            <div class="mb-6">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Preview</h3>
-                </div>
-                <div class="bg-neutral-50 dark:bg-neutral-800/50 rounded-xl p-4 border border-neutral-200 dark:border-dark-border overflow-x-auto">
-                    <table class="w-full text-xs border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="px-3 py-2 text-left text-neutral-500 dark:text-neutral-400 font-medium">Period</th>
-                                <th class="px-3 py-2 text-left text-neutral-500 dark:text-neutral-400 font-medium">Time</th>
-                                <th class="px-3 py-2 text-left text-neutral-500 dark:text-neutral-400 font-medium">Type</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-neutral-200 dark:divide-dark-border">
-                            @php
-                                $previewPeriods = $config->periods->sortBy('sort_order');
-                            @endphp
-                            @foreach($previewPeriods as $period)
-                                @php
-                                    $startTime = \Carbon\Carbon::parse($period->start_time)->format('g:i A');
-                                    $endTime = \Carbon\Carbon::parse($period->end_time)->format('g:i A');
-                                    $type = $period->is_break ? 'Break' : 'Teaching';
-                                @endphp
-                                <tr class="hover:bg-neutral-100 dark:hover:bg-neutral-800/50">
-                                    <td class="px-3 py-2 text-neutral-900 dark:text-white">{{ $period->name ?? 'Period ' . $period->period_number }}</td>
-                                    <td class="px-3 py-2 text-neutral-900 dark:text-white">{{ $startTime }} – {{ $endTime }}</td>
-                                    <td class="px-3 py-2 text-xs font-medium {{ $period->is_break ? 'text-warning-600 dark:text-warning-400' : 'text-success-600 dark:text-success-400' }}">{{ $type }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <input type="hidden" name="schedules_count" id="schedules_count" value="{{ $configs?->count() ?? 0 }}">
 
-            <div class="flex justify-end gap-3 pt-6">
-                <button type="button" onclick="window.location.href='{{ route('admin.timetable.index') }}'" class="bg-neutral-600 hover:bg-neutral-700 text-white font-medium px-6 py-2.5 rounded-xl shadow-sm text-sm">
+            <div class="flex justify-end gap-3 pt-6 mt-6 border-t border-neutral-200 dark:border-dark-border">
+                <button type="button" onclick="window.location.href='{{ route('admin.timetable.index') }}'"
+                    class="bg-neutral-600 hover:bg-neutral-700 text-white font-medium px-6 py-2.5 rounded-xl shadow-sm text-sm">
                     Cancel
                 </button>
-                <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-8 py-2.5 rounded-xl shadow-sm text-sm">
+                <button type="submit"
+                    class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-8 py-2.5 rounded-xl shadow-sm text-sm">
                     Save Configuration
                 </button>
             </div>
         </form>
     </x-ui.card>
 
+    <div id="schedule-template" class="schedule-card border border-neutral-200 dark:border-dark-border rounded-xl p-4 relative hidden" data-schedule-index="__INDEX__">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex-1 pr-3">
+                <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Schedule Name</label>
+                <input type="text" name="schedules[__INDEX__][name]"
+                    placeholder="e.g. Standard Day, Assembly Day"
+                    class="block w-full px-3.5 py-2 text-neutral-900 dark:text-white bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border rounded-xl shadow-sm placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 sm:text-sm">
+
+                <label class="block text-xs font-medium text-neutral-700 dark:text-neutral-300 mt-4 mb-1.5">Applies To</label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 mb-3">
+                    <label class="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-dark-border hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-all">
+                        <input type="checkbox"
+                            name="schedules[__INDEX__][select_all_days]"
+                            value="1"
+                            class="schedule-select-all rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500"
+                            checked>
+                        <span class="text-xs font-medium text-neutral-600 dark:text-neutral-300">Select All</span>
+                    </label>
+                    @foreach($allDays as $day)
+                        <label class="flex items-center gap-2 p-2 rounded-lg border border-neutral-200 dark:border-dark-border hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer transition-all">
+                            <input type="checkbox"
+                                name="schedules[__INDEX__][days][]"
+                                value="{{ $day }}"
+                                class="schedule-day-checkbox rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500">
+                            <span class="text-xs font-medium text-neutral-600 dark:text-neutral-300">{{ $day }}</span>
+                        </label>
+                    @endforeach
+                </div>
+
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                    Select specific days this schedule applies to, or leave unselected for all days.
+                </p>
+            </div>
+
+            <button type="button" onclick="removeSchedule(this)"
+                class="flex-shrink-0 ml-2 text-neutral-500 dark:text-neutral-400 hover:text-danger-600 dark:hover:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/20 rounded-lg px-2 py-1 transition-colors"
+                title="Remove this schedule">
+                Remove
+            </button>
+        </div>
+
+        <div class="periods-list space-y-3" id="periods-list-__INDEX__">
+        </div>
+
+        <input type="hidden" name="schedules[__INDEX__][periods_count]" value="8">
+        <button type="button" onclick="addPeriodRow('__INDEX__')" class="mt-3 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
+            + Add Period Row
+        </button>
+    </div>
+
     @push('scripts')
     <script>
-        document.getElementById('add-period-row').addEventListener('click', function() {
-            const container = document.getElementById('period-rows');
+        let scheduleCounter = 0;
+
+        function addSchedule() {
+            const container = document.getElementById('schedules-container');
+            const template = document.getElementById('schedule-template');
+            const clone = template.cloneNode(true);
+            clone.classList.remove('hidden');
+
+            const index = 'sched_' + scheduleCounter++;
+            clone.setAttribute('data-schedule-index', index);
+
+            clone.innerHTML = clone.innerHTML.replace(/__INDEX__/g, index);
+
+            container.appendChild(clone);
+            document.getElementById('schedules_count').value = scheduleCounter;
+
+            attachSelectAllHandler(clone);
+            attachPeriodAutoFill(clone);
+        }
+
+        function attachSelectAllHandler(card) {
+            const selectAll = card.querySelector('.schedule-select-all');
+            const checkboxes = card.querySelectorAll('.schedule-day-checkbox');
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                });
+
+                function updateSelectAllState() {
+                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                    selectAll.indeterminate = anyChecked && !allChecked;
+                }
+
+                checkboxes.forEach(cb => cb.addEventListener('change', updateSelectAllState));
+                updateSelectAllState();
+            }
+        }
+
+        document.querySelectorAll('.schedule-card').forEach(attachSelectAllHandler);
+
+        function removeSchedule(button) {
+            const card = button.closest('.schedule-card');
+            if (card) {
+                card.remove();
+            }
+        }
+
+        function addPeriodRow(scheduleIndex) {
+            const container = document.getElementById('periods-list-' + scheduleIndex);
             const index = container.children.length;
             const row = document.createElement('div');
-            row.className = 'grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-dark-border animate-in fade-in slide-in-from-bottom-2 duration-300';
+            row.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 items-end gap-3 p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200 dark:border-dark-border';
             row.innerHTML = `
-                <div>
-                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Period Name</label>
-                    <input type="text" name="periods[${index}][name]" placeholder="e.g. Period ${index + 1}" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+                <div class="sm:col-span-2 md:col-span-1">
+                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Name</label>
+                    <input type="text" name="schedules[${scheduleIndex}][periods][${index}][name]" placeholder="e.g. Period ${index + 1}" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
                 </div>
-                <div>
-                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Start Time</label>
-                    <input type="time" name="periods[${index}][start_time]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+                <div class="md:col-span-1">
+                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Start</label>
+                    <input type="time" name="schedules[${scheduleIndex}][periods][${index}][start_time]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
                 </div>
-                <div>
-                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">End Time</label>
-                    <input type="time" name="periods[${index}][end_time]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+                <div class="md:col-span-1">
+                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">End</label>
+                    <input type="time" name="schedules[${scheduleIndex}][periods][${index}][end_time]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
                 </div>
-                <div class="flex items-end pb-2">
+                <div class="md:col-span-1">
+                    <label class="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">Type</label>
+                    <select name="schedules[${scheduleIndex}][periods][${index}][type]" class="w-full rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="teaching">Teaching</option>
+                        <option value="break">Break</option>
+                        <option value="activity">Activity</option>
+                    </select>
+                </div>
+                <div class="md:col-span-1 flex items-end pb-0.5">
                     <label class="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 cursor-pointer">
-                        <input type="checkbox" name="periods[${index}][is_break]" value="1" class="rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500">
-                        Break
+                        <input type="checkbox" name="schedules[${scheduleIndex}][periods][${index}][is_break]" value="1" class="rounded border-neutral-300 dark:border-dark-border text-primary-600 focus:ring-primary-500">
+                        Is Break
                     </label>
                 </div>
-                <input type="hidden" name="periods[${index}][period_number]" value="${index + 1}">
-                <input type="hidden" name="periods[${index}][sort_order]" value="${index}">
-                <input type="hidden" name="periods[${index}][is_break]" value="0">
+                <input type="hidden" name="schedules[${scheduleIndex}][periods][${index}][period_number]" value="${index + 1}">
+                <input type="hidden" name="schedules[${scheduleIndex}][periods][${index}][sort_order]" value="${index}">
             `;
             container.appendChild(row);
-        });
+        }
 
-        document.getElementById('period-rows').addEventListener('input', function(e) {
-            if (e.target.name && e.target.name.includes('[start_time]')) {
-                const row = e.target.closest('.grid');
-                const endInput = row.querySelector('input[name$="[end_time]"]');
-                const startVal = e.target.value;
-                if (startVal && !endInput.value) {
-                    const [h, m] = startVal.split(':').map(Number);
-                    const endMinutes = h * 60 + m + 40;
-                    const endH = Math.floor(endMinutes / 60) % 24;
-                    const endM = endMinutes % 60;
-                    endInput.value = String(endH).padStart(2, '0') + ':' + String(endM).padStart(2, '0');
-                }
+        function attachPeriodAutoFill(card) {
+            const periodsList = card.querySelector('.periods-list');
+            if (periodsList) {
+                periodsList.addEventListener('input', function(e) {
+                    if (e.target.name && e.target.name.includes('[start_time]')) {
+                        const row = e.target.closest('.grid');
+                        const endInput = row.querySelector('input[name$="[end_time]"]');
+                        const startVal = e.target.value;
+                        if (startVal && !endInput.value) {
+                            const [h, m] = startVal.split(':').map(Number);
+                            const endMinutes = h * 60 + m + 40;
+                            const endH = Math.floor(endMinutes / 60) % 24;
+                            const endM = endMinutes % 60;
+                            endInput.value = String(endH).padStart(2, '0') + ':' + String(endM).padStart(2, '0');
+                        }
+                    }
+                });
             }
-        });
+        }
+
+        document.querySelectorAll('.schedule-card').forEach(attachPeriodAutoFill);
+
+        document.getElementById('add-schedule-btn').addEventListener('click', addSchedule);
     </script>
     @endpush
 </x-layouts.app>
