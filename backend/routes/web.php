@@ -113,6 +113,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 
     Route::middleware(['auth', 'password.only', 'role:parent'])->prefix('parent')->name('parent.')->group(function () {
         Route::get('/dashboard', [ParentDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/children', [ParentDashboardController::class, 'children'])->name('children.index');
         Route::get('/children/{student}', [ChildController::class, 'show'])->name('children.show');
         Route::get('/children/{student}/results', [ParentResultsController::class, 'index'])->name('children.results');
         Route::get('/children/{student}/attendance', [ParentAttendanceController::class, 'index'])->name('children.attendance');

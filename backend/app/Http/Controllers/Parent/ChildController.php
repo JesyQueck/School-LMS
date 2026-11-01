@@ -16,12 +16,17 @@ class ChildController extends Controller
 
         $student->load([
             'schoolClass',
+            'academicSession',
+            'user',
             'results.classSubject.subject',
             'attendance',
             'fees.payments',
             'reportCards' => function ($query) {
                 $query->where('status', ReportCard::STATUS_PUBLISHED)->with('term');
             },
+            'contacts',
+            'emergencyContacts',
+            'documents',
         ]);
 
         $publishedTermIds = $student->reportCards()
@@ -40,23 +45,33 @@ class ChildController extends Controller
             ? round(($present / $totalRecords) * 100, 1)
             : 0;
 
-        $outstanding = $student->fees->sum(function ($fee) {
-            $paid = $fee->payments->sum('amount_paid');
+        $totalExpected = 0;
+        $totalPaid = 0;
+        $outstanding = 0;
 
-            return max(0, ($fee->amount_expected ?? 0) - $paid);
-        });
+        foreach ($student->fees as $fee) {
+            $expected = $fee->amount_expected ?? 0;
+            $paid = $fee->payments->sum('amount_paid');
+            $totalExpected += $expected;
+            $totalPaid += $paid;
+            $outstanding += max(0, $expected - $paid);
+        }
 
         $metrics = [
             'average_score' => $averageScore,
             'attendance_rate' => $attendanceRate,
             'present' => $present,
             'total_records' => $totalRecords,
+            'total_expected' => $totalExpected,
+            'total_paid' => $totalPaid,
             'outstanding' => $outstanding,
         ];
 
-        $terms = Term::orderBy('id')->with(['reportCards' => function ($query) use ($student) {
-            $query->where('student_id', $student->id);
-        }])->get();
+        $terms = Term::where('academic_session_id', $student->academic_session_id)
+            ->orderBy('id')
+            ->with(['reportCards' => function ($query) use ($student) {
+                $query->where('student_id', $student->id);
+            }])->get();
 
         return view('parent.child', compact('student', 'metrics', 'terms'));
     }

@@ -88,6 +88,24 @@ class DashboardController extends Controller
         ));
     }
 
+    public function children(Request $request)
+    {
+        $parent = $request->user()->parentProfile;
+
+        $children = $parent
+            ? $parent->students()->with([
+                'schoolClass',
+                'user',
+            ])->orderBy('students.id')->get()
+            : collect();
+
+        $children->each(function (Student $child) {
+            $child->metrics = $this->computeMetrics($child);
+        });
+
+        return view('parent.children.index', compact('children'));
+    }
+
     protected function computeMetrics(Student $child): array
     {
         $publishedTermIds = $child->reportCards()
@@ -106,17 +124,25 @@ class DashboardController extends Controller
             ? round(($present / $totalRecords) * 100, 1)
             : 0;
 
-        $outstanding = $child->fees->sum(function ($fee) {
-            $paid = $fee->payments->sum('amount_paid');
+        $totalExpected = 0;
+        $totalPaid = 0;
+        $outstanding = 0;
 
-            return max(0, ($fee->amount_expected ?? 0) - $paid);
-        });
+        foreach ($child->fees as $fee) {
+            $expected = $fee->amount_expected ?? 0;
+            $paid = $fee->payments->sum('amount_paid');
+            $totalExpected += $expected;
+            $totalPaid += $paid;
+            $outstanding += max(0, $expected - $paid);
+        }
 
         return [
             'average_score' => $averageScore,
             'attendance_rate' => $attendanceRate,
             'present' => $present,
             'total_records' => $totalRecords,
+            'total_expected' => $totalExpected,
+            'total_paid' => $totalPaid,
             'outstanding' => $outstanding,
         ];
     }

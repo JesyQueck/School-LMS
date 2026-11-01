@@ -177,7 +177,7 @@
             [
                 'label' => 'CHILDREN',
                 'items' => [
-                    $item('Children', route('parent.dashboard').'#my-children', 'users', active: false),
+                    $item('Children', $childRoute('parent.children.show'), 'users', active: false),
                     $item('Timetable', route('parent.timetable'), 'calendar'),
                 ],
             ],

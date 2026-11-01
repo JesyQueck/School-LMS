@@ -16,9 +16,11 @@ class ParentReportCardController extends Controller
 
         $this->authorize('view', $student);
 
-        $terms = Term::orderBy('id')->with(['reportCards' => function ($query) use ($studentId) {
-            $query->where('student_id', $studentId);
-        }])->get();
+        $terms = Term::where('academic_session_id', $student->academic_session_id)
+            ->orderBy('id')
+            ->with(['reportCards' => function ($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            }])->get();
 
         return view('parent.report-cards', compact('student', 'terms'));
     }
