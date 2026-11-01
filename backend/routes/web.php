@@ -95,6 +95,8 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/report-cards/progress', [TeacherReportCardController::class, 'getSubmissionProgress'])->name('report-cards.progress');
         Route::post('/report-cards/{reportCard}/submit', [TeacherReportCardController::class, 'submitForReview'])->name('report-cards.submit');
         Route::get('/report-cards/{reportCard}/download', [TeacherReportCardController::class, 'download'])->name('report-cards.download');
+        Route::get('/report-cards/{reportCard}/preview', [TeacherReportCardController::class, 'preview'])->name('report-cards.preview');
+        Route::get('/report-cards/{reportCard}/render', [TeacherReportCardController::class, 'render'])->name('report-cards.render');
         Route::get('/class-performance', [TeacherReportCardController::class, 'classPerformance'])->name('class-performance');
         Route::get('/timetable', [TeacherPortalController::class, 'timetable'])->name('timetable');
         Route::get('/profile', [TeacherPortalController::class, 'profile'])->name('profile');
@@ -177,6 +179,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::post('/academic/terms', [AcademicStructureController::class, 'createTerm'])->name('academic.terms.store');
         Route::post('/academic/class-subjects', [AcademicStructureController::class, 'createClassSubject'])->name('academic.class_subjects.store');
         Route::put('/academic/class-subjects/{classSubject}', [AcademicStructureController::class, 'updateClassSubject'])->name('academic.class_subjects.update');
+        Route::post('/academic/class-subjects/batch', [AcademicStructureController::class, 'batchUpdateClassSubjects'])->name('academic.class_subjects.batch');
         Route::delete('/academic/class-subjects/{classSubject}', [AcademicStructureController::class, 'destroyClassSubject'])->name('academic.class_subjects.destroy');
         Route::post('/academic/sessions/{session}/current', [AcademicStructureController::class, 'makeSessionCurrent'])->name('academic.sessions.current');
         Route::post('/academic/terms/{term}/current', [AcademicStructureController::class, 'makeTermCurrent'])->name('academic.terms.current');
@@ -228,8 +231,11 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::post('/report-cards/{reportCard}/unpublish', [ReportCardController::class, 'unpublish'])->name('report-cards.unpublish');
         Route::post('/report-cards/{reportCard}/approve', [ReportCardController::class, 'approve'])->name('report-cards.approve');
         Route::post('/report-cards/{reportCard}/return', [ReportCardController::class, 'returnForCorrection'])->name('report-cards.return');
+        Route::post('/report-cards/save-class/{class}', [ReportCardController::class, 'saveClassReportCards'])->name('report-cards.save-class');
         Route::post('/report-cards/publish-all/{term}', [ReportCardController::class, 'publishAll'])->name('report-cards.publish-all');
         Route::get('/report-cards/{reportCard}/download', [ReportCardController::class, 'download'])->name('report-cards.download');
+        Route::get('/report-cards/{reportCard}/preview', [ReportCardController::class, 'preview'])->name('report-cards.preview');
+        Route::get('/report-cards/{reportCard}/render', [ReportCardController::class, 'render'])->name('report-cards.render');
 
         Route::get('/timetable', [TimetableController::class, 'index'])->name('timetable.index');
         Route::get('/timetable/create', [TimetableController::class, 'create'])->name('timetable.create');

@@ -88,12 +88,8 @@ class Timetable extends Model
             }
 
             $hasConflict = $conflicting->where(function ($q) use ($startTime, $endTime) {
-                $q->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function ($subQ) use ($startTime, $endTime) {
-                        $subQ->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
+                $q->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
             })->exists();
 
             if ($hasConflict) {
@@ -115,12 +111,8 @@ class Timetable extends Model
             }
 
             $hasConflict = $conflicting->where(function ($q) use ($startTime, $endTime) {
-                $q->whereBetween('start_time', [$startTime, $endTime])
-                    ->orWhereBetween('end_time', [$startTime, $endTime])
-                    ->orWhere(function ($subQ) use ($startTime, $endTime) {
-                        $subQ->where('start_time', '<=', $startTime)
-                            ->where('end_time', '>=', $endTime);
-                    });
+                $q->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
             })->exists();
 
             if ($hasConflict) {
@@ -138,6 +130,29 @@ class Timetable extends Model
 
             if ($sameSubjectCount >= 2) {
                 $conflicts[] = 'Maximum 2 periods of the same subject per day allowed.';
+            }
+
+            $classSubject = ClassSubject::find($timetable->class_subject_id);
+            if ($classSubject && $classSubject->periods_per_week) {
+                $weeklyCount = Timetable::where('class_subject_id', $timetable->class_subject_id)
+                    ->when($timetable->exists, function ($q) use ($excludeIds) {
+                        foreach ($excludeIds as $id) {
+                            $q->where('id', '!=', $id);
+                        }
+                    })
+                    ->where(function ($q) use ($timetable) {
+                        if ($timetable->term_id) {
+                            $q->where('term_id', $timetable->term_id);
+                        }
+                        if ($timetable->academic_session_id) {
+                            $q->where('academic_session_id', $timetable->academic_session_id);
+                        }
+                    })
+                    ->count() + 1;
+
+                if ($weeklyCount > $classSubject->periods_per_week) {
+                    $conflicts[] = 'This subject is already scheduled for ' . ($weeklyCount - 1) . ' periods this week, which exceeds the configured ' . $classSubject->periods_per_week . ' period(s) per week.';
+                }
             }
         }
 

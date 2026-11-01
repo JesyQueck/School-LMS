@@ -116,4 +116,43 @@ class ReportCard extends Model
     {
         return $this->status === self::STATUS_APPROVED && ! $this->isPublished();
     }
+
+    public function calculatePositionInClass(): int
+    {
+        $classReportCards = ReportCard::where('class_id', $this->class_id)
+            ->where('term_id', $this->term_id)
+            ->pluck('student_id')
+            ->toArray();
+
+        if (empty($classReportCards)) {
+            $classReportCards = Student::where('class_id', $this->class_id)->pluck('id')->toArray();
+        }
+
+        $rankings = Student::whereIn('students.id', $classReportCards)
+            ->leftJoin('results', function ($join) {
+                $join->on('students.id', '=', 'results.student_id')
+                    ->where('results.term_id', '=', $this->term_id);
+            })
+            ->select('students.id')
+            ->selectRaw('COALESCE(SUM(results.ca_score + results.exam_score), 0) as total_score')
+            ->groupBy('students.id')
+            ->orderByDesc('total_score')
+            ->get()
+            ->keyBy('id');
+
+        $position = 1;
+        foreach ($rankings as $sid => $student) {
+            if ($sid == $this->student_id) {
+                return $position;
+            }
+            $position++;
+        }
+
+        return $position;
+    }
+
+    public function getTotalStudentsInClass(): int
+    {
+        return Student::where('class_id', $this->class_id)->count();
+    }
 }

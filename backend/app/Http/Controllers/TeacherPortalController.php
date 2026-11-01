@@ -95,16 +95,25 @@ class TeacherPortalController extends Controller
             ->select('timetables.*')
             ->get();
 
-        $todayAttendanceRecords = collect();
+                $todayAttendanceRecords = collect();
+
         if ($todayClasses->isNotEmpty()) {
             $todayClassIds = $todayClasses->pluck('classSubject.class_id')->unique();
+
             $todayAttendanceRecords = Attendance::whereIn('class_id', $todayClassIds)
                 ->whereDate('date', now()->toDateString())
                 ->get();
         }
-        $totalTodayAttendance = $todayAttendanceRecords->where('status', 'present')->count();
-        $todayAttendanceRate = $totalStudents > 0 ? round(($totalTodayAttendance / max($totalStudents, 1)) * 100) : 0;
 
+        $totalTodayAttendance = $todayAttendanceRecords
+            ->where('status', 'present')
+            ->count();
+
+        $todayAttendanceRate = $totalStudents > 0
+            ? round(($totalTodayAttendance / $totalStudents) * 100)
+            : 0;
+
+        $attendanceKpiValue = $todayAttendanceRecords->count();
         $formClassAttendanceRate = 0;
         if ($isClassTeacher && $classAssignment) {
             $formClassStudentCount = Student::where('class_id', $classAssignment->class_id)->count();
@@ -137,6 +146,7 @@ class TeacherPortalController extends Controller
             'todayClasses' => $todayClasses,
             'todayAttendanceRate' => $todayAttendanceRate,
             'totalTodayAttendance' => $totalTodayAttendance,
+            'attendanceKpiValue' => $attendanceKpiValue,
             'formClassAttendanceRateValue' => $formClassAttendanceRateValue,
             'recentAnnouncements' => $recentAnnouncements,
             'myClasses' => $myClasses,

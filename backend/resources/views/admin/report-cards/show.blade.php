@@ -18,7 +18,8 @@
                     <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium">Publish</button>
                 </form>
             @endif
-            <a href="{{ route('admin.report-cards.download', $reportCard->id) }}" class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium">Download PDF</a>
+             <a href="{{ route('admin.report-cards.preview', $reportCard->id) }}" class="bg-neutral-600 hover:bg-neutral-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium">Preview</a>
+             <a href="{{ route('admin.report-cards.download', $reportCard->id) }}" class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium">Download PDF</a>
         </div>
     </div>
 
@@ -69,27 +70,27 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
-                            @foreach($reportCard->student->results as $result)
+                            @forelse($reportCard->student->results as $result)
+                                @php
+                                    $gradeClass = match($result->grade) {
+                                        'A1', 'B2', 'B3' => 'text-success-600 dark:text-success-400',
+                                        'C4', 'C5', 'C6' => 'text-warning-600 dark:text-warning-400',
+                                        default => 'text-danger-600 dark:text-danger-400',
+                                    };
+                                @endphp
                                 <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                                     <td class="px-4 py-3 text-sm text-neutral-900 dark:text-white">{{ $result->classSubject->subject->name }}</td>
                                     <td class="px-4 py-3 text-center text-sm text-neutral-600 dark:text-neutral-400">{{ $result->ca_score ?? '-' }}</td>
                                     <td class="px-4 py-3 text-center text-sm text-neutral-600 dark:text-neutral-400">{{ $result->exam_score ?? '-' }}</td>
                                     <td class="px-4 py-3 text-center text-sm font-medium text-neutral-900 dark:text-white">{{ $result->total ?? '-' }}</td>
-                            @php
-                                $gradeClass = match($result->grade) {
-                                    'A', 'B' => 'text-success-600 dark:text-success-400',
-                                    'C' => 'text-warning-600 dark:text-warning-400',
-                                    default => 'text-danger-600 dark:text-danger-400',
-                                };
-                            @endphp
-                            <td class="px-4 py-3 text-center text-sm font-semibold {{ $gradeClass }}">
-                                {{ $result->grade ?? '-' }}
-                            </td>
+                                    <td class="px-4 py-3 text-center text-sm font-semibold {{ $gradeClass }}">
+                                        {{ $result->grade ?? '-' }}
+                                    </td>
                                     <td class="px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400">{{ $result->remark ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="6" class="px-4 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No results recorded.</td></tr>
-                            @endforeach
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -130,28 +131,30 @@
                     </div>
 
                     {{-- Promotion Decision --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Promotion Decision</label>
-                            <select name="promotion_decision" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                                <option value="" {{ old('promotion_decision', $reportCard->promotion_decision) === '' ? 'selected' : '' }}>Select decision</option>
-                                <option value="promoted" {{ old('promotion_decision', $reportCard->promotion_decision) === 'promoted' ? 'selected' : '' }}>Promoted</option>
-                                <option value="repeated" {{ old('promotion_decision', $reportCard->promotion_decision) === 'repeated' ? 'selected' : '' }}>Repeated</option>
-                                <option value="transferred" {{ old('promotion_decision', $reportCard->promotion_decision) === 'transferred' ? 'selected' : '' }}>Transferred</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Position in Class</label>
-                            <input type="number" name="position_in_class" min="1" value="{{ old('position_in_class', $reportCard->position_in_class) }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Total Students in Class</label>
-                            <input type="number" name="total_students_in_class" min="1" value="{{ old('total_students_in_class', $reportCard->total_students_in_class) }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Next Term Begins</label>
-                            <input type="date" name="next_term_begins" value="{{ old('next_term_begins', $reportCard->next_term_begins ?? now()->format('Y-m-d')) }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Promotion Decision</label>
+                        <select name="promotion_decision" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                            <option value="" {{ old('promotion_decision', $reportCard->promotion_decision) === '' ? 'selected' : '' }}>Select decision</option>
+                            <option value="promoted" {{ old('promotion_decision', $reportCard->promotion_decision) === 'promoted' ? 'selected' : '' }}>Promoted</option>
+                            <option value="repeated" {{ old('promotion_decision', $reportCard->promotion_decision) === 'repeated' ? 'selected' : '' }}>Repeated</option>
+                            <option value="transferred" {{ old('promotion_decision', $reportCard->promotion_decision) === 'transferred' ? 'selected' : '' }}>Transferred</option>
+                        </select>
+                    </div>
+
+                    {{-- Auto-calculated Position --}}
+                    <div>
+                        <label class="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Position in Class</label>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white">
+                            #{{ $reportCard->calculatePositionInClass() }} of {{ $reportCard->getTotalStudentsInClass() }}
+                        </p>
+                        <input type="hidden" name="position_in_class" value="{{ $reportCard->calculatePositionInClass() }}">
+                        <input type="hidden" name="total_students_in_class" value="{{ $reportCard->getTotalStudentsInClass() }}">
+                    </div>
+
+                    {{-- Next Term Begins --}}
+                    <div>
+                        <label class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase mb-1.5">Next Term Begins</label>
+                        <input type="date" name="next_term_begins" value="{{ old('next_term_begins', $reportCard->next_term_begins ?? now()->format('Y-m-d')) }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
 
                     {{-- Date & Signature --}}
@@ -173,5 +176,6 @@
             </div>
         </div>
     </div>
+</x-ui.card>
 
 </x-layouts.app>

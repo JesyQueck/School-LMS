@@ -68,19 +68,29 @@ class TimetableController extends Controller
 
     private function getActivePeriodsForDay($configs, string $day): \Illuminate\Support\Collection
     {
-        foreach ($configs as $cfg) {
-            if ($cfg->day_of_week === null || $cfg->day_of_week === $day) {
-                $dayConfig = $cfg;
-                break;
+        $dayConfig = null;
+        if ($configs) {
+            foreach ($configs as $cfg) {
+                if ($cfg->day_of_week === $day) {
+                    $dayConfig = $cfg;
+                    break;
+                }
+                if ($cfg->day_rules && is_array($cfg->day_rules) && in_array($day, $cfg->day_rules)) {
+                    $dayConfig = $cfg;
+                    break;
+                }
             }
-            if ($cfg->day_rules && is_array($cfg->day_rules) && in_array($day, $cfg->day_rules)) {
-                $dayConfig = $cfg;
-                break;
+            if (! $dayConfig) {
+                foreach ($configs as $cfg) {
+                    if ($cfg->day_of_week === null) {
+                        $dayConfig = $cfg;
+                        break;
+                    }
+                }
             }
-        }
-
-        if (! isset($dayConfig)) {
-            $dayConfig = $configs->first();
+            if (! $dayConfig) {
+                $dayConfig = $configs->first();
+            }
         }
 
         return $dayConfig?->periods ?? collect();
@@ -93,7 +103,7 @@ class TimetableController extends Controller
 
         foreach ($timetable as $entry) {
             $classId = optional($entry->classSubject)->class_id ?? 0;
-            $key = $day = $entry->day . '|' . $classId . '|' . \Carbon\Carbon::parse($entry->start_time)->format('H:i');
+            $key = $entry->day . '|' . $classId . '|' . \Carbon\Carbon::parse($entry->start_time)->format('H:i');
 
             if (isset($seen[$key])) {
                 $existing = $seen[$key];
@@ -179,7 +189,7 @@ class TimetableController extends Controller
 
     private function resolveConfigForDay(PeriodConfig $config, string $day): ?PeriodConfig
     {
-        if ($config->day_of_week === null || $config->day_of_week === $day) {
+        if ($config->day_of_week === $day) {
             return $config;
         }
 
@@ -187,10 +197,28 @@ class TimetableController extends Controller
             return $config;
         }
 
+        if ($config->day_of_week === null) {
+            $specificConfig = PeriodConfig::where('term_id', $config->term_id)
+                ->where(function ($q) use ($day) {
+                    $q->where('day_of_week', $day)
+                        ->orWhere(function ($sub) use ($day) {
+                            $sub->whereNotNull('day_rules')
+                                ->whereJsonContains('day_rules', $day);
+                        });
+                })
+                ->with('periods')
+                ->first();
+
+            return $specificConfig ?? $config;
+        }
+
         $dayConfig = PeriodConfig::where('term_id', $config->term_id)
             ->where(function ($q) use ($day) {
                 $q->where('day_of_week', $day)
-                    ->orWhereNull('day_of_week');
+                    ->orWhere(function ($sub) use ($day) {
+                        $sub->whereNotNull('day_rules')
+                            ->whereJsonContains('day_rules', $day);
+                    });
             })
             ->with('periods')
             ->first();
@@ -303,6 +331,7 @@ class TimetableController extends Controller
         $query = Timetable::with([
             'classSubject.class',
             'classSubject.subject',
+            'classSubject.teacherAssignments.teacher.user',
             'teacher.user',
             'term',
             'academicSession',
@@ -358,25 +387,43 @@ class TimetableController extends Controller
         }
 
         $periodsByDay = [];
+        $periodsByDayJson = [];
         foreach (self::DAYS as $day) {
             $dayConfig = null;
             if ($configs) {
                 foreach ($configs as $c) {
-                    $dayRules = $c->day_rules;
-                    if (is_string($dayRules)) {
-                        $dayRules = json_decode($dayRules, true);
-                        $dayRules = is_array($dayRules) ? $dayRules : null;
+                    if ($c->day_of_week === $day) {
+                        $dayConfig = $c;
+                        break;
                     }
-                    if ($c->day_of_week === null || $c->day_of_week === $day || (is_array($dayRules) && in_array($day, $dayRules))) {
+                    if ($c->day_rules && is_array($c->day_rules) && in_array($day, $c->day_rules)) {
                         $dayConfig = $c;
                         break;
                     }
                 }
+                if (! $dayConfig) {
+                    foreach ($configs as $c) {
+                        if ($c->day_of_week === null) {
+                            $dayConfig = $c;
+                            break;
+                        }
+                    }
+                }
             }
-            if (! $dayConfig) {
-                $dayConfig = $config;
-            }
-            $periodsByDay[$day] = $dayConfig ? $dayConfig->periods->where('is_break', false)->sortBy('sort_order') : collect();
+            $dayPeriods = $dayConfig ? $dayConfig->periods->sortBy('sort_order') : collect();
+            $periodsByDay[$day] = $dayPeriods;
+            $periodsByDayJson[$day] = $dayPeriods->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'period_number' => $p->period_number,
+                    'start_time' => \Carbon\Carbon::parse($p->start_time)->format('H:i'),
+                    'end_time' => \Carbon\Carbon::parse($p->end_time)->format('H:i'),
+                    'is_break' => $p->is_break,
+                    'type' => $p->type ?? 'teaching',
+                    'sort_order' => $p->sort_order,
+                ];
+            })->values()->toArray();
         }
 
         $conflicts = $this->detectConflicts($timetable);
@@ -387,6 +434,7 @@ class TimetableController extends Controller
         $data['periodTimes'] = $periodTimes;
         $data['periodTimesByDay'] = $periodTimesByDay;
         $data['periodsByDay'] = $periodsByDay;
+        $data['periodsByDayJson'] = $periodsByDayJson;
         $data['conflicts'] = $conflicts;
         $data['configs'] = $configs;
         $data['request'] = $request;
@@ -650,6 +698,13 @@ class TimetableController extends Controller
         $data['is_locked'] = false;
         $data['is_manual'] = true;
 
+        if (empty($data['teacher_id'])) {
+            $classSubject = ClassSubject::with('teacherAssignments')->find($data['class_subject_id']);
+            if ($classSubject && $classSubject->teacherAssignments->isNotEmpty()) {
+                $data['teacher_id'] = $classSubject->teacherAssignments->first()->teacher_id;
+            }
+        }
+
         $timetable = new Timetable($data);
 
         $conflicts = Timetable::validateTimetableEntry($timetable);
@@ -657,7 +712,7 @@ class TimetableController extends Controller
         if ($conflicts->isNotEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot save: schedule conflict.',
+                'message' => 'Cannot add lesson due to a scheduling conflict.',
                 'errors' => $conflicts->toArray(),
             ], 409);
         }
@@ -668,7 +723,7 @@ class TimetableController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Lesson saved successfully.',
+            'message' => 'Lesson added successfully!',
             'entry' => $timetable->load(['classSubject.class', 'classSubject.subject', 'teacher.user']),
         ]);
     }
@@ -694,7 +749,7 @@ class TimetableController extends Controller
         if ($conflicts->isNotEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot update: schedule conflict.',
+                'message' => 'Cannot update lesson due to a scheduling conflict.',
                 'errors' => $conflicts->toArray(),
             ], 409);
         }
@@ -718,7 +773,7 @@ class TimetableController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Lesson removed successfully.',
+            'message' => 'Lesson deleted.',
         ]);
     }
 
@@ -846,7 +901,7 @@ class TimetableController extends Controller
             if ($isAjax) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot move: schedule conflict.',
+                    'message' => 'Cannot move lesson due to a scheduling conflict.',
                     'errors' => $conflicts->toArray(),
                 ], 409);
             }
@@ -867,12 +922,12 @@ class TimetableController extends Controller
         if ($isAjax) {
             return response()->json([
                 'success' => true,
-                'message' => 'Entry moved to '.$request->input('day').' '.$request->input('start_time').'.',
+                'message' => 'Lesson moved to '.$request->input('day').' at '.$request->input('start_time').'.',
                 'end_time' => Carbon::parse($request->input('end_time'))->format('H:i'),
             ]);
         }
 
-        return redirect()->route('admin.timetable.index')->with('status', 'Entry moved to '.$request->input('day').' '.$request->input('start_time').'.');
+        return redirect()->route('admin.timetable.index')->with('status', 'Lesson moved to '.$request->input('day').' at '.$request->input('start_time').'.');
     }
 
     public function swap(Request $request)
@@ -888,7 +943,7 @@ class TimetableController extends Controller
             if ($isAjax) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Invalid request.',
+                    'message' => 'Invalid request. Please try again.',
                     'errors' => $validator->errors()->toArray(),
                 ], 422);
             }
@@ -905,7 +960,7 @@ class TimetableController extends Controller
             if ($isAjax) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot swap an entry with itself.',
+                    'message' => 'Cannot swap a lesson with itself.',
                 ], 400);
             }
 
@@ -918,7 +973,7 @@ class TimetableController extends Controller
             if ($isAjax) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot swap: schedule conflict.',
+                    'message' => 'Cannot swap lessons due to a scheduling conflict.',
                     'errors' => $conflicts->toArray(),
                 ], 409);
             }
@@ -949,10 +1004,10 @@ class TimetableController extends Controller
         if ($isAjax) {
             return response()->json([
                 'success' => true,
-                'message' => 'Entries swapped successfully.',
+                'message' => 'Lessons swapped successfully!',
             ]);
         }
 
-        return redirect()->route('admin.timetable.index')->with('status', 'Entries swapped successfully.');
+        return redirect()->route('admin.timetable.index')->with('status', 'Lessons swapped successfully!');
     }
 }

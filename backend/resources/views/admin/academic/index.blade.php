@@ -171,9 +171,12 @@
 
         {{-- Class Subjects --}}
         <x-ui.card>
-            <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
-                <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Class Subjects</h3>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Set how many periods per week each subject gets for each class. Used by the timetable generator.</p>
+            <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Class Subjects</h3>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">Set how many periods per week each subject gets for each class. Used by the timetable generator.</p>
+                </div>
+                <button type="button" id="save-class-subjects" class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-1.5 rounded-lg text-sm">Save All</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -192,15 +195,10 @@
                                 <td class="px-6 py-4 text-sm text-neutral-900 dark:text-neutral-200">{{ $cs->class->name ?? 'N/A' }}</td>
                                 <td class="px-6 py-4 text-sm text-neutral-900 dark:text-neutral-200">{{ $cs->subject->name ?? 'N/A' }}</td>
                                 <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $cs->is_compulsory ? 'Yes' : 'No' }}</td>
-                                <td class="px-6 py-4">
-                                    <form method="POST" action="{{ route('admin.academic.class_subjects.update', $cs) }}" class="flex justify-center">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="number" name="periods_per_week" min="0" max="20" value="{{ $cs->periods_per_week }}"
-                                            class="w-16 text-center text-sm rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                                            onchange="this.form.submit()">
-                                    </form>
-                                </td>
+                                        <td class="px-6 py-4">
+                                            <input type="number" name="periods_per_week[{{ $cs->id }}]" min="0" max="20" value="{{ $cs->periods_per_week }}"
+                                                class="periods-input w-16 text-center text-sm rounded border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                                        </td>
                                 <td class="px-6 py-4">
                                     <div class="flex justify-end">
                                         <form method="POST" action="{{ route('admin.academic.class_subjects.destroy', $cs) }}"
@@ -222,4 +220,65 @@
             </div>
         </x-ui.card>
     </div>
+
+    @push('scripts')
+    <script>
+        (function() {
+            'use strict';
+
+            var saveBtn = document.getElementById('save-class-subjects');
+            if (!saveBtn) return;
+
+            var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+            var batchUrl = '{{ route('admin.academic.class_subjects.batch') }}';
+
+            saveBtn.addEventListener('click', function() {
+                var inputs = document.querySelectorAll('.periods-input');
+                var updates = [];
+
+                inputs.forEach(function(input) {
+                    var csId = input.name.match(/\[(\d+)\]/)?.[1];
+                    if (!csId) return;
+                    updates.push({
+                        id: csId,
+                        periods_per_week: parseInt(input.value, 10) || 0,
+                    });
+                });
+
+                if (updates.length === 0) {
+                    alert('No changes to save.');
+                    return;
+                }
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving...';
+
+                fetch(batchUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ updates: updates })
+                })
+                    .then(function(r) { return r.json(); })
+                    .then(function(r) {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save All';
+                        if (r.success) {
+                            alert(r.message || 'All class subjects updated successfully.');
+                        } else {
+                            alert(r.message || 'Some errors occurred.');
+                        }
+                    })
+                    .catch(function(err) {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save All';
+                        alert('Error: ' + err.message);
+                    });
+            });
+        })();
+    </script>
+    @endpush
 </x-layouts.app>

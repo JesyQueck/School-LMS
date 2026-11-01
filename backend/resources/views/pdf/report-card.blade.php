@@ -5,7 +5,7 @@
     <title>Report Card - {{ $reportCard->student->full_name ?? $reportCard->student->admission_no }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     @php
-        $subjectCount = $reportCard->student->results->where('term_id', $term->id ?? null)->count() ?? 0;
+        $subjectCount = $reportCard->student->results->where('term_id', $term?->id ?? null)->count() ?? 0;
 
         if ($subjectCount >= 25) {
             $scaleTier = 'super-compact';
@@ -139,7 +139,7 @@
     <!-- Title -->
     <div class="title-block">
         <p class="section-title">Terminal Report Sheet</p>
-        <p class="subtitle">{{ $term->name ?? 'First Term' }} {{ $term->year ?? date('Y') }} Session</p>
+        <p class="subtitle">{{ $term?->name ?? 'First Term' }} {{ $term?->year ?? date('Y') }} Session</p>
     </div>
 
     <!-- Student Info: 4-column table -->
@@ -191,7 +191,7 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($reportCard->student->results->where('term_id', $term->id ?? null) as $index => $result)
+            @forelse($reportCard->student->results->where('term_id', $term?->id ?? null) as $index => $result)
                 @php
                     $total = ($result->ca_score ?? 0) + ($result->exam_score ?? 0);
                     $grade = $result->grade ?? null;
@@ -224,10 +224,10 @@
     <!-- Summary Stats -->
     <div class="summary-block">
         <p><strong>Position in Class:</strong> {{ $reportCard->position_in_class ?? '—' }} of {{ $reportCard->total_students_in_class ?? '—' }}</p>
-        <p><strong>Average Percentage:</strong> {{ number_format($reportCard->student->results->where('term_id', $term->id ?? null)->avg('total') ?? 0, 1) }}%</p>
+        <p><strong>Average Percentage:</strong> {{ number_format($reportCard->student->results->where('term_id', $term?->id ?? null)->avg('total') ?? 0, 1) }}%</p>
         @if($reportCard->student->relationLoaded('attendance') && $reportCard->student->attendance && $reportCard->student->attendance->count() > 0)
             @php
-                $attTerm = $reportCard->student->attendance->where('term_id', $term->id ?? null);
+                $attTerm = $reportCard->student->attendance->where('term_id', $term?->id ?? null);
             @endphp
             @if($attTerm->count() > 0)
             <p><strong>Attendance:</strong> {{ $attTerm->where('status', 'present')->count() }}/{{ $attTerm->count() }} days present</p>

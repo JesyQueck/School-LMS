@@ -261,6 +261,64 @@ class ReportCardController extends Controller
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
     }
 
+    public function preview(Request $request, ReportCard $reportCard)
+    {
+        $teacher = $request->user()->teacher;
+
+        $reportCard->load([
+            'student.results.classSubject.subject',
+            'student.user',
+            'student.schoolClass',
+            'student.attendance',
+            'term',
+        ]);
+
+        $term = $reportCard->term;
+
+        $classAssignment = ClassAssignment::where('teacher_id', $teacher->id)
+            ->where('term_id', $term->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->first();
+
+        if (! $classAssignment || $classAssignment->class_id !== $reportCard->student->class_id) {
+            abort(403, 'You are not authorized to preview this report card.');
+        }
+
+        return view('teacher.report-cards.preview', [
+            'reportCard' => $reportCard,
+        ]);
+    }
+
+    public function render(Request $request, ReportCard $reportCard)
+    {
+        $teacher = $request->user()->teacher;
+
+        $reportCard->load([
+            'student.results.classSubject.subject',
+            'student.user',
+            'student.schoolClass',
+            'student.attendance',
+            'term',
+        ]);
+
+        $term = $reportCard->term;
+
+        $classAssignment = ClassAssignment::where('teacher_id', $teacher->id)
+            ->where('term_id', $term->id)
+            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+            ->first();
+
+        if (! $classAssignment || $classAssignment->class_id !== $reportCard->student->class_id) {
+            abort(403, 'You are not authorized to view this report card.');
+        }
+
+        return view('pdf.report-card', [
+            'reportCard' => $reportCard,
+            'term' => $term,
+            'school' => $reportCard->student->school ?? null,
+        ]);
+    }
+
     public function classPerformance(Request $request)
     {
         $teacher = $request->user()->teacher;

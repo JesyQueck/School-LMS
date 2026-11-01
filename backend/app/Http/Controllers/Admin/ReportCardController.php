@@ -21,16 +21,35 @@ class ReportCardController extends Controller
         protected ReportCardService $reportCardService,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
         $currentTerm = Term::where('is_current', true)->first();
 
+        $classes = SchoolClass::with([
+            'students.user',
+            'formTeacher.user',
+            'students.results' => function ($query) use ($currentTerm) {
+                if ($currentTerm) {
+                    $query->where('term_id', $currentTerm->id)
+                        ->with('classSubject.subject');
+                }
+            },
+            'students.reportCards' => function ($query) use ($currentTerm) {
+                if ($currentTerm) {
+                    $query->where('term_id', $currentTerm->id);
+                }
+            },
+        ])->orderBy('name')->get();
+
+        $subjects = Subject::all();
+        $terms = Term::orderBy('start_date', 'desc')->get();
+
         return view('admin.report-cards.index', [
-            'classes' => SchoolClass::with(['students.user', 'formTeacher.user'])->get(),
-            'students' => Student::with('schoolClass.formTeacher.user', 'user')->get(),
-            'subjects' => Subject::all(),
-            'terms' => Term::all(),
+            'classes' => $classes,
+            'subjects' => $subjects,
+            'terms' => $terms,
             'currentTerm' => $currentTerm,
+            'request' => $request,
         ]);
     }
 
@@ -70,12 +89,6 @@ class ReportCardController extends Controller
         $termId = $validated['term_id'];
         $studentData = $validated['results'][$studentId] ?? [];
 
-        if (! empty($studentData['position_in_class']) && ! empty($studentData['total_students_in_class'])) {
-            if ($studentData['position_in_class'] > $studentData['total_students_in_class']) {
-                return back()->withErrors(['position_in_class' => 'Position cannot exceed total students in class.'])->withInput();
-            }
-        }
-
         $existing = ReportCard::where('student_id', $studentId)
             ->where('term_id', $termId)
             ->first();
@@ -95,6 +108,78 @@ class ReportCardController extends Controller
         );
 
         return redirect()->route('admin.report-cards.index')->with('status', 'Report card saved.');
+    }
+
+    public function saveClassReportCards(Request $request, SchoolClass $class)
+    {
+        $termId = $request->input('term_id') ?: Term::where('is_current', true)->first()?->id;
+
+        if (! $termId) {
+            return back()->with('status', 'Please select a term.');
+        }
+
+        $validated = $request->validate([
+            'term_id' => ['nullable', 'exists:terms,id'],
+            'students' => ['required', 'array'],
+            'students.*.student_id' => ['required', 'exists:students,id'],
+            'students.*.principal_remark' => ['nullable', 'string'],
+            'students.*.promotion_decision' => ['nullable', 'string', 'in:promoted,repeated,transferred'],
+            'students.*.position_in_class' => ['nullable', 'integer', 'min:1'],
+            'students.*.total_students_in_class' => ['nullable', 'integer', 'min:1'],
+            'students.*.next_term_begins' => ['nullable', 'date'],
+            'students.*.review_date' => ['nullable', 'date'],
+            'students.*.principal_signature' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $saved = 0;
+        $skipped = 0;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $termId, &$saved, &$skipped) {
+            foreach ($validated['students'] as $studentData) {
+                $existing = ReportCard::where('student_id', $studentData['student_id'])
+                    ->where('term_id', $termId)
+                    ->first();
+
+                if ($existing && ! $existing->canEdit()) {
+                    $skipped++;
+                    continue;
+                }
+
+                $payload = array_merge([
+                    'student_id' => $studentData['student_id'],
+                    'term_id' => $termId,
+                    'class_id' => $class->id,
+                ], $studentData);
+                unset($payload['student_id'], $payload['term_id'], $payload['class_id']);
+
+                if ($existing) {
+                    if (! $existing->canEdit()) {
+                        $skipped++;
+                        continue;
+                    }
+                    $existing->update($payload);
+                } else {
+                    ReportCard::create(array_merge([
+                        'student_id' => $studentData['student_id'],
+                        'term_id' => $termId,
+                        'class_id' => $class->id,
+                        'status' => ReportCard::STATUS_DRAFT,
+                        'generated_at' => now(),
+                    ], $payload));
+                }
+
+                $saved++;
+            }
+        });
+
+         if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $saved . ' report card(s) saved for ' . $class->name . '. ' . ($skipped > 0 ? $skipped . ' skipped.' : ''),
+            ]);
+        }
+
+        return back()->with('status', $saved . ' report card(s) saved for ' . $class->name . '. ' . ($skipped > 0 ? $skipped . ' skipped.' : ''));
     }
 
     public function returnForCorrection(Request $request, ReportCard $reportCard)
@@ -125,12 +210,6 @@ class ReportCardController extends Controller
             'review_date' => ['nullable', 'date'],
             'principal_signature' => ['nullable', 'string', 'max:255'],
         ]);
-
-        if (! empty($validated['position_in_class']) && ! empty($validated['total_students_in_class'])) {
-            if ($validated['position_in_class'] > $validated['total_students_in_class']) {
-                return back()->withErrors(['position_in_class' => 'Position cannot exceed total students in class.'])->withInput();
-            }
-        }
 
         $reportCard->update([
             'principal_remark' => $validated['principal_remark'] ?? $reportCard->principal_remark,
@@ -221,6 +300,38 @@ class ReportCardController extends Controller
             ->setOption('defaultFont', 'Inter');
 
         return $pdf->download("report-card-{$reportCard->student->admission_no}-{$reportCard->term->name}.pdf");
+    }
+
+    public function preview(Request $request, ReportCard $reportCard)
+    {
+        $reportCard->load([
+            'student.results.classSubject.subject',
+            'student.user',
+            'student.schoolClass',
+            'student.attendance',
+            'term',
+        ]);
+
+        return view('admin.report-cards.preview', [
+            'reportCard' => $reportCard,
+        ]);
+    }
+
+    public function render(Request $request, ReportCard $reportCard)
+    {
+        $reportCard->load([
+            'student.results.classSubject.subject',
+            'student.user',
+            'student.schoolClass',
+            'student.attendance',
+            'term',
+        ]);
+
+        return view('pdf.report-card', [
+            'reportCard' => $reportCard,
+            'term' => $reportCard->term,
+            'school' => $reportCard->student->school ?? null,
+        ]);
     }
 
     public function publishAll(Request $request, Term $term)

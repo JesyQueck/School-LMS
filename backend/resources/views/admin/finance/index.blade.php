@@ -1,4 +1,7 @@
 <x-layouts.app title="Finance Management">
+    <style>
+        .stat-card-wrap .font-bold { word-break: break-all; line-height: 1.1; }
+    </style>
     <div class="mb-6">
         <x-ui.breadcrumbs>
             <x-ui.breadcrumb-item href="/admin/dashboard" active>Finance</x-ui.breadcrumb-item>
@@ -28,10 +31,10 @@
 
     {{-- Finance Summary --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Total Expected" :value="'₦' . number_format($finance['expected'], 2)" icon="wallet" />
-        <x-ui.stat-card label="Amount Collected" :value="'₦' . number_format($finance['collected'], 2)" icon="wallet" :trend="['direction' => 'up', 'value' => 'Payments received']" />
-        <x-ui.stat-card label="Still Owed" :value="'₦' . number_format($finance['outstanding'], 2)" icon="wallet" :trend="['direction' => 'down', 'value' => 'Outstanding balance']" />
-        <x-ui.stat-card label="Collection Rate" :value="$finance['collection_rate'] . '%'" icon="chart" :trend="['direction' => $finance['collection_rate'] >= 70 ? 'up' : 'neutral', 'value' => 'of fees collected']" />
+        <x-ui.stat-card label="Total Expected" :value="'₦' . number_format($finance['expected'], 2)" icon="wallet" compact="true" />
+        <x-ui.stat-card label="Amount Collected" :value="'₦' . number_format($finance['collected'], 2)" icon="wallet" compact="true" :trend="['direction' => 'up', 'value' => 'Collected']" />
+        <x-ui.stat-card label="Still Owed" :value="'₦' . number_format($finance['outstanding'], 2)" icon="wallet" compact="true" :trend="['direction' => 'down', 'value' => 'Outstanding']" />
+        <x-ui.stat-card label="Collection Rate" :value="$finance['collection_rate'] . '%'" icon="chart" compact="true" :trend="['direction' => $finance['collection_rate'] >= 70 ? 'up' : 'neutral', 'value' => 'of fees collected']" />
     </div>
 
     {{-- Per-Class Breakdown --}}

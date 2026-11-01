@@ -154,6 +154,17 @@
     --color-dark-sidebar-text-muted: #94A3B8;
 
     /* ============================================
+       DARK SURFACE AND BORDER (for dark: utilities)
+       ============================================ */
+    --color-dark-surface: #1e293b;
+    --color-dark-border: #334155;
+    --color-dark-text: #f1f5f9;
+    --color-dark-bg: #0f172a;
+    --color-dark-surface-elevated: #334155;
+    --color-dark-text-secondary: #cbd5e1;
+    --color-dark-text-muted: #94a3b8;
+
+    /* ============================================
        GREENFIELD ACADEMY - SHADOW SYSTEM
        ============================================ */
     --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px 0 rgba(15, 23, 42, 0.06);

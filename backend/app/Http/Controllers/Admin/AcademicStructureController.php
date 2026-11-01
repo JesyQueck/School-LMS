@@ -107,9 +107,25 @@ class AcademicStructureController extends Controller
         return redirect()->route('admin.academic')->with('status', 'Class-subject periods per week updated.');
     }
 
-    /**
-     * Remove a class-subject association.
-     */
+    public function batchUpdateClassSubjects(Request $request)
+    {
+        $updates = $request->validate([
+            'updates' => ['required', 'array'],
+            'updates.*.id' => ['required', 'exists:class_subjects,id'],
+            'updates.*.periods_per_week' => ['nullable', 'integer', 'min:0', 'max:20'],
+            'updates.*.is_compulsory' => ['nullable', 'boolean'],
+        ])['updates'];
+
+        foreach ($updates as $update) {
+            $classSubject = ClassSubject::findOrFail($update['id']);
+            $classSubject->update([
+                'periods_per_week' => $update['periods_per_week'] ?? $classSubject->periods_per_week,
+                'is_compulsory' => $update['is_compulsory'] ?? $classSubject->is_compulsory,
+            ]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'All class subjects saved successfully!']);
+    }
     public function destroyClassSubject(ClassSubject $classSubject)
     {
         $classSubject->delete();
