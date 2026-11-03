@@ -28,7 +28,7 @@ class AccountController extends Controller
     public function index(Request $request)
     {
         $role = $request->query('role');
-        $validRoles = ['teacher', 'student', 'parent', 'admin'];
+        $validRoles = ['teacher', 'student', 'parent', 'admin', 'bursar'];
 
         $users = User::with(['teacher', 'student', 'parentProfile'])
             ->when(in_array($role, $validRoles), fn ($q) => $q->where('role', $role))
@@ -72,6 +72,7 @@ class AccountController extends Controller
             'teacher' => $this->createTeacherAccount($user, $request),
             'student' => $this->createStudentAccount($user, $request),
             'parent' => $this->createParentAccount($user, $request),
+            'bursar' => $this->createBursarAccount($user, $request),
         };
 
         $loginIdentifier = $user->loginIdentifier();
@@ -82,10 +83,10 @@ class AccountController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'login_identifier' => $loginIdentifier,
-            'password' => in_array($data['type'], ['student', 'teacher'], true) ? $temporaryPassword : null,
+            'password' => in_array($data['type'], ['student', 'teacher', 'bursar'], true) ? $temporaryPassword : null,
         ]];
 
-        if (in_array($data['type'], ['student', 'teacher'], true)) {
+        if (in_array($data['type'], ['student', 'teacher', 'bursar'], true)) {
             ImportCredential::storeTemporaryPassword($user, $temporaryPassword, (int) auth()->id());
         }
 
@@ -120,7 +121,7 @@ class AccountController extends Controller
     public function credentials(Request $request)
     {
         $filters = $request->validate([
-            'role' => ['nullable', Rule::in(['student', 'teacher', 'parent', 'admin'])],
+            'role' => ['nullable', Rule::in(['student', 'teacher', 'parent', 'admin', 'bursar'])],
             'search' => ['nullable', 'string', 'max:100'],
             'password_status' => ['nullable', Rule::in(['required', 'changed'])],
         ]);
@@ -141,13 +142,14 @@ class AccountController extends Controller
                     && match ($user->role) {
                         'student' => $user->student !== null,
                         'teacher' => $user->teacher !== null,
+                        'bursar' => true,
                         default => false,
                     };
             });
         $eligibleUsersById = $eligibleUsers->keyBy('id');
         $temporaryPasswords = ImportCredential::query()
             ->whereIn('user_id', $eligibleUsersById->keys())
-            ->whereIn('role', ['student', 'teacher'])
+            ->whereIn('role', ['student', 'teacher', 'bursar'])
             ->whereNotNull('temporary_password')
             ->orderByDesc('id')
             ->get()
@@ -167,9 +169,10 @@ class AccountController extends Controller
             'currentRole' => $filters['role'],
             'search' => $filters['search'],
             'passwordStatus' => $filters['password_status'],
-            'roles' => ['student', 'teacher', 'parent', 'admin'],
+            'roles' => ['student', 'teacher', 'parent', 'admin', 'bursar'],
             'roleLabels' => [
                 'admin' => 'Admin',
+                'bursar' => 'Bursar / Financial Officer',
                 'teacher' => 'Teacher',
                 'student' => 'Student',
                 'parent' => 'Parent/Guardian',
@@ -181,7 +184,7 @@ class AccountController extends Controller
     public function downloadAllCredentials(Request $request)
     {
         $filters = $request->validate([
-            'role' => ['nullable', Rule::in(['student', 'teacher', 'parent', 'admin'])],
+            'role' => ['nullable', Rule::in(['student', 'teacher', 'parent', 'admin', 'bursar'])],
             'search' => ['nullable', 'string', 'max:100'],
             'password_status' => ['nullable', Rule::in(['required', 'changed'])],
         ]);
@@ -231,7 +234,7 @@ class AccountController extends Controller
     {
         if (! $this->supportsTemporaryCredential($user)) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Temporary passwords can only be generated for valid student or teacher accounts.'], 404);
+                return response()->json(['message' => 'Temporary passwords can only be generated for valid student, teacher, or bursar accounts.'], 404);
             }
 
             abort(404);
@@ -270,6 +273,7 @@ class AccountController extends Controller
         return match ($user->role) {
             'student' => $user->student()->exists(),
             'teacher' => $user->teacher()->exists(),
+            'bursar' => true, // Bursar accounts always use email login
             default => false,
         };
     }
@@ -399,6 +403,13 @@ class AccountController extends Controller
             'occupation' => $request->input('occupation'),
             'phone' => $request->input('phone'),
         ]);
+    }
+
+    protected function createBursarAccount(User $user, Request $request): User
+    {
+        // Bursar accounts don't need a separate profile table - they use the User model directly
+        // The User model already has all necessary fields (name, email, phone, etc.)
+        return $user;
     }
 
     public function parentCommunication()

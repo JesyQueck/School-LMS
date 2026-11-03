@@ -54,9 +54,11 @@
         table.info-grid-table td { width: 25%; padding: 0 6px; box-sizing: border-box; }
         table.info-grid-table td:first-child { padding-left: 0; }
         table.info-grid-table td:last-child { padding-right: 0; }
-        .info-item { border: 1px solid #C9CDD3; padding: 8px 10px; border-radius: 4px; font-size: 13px; }
-        .info-item .label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.025em; color: #6b7280; display: block; margin-bottom: 3px; }
+        .info-item { border: 1px solid #C9CDD3; padding: 8px 10px; border-radius: 4px; font-size: 13px; display: flex; flex-direction: column; }
+        .info-item .label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.025em; color: #6b7280; margin-bottom: 3px; }
         .info-item .value { font-weight: 600; color: #000000; }
+        .student-photo { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #C9CDD3; }
+        .student-photo-placeholder { width: 36px; height: 36px; border-radius: 50%; background: #059669; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
 
         table.results { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 16px; line-height: 1; }
         table.results th { background: #059669; color: #fff; font-weight: 600; font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; padding: 8px 6px; text-align: left; border: 1px solid #059669; box-sizing: border-box; }
@@ -148,7 +150,14 @@
             <td>
                 <div class="info-item">
                     <span class="label">Name:</span>
-                    <span class="value">{{ $reportCard->student->full_name ?? '—' }}</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        @if($reportCard->student->user && $reportCard->student->user->profile_photo)
+                            <img src="{{ public_path('storage/' . $reportCard->student->user->profile_photo) }}" alt="" class="student-photo">
+                        @else
+                            <div class="student-photo-placeholder">{{ substr($reportCard->student->full_name ?? $reportCard->student->admission_no, 0, 1) }}</div>
+                        @endif
+                        <span class="value">{{ $reportCard->student->full_name ?? '—' }}</span>
+                    </div>
                 </div>
             </td>
             <td>

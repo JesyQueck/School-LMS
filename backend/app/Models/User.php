@@ -57,6 +57,7 @@ class User extends Authenticatable
     {
         return match ($this->role) {
             'admin' => $this->email,
+            'bursar' => $this->email,
             'teacher' => $this->teacher?->employee_id,
             'student' => $this->student?->admission_no,
             'parent' => $this->parentProfile ? 'PARENT-'.$this->parentProfile->id : null,

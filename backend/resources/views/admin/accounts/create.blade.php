@@ -52,6 +52,7 @@
                             <option value="teacher">Teacher</option>
                             <option value="student">Student</option>
                             <option value="parent">Parent</option>
+                            <option value="bursar">Bursar / Financial Officer</option>
                         </select>
                     </div>
 
@@ -153,6 +154,9 @@
                         </div>
                         <div class="border-l-2 border-neutral-200 dark:border-dark-border pl-3">
                             <strong>Parent:</strong> Creates parent account that can link to multiple students
+                        </div>
+                        <div class="border-l-2 border-neutral-200 dark:border-dark-border pl-3">
+                            <strong>Bursar:</strong> Creates financial officer account with email login for finance management
                         </div>
                     </div>
                 </div>

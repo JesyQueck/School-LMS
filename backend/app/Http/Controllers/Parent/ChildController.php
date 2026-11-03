@@ -67,11 +67,27 @@ class ChildController extends Controller
             'outstanding' => $outstanding,
         ];
 
-        $terms = Term::where('academic_session_id', $student->academic_session_id)
+        $reportCardTermIds = ReportCard::where('student_id', $student->id)
+            ->where('status', ReportCard::STATUS_PUBLISHED)
+            ->pluck('term_id')
+            ->unique();
+
+        $termsQuery = Term::query();
+
+        if ($student->academic_session_id) {
+            $termsQuery->where('academic_session_id', $student->academic_session_id);
+        }
+
+        if ($reportCardTermIds->isNotEmpty()) {
+            $termsQuery->orWhereIn('id', $reportCardTermIds);
+        }
+
+        $terms = $termsQuery
             ->orderBy('id')
             ->with(['reportCards' => function ($query) use ($student) {
-                $query->where('student_id', $student->id);
-            }])->get();
+                $query->where('student_id', $student->id)->where('status', ReportCard::STATUS_PUBLISHED);
+            }])
+            ->get();
 
         return view('parent.child', compact('student', 'metrics', 'terms'));
     }

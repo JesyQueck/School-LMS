@@ -66,7 +66,7 @@ class ParentPortalTest extends TestCase
         $response->assertOk();
         foreach ([
             'Dashboard' => route('parent.dashboard'),
-            'Children' => route('parent.dashboard').'#my-children',
+            'Children' => route('parent.children.show', $student),
             'Timetable' => route('parent.timetable'),
             'Results' => route('parent.children.results', $student),
             'Attendance' => route('parent.children.attendance', $student),

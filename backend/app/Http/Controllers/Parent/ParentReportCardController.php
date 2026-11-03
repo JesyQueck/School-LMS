@@ -16,11 +16,28 @@ class ParentReportCardController extends Controller
 
         $this->authorize('view', $student);
 
-        $terms = Term::where('academic_session_id', $student->academic_session_id)
+        $reportCardTermIds = ReportCard::where('student_id', $studentId)
+            ->where('status', ReportCard::STATUS_PUBLISHED)
+            ->pluck('term_id')
+            ->unique();
+
+        $termsQuery = Term::query();
+
+        if ($student->academic_session_id) {
+            $termsQuery->where('academic_session_id', $student->academic_session_id);
+        }
+
+        // Also include terms that have published report cards for this student
+        if ($reportCardTermIds->isNotEmpty()) {
+            $termsQuery->orWhereIn('id', $reportCardTermIds);
+        }
+
+        $terms = $termsQuery
             ->orderBy('id')
             ->with(['reportCards' => function ($query) use ($studentId) {
-                $query->where('student_id', $studentId);
-            }])->get();
+                $query->where('student_id', $studentId)->where('status', ReportCard::STATUS_PUBLISHED);
+            }])
+            ->get();
 
         return view('parent.report-cards', compact('student', 'terms'));
     }

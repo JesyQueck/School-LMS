@@ -27,7 +27,7 @@ class StoreAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type' => ['required', 'in:teacher,student,parent'],
+            'type' => ['required', 'in:teacher,student,parent,bursar'],
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 Rule::requiredIf(fn () => $this->input('type') !== 'student'),

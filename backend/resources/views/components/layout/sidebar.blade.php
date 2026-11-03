@@ -14,6 +14,7 @@
 
     $roleLabels = [
         'admin' => 'System Administrator',
+        'bursar' => 'Bursar / Financial Officer',
         'teacher' => 'Teacher',
         'student' => 'Student',
         'parent' => 'Parent',
@@ -95,6 +96,31 @@
                 'items' => [
                     $item('Accounts', route('admin.accounts.index'), 'shield-lock'),
                     $item('Audit Logs', route('admin.audit-logs.index'), 'clipboard'),
+                ],
+            ],
+        ];
+    } elseif ($role === 'bursar') {
+        $sections = [
+            [
+                'label' => 'MAIN',
+                'items' => [
+                    $item('Dashboard', route('bursar.dashboard'), 'layout-dashboard'),
+                ],
+            ],
+            [
+                'label' => 'FINANCE',
+                'items' => [
+                    $item('Student Fee Payments', route('bursar.student-fees'), 'wallet'),
+                    $item('Fee Collections & Reports', route('bursar.fee-collections'), 'bar-chart-3'),
+                    $item('Staff Salary Payments', route('bursar.staff-salaries'), 'calculator'),
+                    $item('School Expenses', route('bursar.expenses'), 'file-text'),
+                    $item('Financial Activity', route('bursar.financial-activity'), 'clipboard'),
+                ],
+            ],
+            [
+                'label' => 'COMMUNICATION',
+                'items' => [
+                    $item('Announcements', route('admin.announcements'), 'megaphone'),
                 ],
             ],
         ];
@@ -184,10 +210,10 @@
             [
                 'label' => 'SCHOOL',
                 'items' => [
-                    $item('Results', $childRoute('parent.children.results'), 'clipboard-list'),
-                    $item('Attendance', $childRoute('parent.children.attendance'), 'calendar-check'),
-                    $item('Fees', $childRoute('parent.children.fees'), 'wallet'),
-                    $item('Report Cards', $childRoute('parent.children.report-cards'), 'file-text'),
+                    $item("Child's Results", $childRoute('parent.children.results'), 'clipboard-list'),
+                    $item("Child's Attendance", $childRoute('parent.children.attendance'), 'calendar-check'),
+                    $item("Child's Fees", $childRoute('parent.children.fees'), 'wallet'),
+                    $item("Child's Report Cards", $childRoute('parent.children.report-cards'), 'file-text'),
                     $item('Announcements', route('parent.announcements'), 'megaphone'),
                 ],
             ],
@@ -198,7 +224,7 @@
         $settingsItems = [];
     }
 
-    if (in_array($role, ['admin', 'teacher', 'student', 'parent'])) {
+    if (in_array($role, ['admin', 'bursar', 'teacher', 'student', 'parent'])) {
         $settingsItems = [
             $item('Profile', route('settings.profile'), 'camera'),
             $item('Change Password', route('password.change'), 'settings'),

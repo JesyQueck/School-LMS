@@ -210,6 +210,7 @@ class ReportCardController extends Controller
             'admission_no' => $student->admission_no ?? '',
             'date_of_birth' => $student->date_of_birth ? $student->date_of_birth->format('Y-m-d') : null,
             'class' => $student->schoolClass,
+            'profile_photo' => $student->user?->profile_photo ?? null,
         ];
 
         return response()->json([

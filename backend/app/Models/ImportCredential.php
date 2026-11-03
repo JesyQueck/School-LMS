@@ -55,8 +55,8 @@ class ImportCredential extends Model
 
     public static function storeTemporaryPassword(User $user, string $password, int $createdBy): self
     {
-        if (! in_array($user->role, ['student', 'teacher'], true)) {
-            throw new InvalidArgumentException('Temporary password retrieval is only supported for student and teacher accounts.');
+        if (! in_array($user->role, ['student', 'teacher', 'bursar'], true)) {
+            throw new InvalidArgumentException('Temporary password retrieval is only supported for student, teacher, and bursar accounts.');
         }
 
         $records = static::where('user_id', $user->id);

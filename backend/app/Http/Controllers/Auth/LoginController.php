@@ -70,6 +70,7 @@ class LoginController extends Controller
     {
         return match ($user->role) {
             'admin' => '/admin/dashboard',
+            'bursar' => '/bursar/dashboard',
             'teacher' => '/teacher/dashboard',
             'parent' => '/parent/dashboard',
             'student' => '/student/dashboard',
@@ -82,7 +83,7 @@ class LoginController extends Controller
         $users = User::query()
             ->where(function ($query) use ($identifier) {
                 $query->where(function ($query) use ($identifier) {
-                    $query->whereIn('role', ['admin', 'teacher', 'parent'])
+                    $query->whereIn('role', ['admin', 'bursar', 'teacher', 'parent'])
                         ->whereRaw('LOWER(email) = ?', [$identifier]);
                 })->orWhere(function ($query) use ($identifier) {
                     $query->where('role', 'teacher')

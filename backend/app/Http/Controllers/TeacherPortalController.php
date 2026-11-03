@@ -87,45 +87,28 @@ class TeacherPortalController extends Controller
         }
         $totalStudents = Student::whereIn('class_id', $myClassIds)->count();
 
-        $todayClasses = Timetable::with(['classSubject.subject', 'classSubject.class'])
-            ->join('class_subjects', 'timetables.class_subject_id', '=', 'class_subjects.id')
-            ->whereIn('class_subjects.id', $subjectAssignments->pluck('class_subject_id'))
-            ->where('timetables.day', now()->format('l'))
-            ->orderBy('timetables.start_time')
-            ->select('timetables.*')
-            ->get();
+        // Attendance KPI - only for form class if class teacher
+        $todayAttendanceRecords = collect();
+        $totalTodayAttendance = 0;
+        $todayAttendanceRate = 0;
+        $attendanceKpiValue = 0;
+        $formClassAttendanceRate = 0;
 
-                $todayAttendanceRecords = collect();
-
-        if ($todayClasses->isNotEmpty()) {
-            $todayClassIds = $todayClasses->pluck('classSubject.class_id')->unique();
-
-            $todayAttendanceRecords = Attendance::whereIn('class_id', $todayClassIds)
+        if ($isClassTeacher && $classAssignment) {
+            $todayAttendanceRecords = Attendance::where('class_id', $classAssignment->class_id)
                 ->whereDate('date', now()->toDateString())
                 ->get();
-        }
 
-        $totalTodayAttendance = $todayAttendanceRecords
-            ->where('status', 'present')
-            ->count();
-
-        $todayAttendanceRate = $totalStudents > 0
-            ? round(($totalTodayAttendance / $totalStudents) * 100)
-            : 0;
-
-        $attendanceKpiValue = $todayAttendanceRecords->count();
-        $formClassAttendanceRate = 0;
-        if ($isClassTeacher && $classAssignment) {
+            $totalTodayAttendance = $todayAttendanceRecords->where('status', 'present')->count();
             $formClassStudentCount = Student::where('class_id', $classAssignment->class_id)->count();
-            if ($formClassStudentCount > 0) {
-                $formClassAttendanceRecords = Attendance::where('class_id', $classAssignment->class_id)
-                    ->whereDate('date', now()->toDateString())
-                    ->get();
-                $presentCount = $formClassAttendanceRecords->where('status', 'present')->count();
-                $formClassAttendanceRate = round(($presentCount / $formClassStudentCount) * 100);
-            }
+            $todayAttendanceRate = $formClassStudentCount > 0
+                ? round(($totalTodayAttendance / $formClassStudentCount) * 100)
+                : 0;
+            $attendanceKpiValue = $totalTodayAttendance . ' / ' . $formClassStudentCount;
+            $formClassAttendanceRate = $todayAttendanceRate;
         }
-        $formClassAttendanceRateValue = $isClassTeacher ? $formClassAttendanceRate.'%' : $todayAttendanceRate.'%';
+
+        $formClassAttendanceRateValue = $isClassTeacher ? $formClassAttendanceRate.'%' : 'N/A';
 
         $recentAnnouncements = Announcement::forRole('teacher')
             ->latest()
@@ -133,6 +116,14 @@ class TeacherPortalController extends Controller
             ->get();
 
         $myClasses = $subjectAssignments->unique('classSubject.class_id')->values();
+
+        $todayClasses = Timetable::with(['classSubject.subject', 'classSubject.class'])
+            ->join('class_subjects', 'timetables.class_subject_id', '=', 'class_subjects.id')
+            ->whereIn('class_subjects.id', $subjectAssignments->pluck('class_subject_id'))
+            ->where('timetables.day', now()->format('l'))
+            ->orderBy('timetables.start_time')
+            ->select('timetables.*')
+            ->get();
 
         return view('dashboard.teacher', [
             'user' => $user,

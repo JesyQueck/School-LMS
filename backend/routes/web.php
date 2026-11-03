@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Bursar\DashboardController as BursarDashboardController;
+use App\Http\Controllers\Bursar\FeeController as BursarFeeController;
+use App\Http\Controllers\Bursar\ReportController as BursarReportController;
 use App\Http\Controllers\Admin\AcademicStructureController;
 use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\AnnouncementsController;
@@ -252,4 +255,23 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::put('/timetable/cell/{timetable}', [TimetableController::class, 'updateCell'])->name('timetable.cell.update');
         Route::delete('/timetable/cell/{timetable}', [TimetableController::class, 'destroyCell'])->name('timetable.cell.destroy');
     });
+});
+
+Route::middleware(['auth', 'password.only', 'role:bursar'])->prefix('bursar')->name('bursar.')->group(function () {
+    Route::get('/dashboard', [BursarDashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/student-fees', [BursarFeeController::class, 'index'])->name('student-fees');
+    Route::get('/student-fees/search-students', [BursarFeeController::class, 'searchStudentFees'])->name('student-fees.search');
+    Route::get('/student-fees/{studentFee}', [BursarFeeController::class, 'showStudentFee'])->name('student-fees.show');
+    Route::post('/payments', [BursarFeeController::class, 'createPayment'])->name('payments.store');
+    Route::get('/payments/{payment}/receipt', [BursarFeeController::class, 'paymentReceipt'])->name('payments.receipt');
+
+    Route::get('/fee-collections', [BursarReportController::class, 'index'])->name('fee-collections');
+    Route::get('/reports/daily', [BursarReportController::class, 'dailyCollectionReport'])->name('reports.daily');
+    Route::get('/reports/debtors', [BursarReportController::class, 'outstandingDebtorsReport'])->name('reports.debtors');
+    Route::get('/reports/student-statement/{student}', [BursarReportController::class, 'studentStatement'])->name('reports.student-statement');
+
+    Route::get('/staff-salaries', fn () => view('bursar.staff-salaries'))->name('staff-salaries');
+    Route::get('/expenses', fn () => view('bursar.expenses'))->name('expenses');
+    Route::get('/financial-activity', fn () => view('bursar.financial-activity'))->name('financial-activity');
 });

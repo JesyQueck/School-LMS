@@ -46,6 +46,7 @@ class PasswordChangeController extends Controller
 
         $redirectRoute = match ($user->role) {
             'admin' => 'admin.dashboard',
+            'bursar' => 'bursar.dashboard',
             'teacher' => 'teacher.dashboard',
             'student' => 'student.dashboard',
             'parent' => 'parent.dashboard',

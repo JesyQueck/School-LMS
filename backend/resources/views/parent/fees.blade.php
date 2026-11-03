@@ -2,7 +2,7 @@
     <div class="mb-6">
         <x-ui.breadcrumbs>
             <x-ui.breadcrumb-item href="/parent/dashboard">Parent</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('parent.children.show', $student) }}">{{ $student->full_name ?? 'Child' }}</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('parent.children.show', $student) }}">{{ $student->full_name }}</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item active>Fees</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Fees</h1>

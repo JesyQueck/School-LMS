@@ -2,7 +2,7 @@
     <div class="mb-6">
         <x-ui.breadcrumbs>
             <x-ui.breadcrumb-item href="/parent/dashboard">Parent</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('parent.children.show', $student) }}">{{ $student->full_name ?? 'Child' }}</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('parent.children.show', $student) }}">{{ $student->full_name }}</x-ui.breadcrumb-item>
             <x-ui.breadcrumb-item active>Results</x-ui.breadcrumb-item>
         </x-ui.breadcrumbs>
         <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Results</h1>
@@ -46,7 +46,7 @@
                 </div>
             </x-ui.card>
         @empty
-            <x-ui.empty-state title="No results available" description="There are no published results for this student yet. Results will appear here once published by the school." />
+            <x-ui.empty-state title="No results available" description="There are no published results for this child yet. Results will appear here once published by the school." />
         @endforelse
     </div>
 </x-layouts.app>
