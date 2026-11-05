@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFeeTypeRequest;
+use App\Models\AcademicSession;
+use App\Models\FeePackage;
+use App\Models\FeePackageAssignment;
 use App\Models\FeeType;
 use App\Models\Payment;
 use App\Models\SchoolClass;
@@ -25,24 +28,27 @@ class FinanceController extends Controller
     public function index(Request $request)
     {
         $feeTypes = FeeType::with(['term', 'class'])->latest()->paginate(15);
+        $feePackages = FeePackage::with('components')->latest()->paginate(15);
 
         return view('admin.finance.index', [
             'finance' => $this->feeService->financeSummary(),
             'classSummary' => $this->feeService->classSummary(),
             'feeTypes' => $feeTypes,
+            'feePackages' => $feePackages,
             'terms' => Term::all(),
             'classes' => SchoolClass::all(),
+            'academicSessions' => AcademicSession::all(),
         ]);
     }
 
     public function showStudentFee(StudentFee $studentFee)
     {
-        $studentFee->load(['student.schoolClass', 'feeType', 'term', 'payments.recordedBy']);
+        $studentFee->load(['student.schoolClass', 'feeType', 'term', 'payments.recordedBy', 'componentSnapshots.feeComponent']);
 
         return view('admin.finance.student-fee', [
             'studentFee' => $studentFee,
             'status' => $this->feeService->recomputeStatus($studentFee),
-            'paid' => $studentFee->payments->sum('amount_paid'),
+            'paid' => $studentFee->payments()->whereDoesntHave('reversal')->sum('amount_paid'),
             'outstanding' => $this->feeService->outstandingBalance($studentFee),
         ]);
     }
@@ -76,7 +82,7 @@ class FinanceController extends Controller
             ->get();
 
         $reportData = $studentFees->map(function ($fee) {
-            $paid = $fee->payments->sum('amount_paid');
+            $paid = $fee->payments()->whereDoesntHave('reversal')->sum('amount_paid');
             $expected = $fee->amount_expected;
 
             return [

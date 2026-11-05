@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AcademicSession;
 use App\Models\FeeType;
 use App\Models\Payment;
+use App\Models\PaymentReversal;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
@@ -18,7 +19,7 @@ class FinanceManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_create_fee_types_and_record_payments(): void
+    public function test_admin_can_create_fee_types(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin);
@@ -60,26 +61,141 @@ class FinanceManagementTest extends TestCase
 
         // Student fees are auto-created when fee type is created
         $this->assertDatabaseHas('student_fees', ['student_id' => $student->id, 'fee_type_id' => $feeType->id]);
+    }
 
-        $studentFee = StudentFee::where('student_id', $student->id)->firstOrFail();
+    public function test_admin_cannot_record_payments_on_bursar_endpoint(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
 
-        $paymentResponse = $this->post('/admin/finance/payments', [
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM101',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1500.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1500.00,
+            'status' => 'unpaid',
+        ]);
+
+        // Admin trying to access Bursar payment endpoint should be forbidden
+        $response = $this->post('/bursar/payments', [
             'student_fee_id' => $studentFee->id,
-            'receipt_number' => 'RCPT-001',
             'amount_paid' => '1500.00',
             'payment_method' => 'cash',
             'payment_date' => '2026-07-15',
         ]);
 
-        $paymentResponse->assertRedirect('/admin/finance')->assertSessionHas('status');
-        $this->assertDatabaseHas('payments', ['student_fee_id' => $studentFee->id, 'receipt_number' => 'RCPT-001']);
-        $this->assertDatabaseHas('student_fees', ['id' => $studentFee->id, 'status' => 'paid']);
+        $response->assertForbidden();
     }
 
-    public function test_payment_reference_and_notes_are_persisted(): void
+    public function test_admin_cannot_access_bursar_receipt_endpoint(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-07-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM101',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1500.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1500.00,
+            'status' => 'unpaid',
+        ]);
+
+        $payment = Payment::create([
+            'student_fee_id' => $studentFee->id,
+            'receipt_number' => 'RCPT-001',
+            'amount_paid' => 1500.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-07-15',
+            'recorded_by' => $studentUser->id,
+        ]);
+
+        // Admin trying to access Bursar receipt endpoint should be forbidden
+        $response = $this->get("/bursar/payments/{$payment->id}/receipt");
+        $response->assertForbidden();
+    }
+
+    public function test_admin_cannot_access_bursar_student_fees(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/bursar/student-fees');
+        $response->assertForbidden();
+    }
+
+    public function test_admin_cannot_access_bursar_fee_collections(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/bursar/fee-collections');
+        $response->assertForbidden();
+    }
+
+    public function test_payment_reference_and_notes_are_persisted_on_bursar_endpoint(): void
+    {
+        $bursar = User::factory()->create(['role' => 'bursar']);
+        $this->actingAs($bursar);
 
         $session = AcademicSession::create([
             'name' => '2026/2027',
@@ -119,7 +235,7 @@ class FinanceManagementTest extends TestCase
             'status' => 'unpaid',
         ]);
 
-        $paymentResponse = $this->post('/admin/finance/payments', [
+        $paymentResponse = $this->post('/bursar/payments', [
             'student_fee_id' => $studentFee->id,
             'receipt_number' => 'RCPT-REF-001',
             'amount_paid' => '1500.00',
@@ -129,7 +245,7 @@ class FinanceManagementTest extends TestCase
             'notes' => 'Paid via direct bank transfer.',
         ]);
 
-        $paymentResponse->assertRedirect('/admin/finance')->assertSessionHas('status');
+        $paymentResponse->assertRedirect('/bursar/student-fees')->assertSessionHas('status');
         $this->assertDatabaseHas('payments', [
             'student_fee_id' => $studentFee->id,
             'receipt_number' => 'RCPT-REF-001',
@@ -138,10 +254,10 @@ class FinanceManagementTest extends TestCase
         ]);
     }
 
-    public function test_payment_with_future_date_is_rejected(): void
+    public function test_payment_with_future_date_is_rejected_on_bursar_endpoint(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
+        $bursar = User::factory()->create(['role' => 'bursar']);
+        $this->actingAs($bursar);
 
         $session = AcademicSession::create([
             'name' => '2026/2027',
@@ -183,7 +299,7 @@ class FinanceManagementTest extends TestCase
 
         $futureDate = now()->addDay()->format('Y-m-d');
 
-        $paymentResponse = $this->post('/admin/finance/payments', [
+        $paymentResponse = $this->post('/bursar/payments', [
             'student_fee_id' => $studentFee->id,
             'receipt_number' => 'RCPT-FUTURE',
             'amount_paid' => '1500.00',
@@ -360,10 +476,10 @@ class FinanceManagementTest extends TestCase
         $this->assertDatabaseCount('fee_types', 2);
     }
 
-    public function test_partial_payment_leaves_fee_status_as_partial(): void
+    public function test_partial_payment_leaves_fee_status_as_partial_on_bursar_endpoint(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $this->actingAs($admin);
+        $bursar = User::factory()->create(['role' => 'bursar']);
+        $this->actingAs($bursar);
 
         $session = AcademicSession::create([
             'name' => '2026/2027',
@@ -404,14 +520,14 @@ class FinanceManagementTest extends TestCase
         ]);
 
         // Pay only part of the expected amount.
-        $paymentResponse = $this->post('/admin/finance/payments', [
+        $paymentResponse = $this->post('/bursar/payments', [
             'student_fee_id' => $studentFee->id,
             'amount_paid' => '500.00',
             'payment_method' => 'cash',
             'payment_date' => '2026-07-15',
         ]);
 
-        $paymentResponse->assertRedirect('/admin/finance')->assertSessionHas('status');
+        $paymentResponse->assertRedirect('/bursar/student-fees')->assertSessionHas('status');
         $this->assertDatabaseHas('student_fees', ['id' => $studentFee->id, 'status' => 'partial']);
     }
 
@@ -704,7 +820,77 @@ class FinanceManagementTest extends TestCase
         $this->assertEquals(1, $summary['partial']);
         $this->assertEquals(1, $summary['unpaid']);
     }
+    public function test_finance_summary_counts_fees_with_only_reversed_payments_as_unpaid(): void
+{
+    $feeService = new FeeService;
 
+    $session = AcademicSession::create([
+        'name' => '2026/2027',
+        'start_date' => '2026-09-01',
+        'end_date' => '2027-08-31',
+        'is_current' => true,
+    ]);
+
+    $term = Term::create([
+        'academic_session_id' => $session->id,
+        'name' => 'First Term',
+        'start_date' => '2026-09-01',
+        'end_date' => '2026-12-20',
+        'is_current' => true,
+    ]);
+
+    $class = SchoolClass::create(['name' => 'JSS 1']);
+
+    $studentUser = User::factory()->create();
+
+    $student = Student::create([
+        'user_id' => $studentUser->id,
+        'class_id' => $class->id,
+        'admission_no' => 'ADM-REVERSED-001',
+    ]);
+
+    $feeType = FeeType::create([
+        'name' => 'Tuition Fee',
+        'amount' => 1000.00,
+        'term_id' => $term->id,
+        'class_id' => $class->id,
+    ]);
+
+    $studentFee = StudentFee::create([
+        'student_id' => $student->id,
+        'fee_type_id' => $feeType->id,
+        'term_id' => $term->id,
+        'amount_expected' => 1000.00,
+        'status' => 'paid',
+    ]);
+
+    $payment = Payment::create([
+        'student_fee_id' => $studentFee->id,
+        'receipt_number' => 'RCPT-REVERSED-001',
+        'amount_paid' => 1000.00,
+        'payment_method' => 'cash',
+        'payment_date' => '2026-07-15',
+        'recorded_by' => $studentUser->id,
+    ]);
+
+    PaymentReversal::create([
+        'payment_id' => $payment->id,
+        'reversed_by' => $studentUser->id,
+        'reason' => 'Test reversal',
+        'amount_reversed' => 1000.00,
+        'reversed_at' => now(),
+    ]);
+
+    $summary = $feeService->financeSummary();
+
+    $this->assertEquals(1000.00, $summary['expected']);
+    $this->assertEquals(0.00, $summary['collected']);
+    $this->assertEquals(1000.00, $summary['outstanding']);
+    $this->assertEquals(0.0, $summary['collection_rate']);
+    $this->assertEquals(0, $summary['paid']);
+    $this->assertEquals(0, $summary['partial']);
+    $this->assertEquals(1, $summary['unpaid']);
+}
     public function test_finance_summary_with_no_fees_returns_zeros(): void
     {
         $feeService = new FeeService;

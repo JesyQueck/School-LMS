@@ -104,20 +104,19 @@ class TeacherReportCardTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_teacher_report_card_index_handles_no_class_assignment_gracefully(): void
-    {
-        $data = $this->setUpTeacherWithClass();
-        $this->actingAs($data['teacherUser']);
+    public function test_teacher_without_current_class_assignment_cannot_access_report_cards(): void
+{
+    $data = $this->setUpTeacherWithClass();
+    $this->actingAs($data['teacherUser']);
 
-        ClassAssignment::where('teacher_id', $data['teacher']->id)
-            ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
-            ->delete();
+    ClassAssignment::where('teacher_id', $data['teacher']->id)
+        ->whereHas('academicSession', fn ($q) => $q->where('is_current', true))
+        ->delete();
 
-        $response = $this->get('/teacher/report-cards');
-        $response->assertOk();
-        $response->assertViewHas('reportCards');
-        $this->assertCount(0, $response->viewData('reportCards'));
-    }
+    $response = $this->get('/teacher/report-cards');
+
+    $response->assertForbidden();
+}
 
     public function test_teacher_can_view_report_card_index_with_authorization(): void
     {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Payment extends Model
 {
@@ -31,5 +32,15 @@ class Payment extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function reversal(): HasOne
+    {
+        return $this->hasOne(PaymentReversal::class, 'payment_id');
+    }
+
+    public function isReversed(): bool
+    {
+        return $this->reversal()->exists();
     }
 }

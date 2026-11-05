@@ -138,11 +138,11 @@
 
         if ($isClassTeacher) {
             $teachingItems[] = $item('My Students', route('teacher.students.index'), 'users');
+            $teachingItems[] = $item('Attendance', route('teacher.attendance'), 'calendar');
+            $teachingItems[] = $item('Report Cards', route('teacher.report-cards.index'), 'file-text');
         }
 
-        $teachingItems[] = $item('Attendance', route('teacher.attendance'), 'calendar');
         $teachingItems[] = $item('Results', route('teacher.results'), 'clipboard-list');
-        $teachingItems[] = $item('Report Cards', route('teacher.report-cards.index'), 'file-text');
         $teachingItems[] = $item('Timetable', route('teacher.timetable'), 'calendar-check');
 
         $sections = [

@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\FeeComponent;
+use App\Models\FeePackageAssignment;
 use App\Models\FeeType;
 use App\Models\Payment;
+use App\Models\PaymentReversal;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
+use App\Models\StudentFeeComponentSnapshot;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +75,49 @@ class FeeService
         throw new \RuntimeException('Unable to generate a unique receipt number after maximum attempts.');
     }
 
+    /**
+     * Reverse a payment.
+     *
+     * Business rules:
+     * - Payment must exist and not already be reversed.
+     * - Reason is mandatory.
+     * - Original payment is preserved.
+     * - Balance and status are recalculated.
+     * - Audit log entry is created.
+     */
+    public function reversePayment(Payment $payment, string $reason, User $reversedBy): PaymentReversal
+{
+    return DB::transaction(function () use ($payment, $reason, $reversedBy) {
+        $lockedPayment = Payment::whereKey($payment->id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        if ($lockedPayment->isReversed()) {
+            throw new \InvalidArgumentException(
+                'This payment has already been reversed.'
+            );
+        }
+
+        $reversal = PaymentReversal::create([
+            'payment_id' => $lockedPayment->id,
+            'reversed_by' => $reversedBy->id,
+            'reason' => $reason,
+            'amount_reversed' => $lockedPayment->amount_paid,
+            'reversed_at' => now(),
+        ]);
+
+        $studentFee = StudentFee::whereKey($lockedPayment->student_fee_id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        $studentFee->update([
+            'status' => $this->recomputeStatus($studentFee),
+        ]);
+
+        return $reversal;
+    });
+}
+
     private function isDuplicateReceiptError(QueryException $e): bool
     {
         return str_contains($e->getMessage(), 'receipt_number')
@@ -82,7 +129,7 @@ class FeeService
      */
     public function recomputeStatus(StudentFee $studentFee): string
     {
-        $totalPaid = (float) $studentFee->payments()->sum('amount_paid');
+        $totalPaid = (float) $studentFee->payments()->whereDoesntHave('reversal')->sum('amount_paid');
         $expected = (float) $studentFee->amount_expected;
 
         if ($totalPaid <= 0) {
@@ -98,10 +145,11 @@ class FeeService
 
     /**
      * The remaining amount still owed on a fee obligation.
+     * Excludes reversed payments.
      */
     public function outstandingBalance(StudentFee $studentFee): float
     {
-        $totalPaid = (float) $studentFee->payments()->sum('amount_paid');
+        $totalPaid = (float) $studentFee->payments()->whereDoesntHave('reversal')->sum('amount_paid');
         $expected = (float) $studentFee->amount_expected;
 
         return max(0, $expected - $totalPaid);
@@ -137,17 +185,71 @@ class FeeService
     }
 
     /**
+     * Create student fee obligations from a fee package assignment.
+     * Creates one StudentFee per student with the package total,
+     * and creates component snapshots for historical preservation.
+     */
+    public function createStudentFeesForPackageAssignment(FeePackageAssignment $assignment): void
+    {
+        $package = $assignment->package()->with('components')->firstOrFail();
+
+        if (! $package->is_active || ! $assignment->is_active) {
+            return;
+        }
+
+        $students = Student::where('class_id', $assignment->class_id)->get();
+        $components = $package->components;
+        $totalAmount = $components->sum('amount');
+
+        DB::transaction(function () use ($students, $assignment, $package, $components, $totalAmount) {
+            foreach ($students as $student) {
+                $studentFee = StudentFee::firstOrCreate(
+                    [
+                        'student_id' => $student->id,
+                        'fee_type_id' => $package->id,
+                        'fee_source_type' => 'fee_package',
+                        'fee_package_id' => $package->id,
+                        'term_id' => $assignment->term_id,
+                    ],
+                    [
+                        'amount_expected' => $totalAmount,
+                        'status' => 'unpaid',
+                    ]
+                );
+
+                // Create component snapshots for historical preservation
+                foreach ($components as $component) {
+                    StudentFeeComponentSnapshot::firstOrCreate(
+                        [
+                            'student_fee_id' => $studentFee->id,
+                            'fee_component_id' => $component->id,
+                        ],
+                        [
+                            'component_name' => $component->name,
+                            'component_amount' => $component->amount,
+                            'component_description' => $component->description,
+                        ]
+                    );
+                }
+            }
+        });
+    }
+
+    /**
      * School-wide finance summary.
+     * Excludes reversed payments from collected amount.
      *
      * @return array{expected:float, collected:float, outstanding:float, collection_rate:float, paid:int, partial:int, unpaid:int}
      */
     public function financeSummary(): array
     {
         $expected = (float) StudentFee::sum('amount_expected');
-        $collected = (float) Payment::sum('amount_paid');
+        $collected = (float) Payment::whereDoesntHave('reversal')->sum('amount_paid');
 
-        $paid = StudentFee::whereRaw('amount_expected <= (SELECT COALESCE(SUM(amount_paid), 0) FROM payments WHERE payments.student_fee_id = student_fees.id)')->count();
-        $unpaid = StudentFee::whereDoesntHave('payments')->count();
+        $paid = StudentFee::whereRaw('amount_expected <= (SELECT COALESCE(SUM(amount_paid), 0) FROM payments WHERE payments.student_fee_id = student_fees.id AND NOT EXISTS (SELECT 1 FROM payment_reversals WHERE payment_reversals.payment_id = payments.id))')->count();
+        $unpaid = StudentFee::whereDoesntHave('payments', function ($query) {
+    $query->whereDoesntHave('reversal');
+})->count();
         $total = StudentFee::count();
         $partial = max(0, $total - $paid - $unpaid);
 
@@ -164,6 +266,7 @@ class FeeService
 
     /**
      * Per-class finance breakdown.
+     * Excludes reversed payments.
      *
      * @return array<int, array{class:string, expected:float, collected:float, outstanding:float, collection_rate:float, paid:int, partial:int, unpaid:int, total:int}>
      */
@@ -175,7 +278,9 @@ class FeeService
             $fees = StudentFee::whereIn('student_id', $studentIds);
 
             $expected = (float) $fees->sum('amount_expected');
-            $collected = (float) Payment::whereIn('student_fee_id', $fees->pluck('id'))->sum('amount_paid');
+            $collected = (float) Payment::whereIn('student_fee_id', $fees->pluck('id'))
+                ->whereDoesntHave('reversal')
+                ->sum('amount_paid');
 
             $paidCount = 0;
             $partialCount = 0;

@@ -31,7 +31,9 @@
             <x-ui.card class="h-full flex flex-col">
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Daily Collections</h3>
-                    <a href="{{ route('bursar.reports.daily', ['term_id' => $currentTerm->id]) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Report</a>
+                    @if($currentTerm)
+    <a href="{{ route('bursar.reports.daily', ['term_id' => $currentTerm->id]) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Report</a>
+@endif
                 </div>
                 <div class="p-6 flex-1 overflow-y-auto">
                     @if(!empty($dailyCollections))
@@ -124,13 +126,16 @@
                             @foreach($paymentMethodSummary as $method => $data)
                                 <div class="flex items-center justify-between p-3 rounded-lg border border-neutral-200 dark:border-dark-border">
                                     <div class="flex items-center gap-3">
-                                        <div class="h-8 w-8 rounded-lg {{ match($method) {
-                                            'cash' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-                                            'bank_transfer' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-                                            'card' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
-                                            'cheque' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-                                            default => 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300'
-                                        }} flex items-center justify-center">
+@php
+    $methodClass = match($method) {
+        'cash' => 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+        'bank_transfer' => 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+        'card' => 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+        'cheque' => 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+        default => 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300',
+    };
+@endphp
+{{ $methodClass }} flex items-center justify-center">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 @if($method === 'cash')
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -201,7 +206,9 @@
 
     {{-- Quick Report Actions --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <a href="{{ route('bursar.reports.daily', ['term_id' => $currentTerm->id]) }}" class="flex items-center gap-3 p-4 rounded-lg border border-neutral-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-700 hover:bg-primary-200 dark:hover:bg-primary-900/10 transition-colors">
+        @if($currentTerm)
+    <a href="{{ route('bursar.reports.daily', ['term_id' => $currentTerm->id]) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View Full Report</a>
+@endif
             <div class="h-10 w-10 rounded-lg bg-primary-200 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
             <div><p class="text-sm font-medium text-neutral-900 dark:text-white">Daily Collection Report</p><p class="text-xs text-neutral-500 dark:text-neutral-400">PDF / CSV Export</p></div>
         </a>

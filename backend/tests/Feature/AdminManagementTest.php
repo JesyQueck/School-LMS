@@ -1475,7 +1475,7 @@ class AdminManagementTest extends TestCase
         $this->actingAs($admin)
             ->postJson(route('admin.accounts.credentials.password.regenerate', $parent))
             ->assertNotFound()
-            ->assertJsonPath('message', 'Temporary passwords can only be generated for valid student or teacher accounts.');
+            ->assertJsonPath('message', 'Temporary passwords can only be generated for valid student, teacher, or bursar accounts.');
         $this->postJson(route('admin.accounts.credentials.password.regenerate', $admin))->assertNotFound();
         $this->assertDatabaseMissing('audit_logs', ['action' => 'account.temporary_password_regenerated']);
     }

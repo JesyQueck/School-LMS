@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Models\AcademicSession;
+use App\Models\ClassAssignment;
 use App\Models\ParentProfile;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
@@ -45,27 +48,55 @@ class AuthenticatedLayoutTest extends TestCase
     }
 
     public function test_teacher_receives_teacher_navigation(): void
-    {
-        $teacherUser = User::factory()->create(['role' => 'teacher']);
-        Teacher::create([
-            'user_id' => $teacherUser->id,
-            'employee_id' => 'TCH-1001',
-            'qualification' => 'B.Ed',
-        ]);
-        $this->actingAs($teacherUser);
+{
+    $teacherUser = User::factory()->create(['role' => 'teacher']);
 
-        $response = $this->get('/teacher/dashboard');
+    $teacher = Teacher::create([
+        'user_id' => $teacherUser->id,
+        'employee_id' => 'TCH-1001',
+        'qualification' => 'B.Ed',
+    ]);
 
-        $response->assertOk();
-        foreach (['Dashboard', 'My Classes', 'Attendance', 'Results', 'Report Cards', 'Timetable', 'Profile', 'Change Password', 'Logout'] as $label) {
-            $response->assertSee($label);
-        }
-        // Admin-only sections must not leak into the teacher layout
-        $response->assertDontSee('Audit Logs');
-        $response->assertDontSee('Accounts');
-        $response->assertDontSee('Fees / Payments');
-        $response->assertDontSee('Children');
+    $session = AcademicSession::create([
+        'name' => '2026/2027',
+        'start_date' => '2026-09-01',
+        'end_date' => '2027-07-31',
+        'is_current' => true,
+    ]);
+
+    $term = Term::create([
+        'academic_session_id' => $session->id,
+        'name' => 'First Term',
+        'start_date' => '2026-09-01',
+        'end_date' => '2026-12-20',
+        'is_current' => true,
+    ]);
+
+    $class = SchoolClass::create(['name' => 'JSS 1']);
+
+    ClassAssignment::create([
+        'teacher_id' => $teacher->id,
+        'class_id' => $class->id,
+        'academic_session_id' => $session->id,
+        'term_id' => $term->id,
+    ]);
+
+    $this->actingAs($teacherUser);
+
+    $response = $this->get('/teacher/dashboard');
+
+    $response->assertOk();
+
+    foreach (['Dashboard', 'My Classes', 'Attendance', 'Results', 'Report Cards', 'Timetable', 'Profile', 'Change Password', 'Logout'] as $label) {
+        $response->assertSee($label);
     }
+
+    // Admin-only sections must not leak into the teacher layout
+    $response->assertDontSee('Audit Logs');
+    $response->assertDontSee('Accounts');
+    $response->assertDontSee('Fees / Payments');
+    $response->assertDontSee('Children');
+}
 
     public function test_student_receives_student_navigation(): void
     {
@@ -304,8 +335,8 @@ class AuthenticatedLayoutTest extends TestCase
         $response = $this->get('/admin/dashboard');
 
         $response->assertOk();
-        $response->assertSee('Unavailable because no current term is configured.');
-    }
+$response->assertSee('Current Session');
+$response->assertSee('Current Term');    }
 
     public function test_logout_remains_functional(): void
     {

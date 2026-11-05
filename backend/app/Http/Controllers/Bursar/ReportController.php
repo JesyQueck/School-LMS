@@ -24,6 +24,11 @@ class ReportController extends Controller
     {
         $currentTerm = Term::where('is_current', true)->with('academicSession')->first();
 
+        // If no current term, get the latest term
+        if (! $currentTerm) {
+            $currentTerm = Term::with('academicSession')->latest('id')->first();
+        }
+
         $dailyCollections = $this->getDailyCollections($currentTerm);
         $paymentMethodSummary = $this->getPaymentMethodSummary($currentTerm);
         $classCollectionSummary = $this->feeService->classSummary();
@@ -86,7 +91,12 @@ class ReportController extends Controller
             };
         }
 
-        return view('bursar.daily-collection-report', compact('dailyData', 'summary', 'term'));
+        return view('bursar.daily-collection-report', [
+    'dailyData' => $dailyData,
+    'summary' => $summary,
+    'term' => $term,
+    'classes' => SchoolClass::orderBy('name')->get(),
+]);
     }
 
     public function outstandingDebtorsReport(Request $request)
@@ -144,12 +154,23 @@ class ReportController extends Controller
             };
         }
 
-        return view('bursar.outstanding-debtors-report', compact('debtors', 'classSummaries', 'summary'));
+        return view('bursar.outstanding-debtors-report', [
+    'debtors' => $debtors,
+    'classSummaries' => $classSummaries,
+    'summary' => $summary,
+    'terms' => Term::orderBy('id', 'desc')->get(),
+    'classes' => SchoolClass::orderBy('name')->get(),
+]);
     }
 
     public function studentStatement(Request $request, Student $student)
     {
-        $this->authorize('view', $student);
+        $user = $request->user();
+
+        // Bursar authorization: must be bursar role and student must have fee records
+        if (! ($user->role === 'bursar' && StudentFee::where('student_id', $student->id)->exists())) {
+            abort(403);
+        }
 
         $termId = $request->input('term_id');
         $classId = $request->input('class_id');
@@ -198,7 +219,8 @@ class ReportController extends Controller
             };
         }
 
-        return view('bursar.student-statement', compact('student', 'statement', 'summary'));
+        return view('bursar.student-statement', compact('student', 'statement', 'summary'))
+            ->with('terms', Term::orderBy('id', 'desc')->get());
     }
 
     private function getDailyCollections(?Term $term): array

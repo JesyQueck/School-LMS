@@ -5,12 +5,14 @@ namespace Tests\Feature;
 use App\Models\AcademicSession;
 use App\Models\FeeType;
 use App\Models\Payment;
+use App\Models\PaymentReversal;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFee;
 use App\Models\Term;
 use App\Models\User;
 use App\Services\FeeService;
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -68,10 +70,16 @@ class BursarFeeTest extends TestCase
         $this->studentFee = StudentFee::create([
             'student_id' => $this->student->id,
             'fee_type_id' => $this->feeType->id,
+            'fee_source_type' => 'fee_type',
             'term_id' => $this->term->id,
             'amount_expected' => 1500.00,
             'status' => 'unpaid',
         ]);
+    }
+
+    protected function disableCsrf(): void
+    {
+        $this->withoutMiddleware('csrf');
     }
 
     public function test_bursar_can_access_student_fees_page(): void
@@ -84,8 +92,95 @@ class BursarFeeTest extends TestCase
         $response->assertViewIs('bursar.student-fees');
     }
 
+    public function test_bursar_student_fee_status_filters_use_valid_payments(): void
+{
+    $this->actingAs($this->bursar);
+
+    $makeFee = function (string $admissionNo): StudentFee {
+        $studentUser = User::factory()->create();
+
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $this->class->id,
+            'admission_no' => $admissionNo,
+        ]);
+
+        return StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $this->feeType->id,
+            'fee_source_type' => 'fee_type',
+            'term_id' => $this->term->id,
+            'amount_expected' => 1500.00,
+            'status' => 'unpaid',
+        ]);
+    };
+
+    $partialFee = $makeFee('ADM102');
+    $paidFee = $makeFee('ADM103');
+    $reversedFee = $makeFee('ADM104');
+
+    Payment::create([
+        'student_fee_id' => $partialFee->id,
+        'receipt_number' => 'TEST-PARTIAL-001',
+        'amount_paid' => 500,
+        'payment_method' => 'cash',
+        'payment_date' => '2026-10-01',
+        'recorded_by' => $this->bursar->id,
+    ]);
+
+    Payment::create([
+        'student_fee_id' => $paidFee->id,
+        'receipt_number' => 'TEST-PAID-001',
+        'amount_paid' => 1500,
+        'payment_method' => 'cash',
+        'payment_date' => '2026-10-01',
+        'recorded_by' => $this->bursar->id,
+    ]);
+
+    $reversedPayment = Payment::create([
+        'student_fee_id' => $reversedFee->id,
+        'receipt_number' => 'TEST-REVERSED-001',
+        'amount_paid' => 1500,
+        'payment_method' => 'cash',
+        'payment_date' => '2026-10-01',
+        'recorded_by' => $this->bursar->id,
+    ]);
+
+    PaymentReversal::create([
+        'payment_id' => $reversedPayment->id,
+        'reversed_by' => $this->bursar->id,
+        'reason' => 'Regression test reversal',
+        'amount_reversed' => 1500,
+        'reversed_at' => now(),
+    ]);
+
+    $this->get('/bursar/student-fees?status=unpaid')
+        ->assertOk()
+        ->assertViewHas('studentFees', function ($fees) use ($reversedFee) {
+            $ids = $fees->getCollection()->pluck('id')->sort()->values()->all();
+
+            return $ids === collect([
+                $this->studentFee->id,
+                $reversedFee->id,
+            ])->sort()->values()->all();
+        });
+
+    $this->get('/bursar/student-fees?status=partial')
+        ->assertOk()
+        ->assertViewHas('studentFees', function ($fees) use ($partialFee) {
+            return $fees->getCollection()->pluck('id')->all() === [$partialFee->id];
+        });
+
+    $this->get('/bursar/student-fees?status=paid')
+        ->assertOk()
+        ->assertViewHas('studentFees', function ($fees) use ($paidFee) {
+            return $fees->getCollection()->pluck('id')->all() === [$paidFee->id];
+        });
+}
+
     public function test_bursar_can_record_full_payment(): void
     {
+        $this->withoutMiddleware();
         $this->actingAs($this->bursar);
 
         $response = $this->post('/bursar/payments', [
@@ -110,6 +205,7 @@ class BursarFeeTest extends TestCase
 
     public function test_bursar_can_record_partial_payment(): void
     {
+        $this->withoutMiddleware();
         $this->actingAs($this->bursar);
 
         $response = $this->post('/bursar/payments', [
@@ -126,6 +222,7 @@ class BursarFeeTest extends TestCase
 
     public function test_bursar_cannot_overpay(): void
     {
+        $this->withoutMiddleware();
         $this->actingAs($this->bursar);
 
         $response = $this->post('/bursar/payments', [
@@ -204,6 +301,82 @@ class BursarFeeTest extends TestCase
         $response->assertJsonStructure([0 => ['id', 'label', 'student_name', 'fee_type', 'amount_expected', 'class', 'admission_no']]);
     }
 
+    public function test_bursar_can_search_student_fee_with_reversed_payment(): void
+{
+    $this->actingAs($this->bursar);
+
+    $payment = Payment::create([
+        'student_fee_id' => $this->studentFee->id,
+        'receipt_number' => 'TEST-SEARCH-REVERSAL',
+        'amount_paid' => 1500,
+        'payment_method' => 'cash',
+        'payment_date' => '2026-10-01',
+        'recorded_by' => $this->bursar->id,
+    ]);
+
+    $this->studentFee->update(['status' => 'paid']);
+
+    PaymentReversal::create([
+        'payment_id' => $payment->id,
+        'reversed_by' => $this->bursar->id,
+        'reason' => 'Regression test reversal',
+        'amount_reversed' => 1500,
+        'reversed_at' => now(),
+    ]);
+
+    $response = $this->get(
+        '/bursar/student-fees/search-students?q=ADM101'
+    );
+
+    $response->assertOk();
+    $response->assertJsonFragment([
+        'id' => $this->studentFee->id,
+        'admission_no' => 'ADM101',
+    ]);
+}
+
+public function test_payment_cannot_be_reversed_twice(): void
+{
+    $payment = Payment::create([
+        'student_fee_id' => $this->studentFee->id,
+        'receipt_number' => 'TEST-DUPLICATE-REVERSAL',
+        'amount_paid' => 1500,
+        'payment_method' => 'cash',
+        'payment_date' => '2026-10-01',
+        'recorded_by' => $this->bursar->id,
+    ]);
+
+    $service = app(FeeService::class);
+
+    $service->reversePayment(
+        $payment,
+        'First reversal',
+        $this->bursar
+    );
+
+    try {
+        $service->reversePayment(
+            $payment->fresh(),
+            'Second reversal',
+            $this->bursar
+        );
+
+        $this->fail('A second reversal should not be allowed.');
+    } catch (\InvalidArgumentException $e) {
+        $this->assertSame(
+            'This payment has already been reversed.',
+            $e->getMessage()
+        );
+    }
+
+    $this->assertDatabaseCount('payment_reversals', 1);
+
+    $this->assertDatabaseHas('student_fees', [
+        'id' => $this->studentFee->id,
+        'status' => 'unpaid',
+    ]);
+}
+
     public function test_bursar_can_view_student_fee_details(): void
     {
         $this->actingAs($this->bursar);
@@ -228,16 +401,21 @@ class BursarFeeTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $routes = [
+        // Test GET routes
+        $getRoutes = [
             '/bursar/student-fees',
             '/bursar/fee-collections',
-            '/bursar/payments',
         ];
 
-        foreach ($routes as $route) {
+        foreach ($getRoutes as $route) {
             $response = $this->get($route);
             $response->assertForbidden();
         }
+
+        // Test POST route
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+        $response = $this->post('/bursar/payments', []);
+        $response->assertForbidden();
     }
 
     public function test_teacher_cannot_access_bursar_fee_routes(): void
@@ -251,20 +429,26 @@ class BursarFeeTest extends TestCase
 
     public function test_guest_cannot_access_bursar_fee_routes(): void
     {
-        $routes = [
+        // Test GET routes
+        $getRoutes = [
             '/bursar/student-fees',
             '/bursar/fee-collections',
-            '/bursar/payments',
         ];
 
-        foreach ($routes as $route) {
+        foreach ($getRoutes as $route) {
             $response = $this->get($route);
             $response->assertRedirect('/login');
         }
+
+// Test POST route
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
+        $response = $this->post('/bursar/payments', []);
+        $response->assertRedirect('/login');
     }
 
     public function test_bursar_payment_creates_audit_log(): void
     {
+        $this->disableCsrf();
         $this->actingAs($this->bursar);
 
         $this->post('/bursar/payments', [
@@ -282,6 +466,7 @@ class BursarFeeTest extends TestCase
 
     public function test_multiple_partial_payments_sum_correctly(): void
     {
+        $this->disableCsrf();
         $this->actingAs($this->bursar);
 
         // First partial payment

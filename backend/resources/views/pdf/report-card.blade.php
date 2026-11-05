@@ -124,7 +124,7 @@
                 <img src="{{ public_path('images/Logo.webp') }}" alt="Logo" style="height: 64px; width: auto;">
             </td>
             <td class="school-center-cell">
-                <h1 class="school-name">{{ $school->name ?? config('school.name', 'Greenfield High School') }}</h1>
+                <h1 class="school-name">{{ $school->name ?? config('school.name', 'Greenfield Academy') }}</h1>
                 <p class="school-details">
                     {{ $school->address ?? config('school.address', '123 Education Lane, Victoria Island, Lagos') }}<br>
                     {{ $school->phone ?? config('school.phone', '+234 800 000 0000') }} | {{ $school->email ?? config('school.email', 'info@greenfieldhs.edu') }}
@@ -140,7 +140,7 @@
 
     <!-- Title -->
     <div class="title-block">
-        <p class="section-title">Terminal Report Sheet</p>
+        <p class="section-title">TERMINAL REPORT SHEET</p>
         <p class="subtitle">{{ $term?->name ?? 'First Term' }} {{ $term?->year ?? date('Y') }} Session</p>
     </div>
 

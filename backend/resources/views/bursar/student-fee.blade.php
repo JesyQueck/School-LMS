@@ -31,6 +31,39 @@
                 </div>
             </x-ui.card>
 
+            {{-- Component Breakdown (for fee packages) --}}
+            @if($studentFee->componentSnapshots->isNotEmpty())
+                <x-ui.card class="mb-6">
+                    <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
+                        <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Component Breakdown</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+                            <thead class="bg-neutral-50 dark:bg-dark-surface">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Component</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                                @foreach($studentFee->componentSnapshots as $snapshot)
+                                    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                                        <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $snapshot->component_name }}</td>
+                                        <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $snapshot->component_description ?? '—' }}</td>
+                                        <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($snapshot->component_amount, 2) }}</td>
+                                    </tr>
+                                @endforeach
+                                <tr class="bg-neutral-50 dark:bg-neutral-800/50 font-semibold">
+                                    <td colspan="2" class="px-6 py-3 text-right text-sm text-neutral-900 dark:text-white">Total</td>
+                                    <td class="px-6 py-3 text-sm text-neutral-900 dark:text-white text-right">₦{{ number_format($studentFee->componentSnapshots->sum('component_amount'), 2) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </x-ui.card>
+            @endif
+
             {{-- Payment History --}}
             <x-ui.card>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
@@ -51,12 +84,18 @@
                                 <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Amount</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Reference</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Recorded By</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                             @forelse($studentFee->payments->sortByDesc('payment_date') as $payment)
-                                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                                @php
+                                    $isReversed = $payment->isReversed();
+                                    $statusClass = $isReversed ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300' : ($isReversed ? '' : 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300');
+                                    $statusLabel = $isReversed ? 'Reversed' : 'Valid';
+                                @endphp
+                                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors {{ $isReversed ? 'opacity-75' : '' }}">
                                     <td class="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-white">{{ $payment->receipt_number }}</td>
                                     <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->payment_date?->format('d M Y') }}</td>
                                     <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ ucfirst($payment->payment_method ?? 'Cash') }}</td>
@@ -64,11 +103,17 @@
                                     <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->reference ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400">{{ $payment->recordedBy->name ?? 'System' }}</td>
                                     <td class="px-6 py-4 text-sm">
-                                        <button type="button" data-view-receipt="{{ $payment->id }}" class="text-primary-600 dark:text-primary-400 hover:underline">View Receipt</button>
+                                        <span class="inline-flex items-center rounded-full {{ $statusClass }} px-2 py-0.5 text-xs font-medium">{{ $statusLabel }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <button type="button" data-view-receipt="{{ $payment->id }}" class="text-primary-600 dark:text-primary-400 hover:underline mr-3">View Receipt</button>
+                                        @if(!$isReversed && $outstanding > 0)
+                                            <button type="button" onclick="openReversalModal({{ $payment->id }}, '{{ $payment->receipt_number }}', {{ $payment->amount_paid }})" class="text-danger-600 dark:text-danger-400 hover:underline">Reverse</button>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No payments recorded.</td></tr>
+                                <tr><td colspan="8" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No payments recorded.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -122,6 +167,89 @@
         </div>
     </div>
 
+    {{-- Payment Modal (for inline payment recording) --}}
+    <div id="payment-modal" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50 overflow-y-auto p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col" style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <form method="POST" action="{{ route('bursar.payments.store') }}" class="flex-1 flex flex-col">
+                @csrf
+                <div class="px-4 py-3 border-b">
+                    <h2 class="text-lg font-semibold" style="color: #000000;">Record Payment</h2>
+                </div>
+                <div class="p-4 overflow-y-auto space-y-4">
+                    <input type="hidden" name="student_fee_id" id="modal_fee_id">
+                    <div>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white" id="modal_student_name"></p>
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400" id="modal_fee_info"></p>
+                    </div>
+                    <div class="border-t border-neutral-200 dark:border-dark-border pt-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Outstanding Balance</label>
+                            <p class="text-2xl font-bold text-danger-600 dark:text-danger-400" id="modal_outstanding">₦0.00</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (₦) <span class="text-danger-500">*</span></label>
+                            <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" id="modal_amount_paid">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Method</label>
+                            <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                                <option value="cash">Cash</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="card">Card</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Date <span class="text-danger-500">*</span></label>
+                            <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Reference (optional)</label>
+                            <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Notes (optional)</label>
+                            <textarea name="notes" rows="2" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 border-t border-neutral-200 dark:border-dark-border flex gap-2">
+                    <button type="button" onclick="closePaymentModal()" class="flex-1 px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:underline">Cancel</button>
+                    <button type="submit" class="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Reversal Modal --}}
+    <div id="reversal-modal" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50 overflow-y-auto p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col" style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <form method="POST" action="{{ route('bursar.payments.reverse') }}" class="flex-1 flex flex-col">
+                @csrf
+                <div class="px-4 py-3 border-b">
+                    <h2 class="text-lg font-semibold" style="color: #000000;">Reverse Payment</h2>
+                </div>
+                <div class="p-4 overflow-y-auto space-y-4">
+                    <input type="hidden" name="payment_id" id="reversal_payment_id">
+                    <div>
+                        <p class="text-sm font-medium text-neutral-900 dark:text-white" id="reversal_receipt"></p>
+                        <p class="text-xs text-neutral-500 dark:text-neutral-400" id="reversal_amount"></p>
+                    </div>
+                    <div class="border-t border-neutral-200 dark:border-dark-border pt-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Reason <span class="text-danger-500">*</span></label>
+                            <textarea name="reason" rows="4" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" placeholder="Enter the reason for reversing this payment (minimum 10 characters)"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 border-t border-neutral-200 dark:border-dark-border flex gap-2">
+                    <button type="button" onclick="closeReversalModal()" class="flex-1 px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:underline">Cancel</button>
+                    <button type="submit" class="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-danger-600 hover:bg-danger-700 rounded-lg">Reverse Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Receipt Modals --}}
     @foreach($studentFee->payments as $payment)
         @php
@@ -131,6 +259,7 @@
             $receiptTerm = $payment->studentFee->term ?? null;
             $receiptAmount = number_format($payment->amount_paid, 2);
             $receiptMethod = ucfirst($payment->payment_method ?? 'Cash');
+            $isReversed = $payment->isReversed();
         @endphp
         <div id="receipt-modal-{{ $payment->id }}" class="receipt-modal fixed inset-0 z-[60] hidden items-center justify-center bg-black/60 p-3">
             <div class="bg-white dark:bg-dark-surface rounded-xl shadow-xl w-full max-w-xl mx-auto max-h-[90vh] flex flex-col">
@@ -174,6 +303,13 @@
                         <div class="row"><span class="label">Payment Method:</span><span>{{ $receiptMethod }}</span></div>
                         <div class="row"><span class="label">Reference:</span><span>{{ $payment->reference ?? '—' }}</span></div>
                         <div class="row"><span class="label">Recorded By:</span><span>{{ $payment->recordedBy->name ?? 'System' }}</span></div>
+                        @if($isReversed)
+                            <div class="line"></div>
+                            <div class="row"><span class="label">Status:</span><span class="text-danger-600 dark:text-danger-400 font-bold">REVERSED</span></div>
+                            <div class="row"><span class="label">Reversal Reason:</span><span>{{ $payment->reversal->reason ?? '—' }}</span></div>
+                            <div class="row"><span class="label">Reversed By:</span><span>{{ $payment->reversal->reversedBy->name ?? 'System' }}</span></div>
+                            <div class="row"><span class="label">Reversed At:</span><span>{{ $payment->reversal->reversed_at?->format('d F Y H:i') }}</span></div>
+                        @endif
                         <div class="line"></div>
                         <p class="center" style="font-size: 12px; color: #888;">Thank you for your payment.</p>
                     </div>
@@ -241,6 +377,70 @@
                     printWindow.print();
                 });
             });
+
+            /* Payment Modal handling */
+            var paymentModal = document.getElementById('payment-modal');
+            var modalFeeId = document.getElementById('modal_fee_id');
+            var modalStudentName = document.getElementById('modal_student_name');
+            var modalFeeInfo = document.getElementById('modal_fee_info');
+            var modalOutstanding = document.getElementById('modal_outstanding');
+            var modalAmountPaid = document.getElementById('modal_amount_paid');
+
+            window.openPaymentModal = function(feeId, studentName, feeTypeName, amountExpected, balance) {
+                modalFeeId.value = feeId;
+                modalStudentName.textContent = studentName;
+                modalFeeInfo.textContent = feeTypeName + ' (Expected: ₦' + Number(amountExpected).toLocaleString(undefined, {minimumFractionDigits: 2}) + ')';
+                modalOutstanding.textContent = '₦' + Number(balance).toLocaleString(undefined, {minimumFractionDigits: 2});
+                modalAmountPaid.value = balance;
+                modalAmountPaid.max = balance;
+                paymentModal.classList.remove('hidden');
+                paymentModal.classList.add('flex');
+                modalAmountPaid.focus();
+            };
+
+            window.closePaymentModal = function() {
+                paymentModal.classList.add('hidden');
+                paymentModal.classList.remove('flex');
+            };
+
+            document.addEventListener('click', function(e) {
+                if (e.target === paymentModal) {
+                    closePaymentModal();
+                }
+            });
+
+            /* Reversal Modal handling */
+            var reversalModal = document.getElementById('reversal-modal');
+            var reversalPaymentId = document.getElementById('reversal_payment_id');
+            var reversalReceipt = document.getElementById('reversal_receipt');
+            var reversalAmount = document.getElementById('reversal_amount');
+
+            window.openReversalModal = function(paymentId, receiptNumber, amount) {
+                reversalPaymentId.value = paymentId;
+                reversalReceipt.textContent = 'Receipt: ' + receiptNumber;
+                reversalAmount.textContent = 'Amount: ₦' + Number(amount).toLocaleString(undefined, {minimumFractionDigits: 2});
+                reversalModal.classList.remove('hidden');
+                reversalModal.classList.add('flex');
+                reversalModal.querySelector('textarea[name="reason"]').focus();
+            };
+
+            window.closeReversalModal = function() {
+                reversalModal.classList.add('hidden');
+                reversalModal.classList.remove('flex');
+            };
+
+            document.addEventListener('click', function(e) {
+                if (e.target === reversalModal) {
+                    closeReversalModal();
+                }
+            });
+
+            /* After a payment is recorded, open its receipt immediately */
+            var showReceipt = @json(session('show_receipt'));
+            if (showReceipt) {
+                var modal = document.getElementById('receipt-modal-' + showReceipt);
+                if (modal) { openReceipt(showReceipt); }
+            }
         });
     </script>
     @endpush

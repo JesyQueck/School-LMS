@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AcademicStructureController;
 use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\AnnouncementsController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\FeePackageController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
@@ -82,6 +83,18 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/dashboard', [TeacherPortalController::class, 'dashboard'])->name('dashboard');
         Route::get('/classes', [TeacherPortalController::class, 'classes'])->name('classes.index');
         Route::get('/classes/{class}', [TeacherPortalController::class, 'classStudents'])->name('classes.show');
+        Route::get('/assignments', [TeacherPortalController::class, 'mySubjects'])->name('assignments');
+        Route::get('/results', [TeacherPortalController::class, 'results'])->name('results');
+        Route::get('/timetable', [TeacherPortalController::class, 'timetable'])->name('timetable');
+        Route::get('/profile', [TeacherPortalController::class, 'profile'])->name('profile');
+        Route::get('/announcements', [TeacherPortalController::class, 'announcements'])->name('announcements');
+        Route::get('/parents', [AccountController::class, 'parentCommunication'])->name('parents');
+        Route::get('/assessments', [AccountController::class, 'assessments'])->name('assessments');
+        Route::get('/scores', [SubjectResultsController::class, 'scores'])->name('scores');
+        Route::post('/scores', [SubjectResultsController::class, 'store'])->name('scores.store');
+    });
+
+    Route::middleware(['role:teacher', 'class.teacher'])->prefix('teacher')->name('teacher.')->group(function () {
         Route::get('/my-students', [TeacherPortalController::class, 'myStudents'])->name('students.index');
 
         Route::get('/class/attendance', [TeacherPortalController::class, 'classAttendance'])->name('class.attendance');
@@ -89,9 +102,8 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/attendance/edit', [TeacherPortalController::class, 'editAttendance'])->name('attendance.edit');
         Route::post('/attendance', [TeacherPortalController::class, 'storeAttendance'])->name('attendance.store');
         Route::post('/attendance/start', [TeacherPortalController::class, 'startAttendance'])->name('attendance.start');
-        Route::get('/assignments', [TeacherPortalController::class, 'mySubjects'])->name('assignments');
-        Route::get('/results', [TeacherPortalController::class, 'results'])->name('results');
         Route::get('/class-attendance', [TeacherPortalController::class, 'classAttendance'])->name('class-attendance');
+
         Route::get('/report-cards', [TeacherReportCardController::class, 'index'])->name('report-cards.index');
         Route::post('/report-cards', [TeacherReportCardController::class, 'store'])->name('report-cards.store');
         Route::get('/report-cards/student/{student}', [TeacherReportCardController::class, 'getStudentResults'])->name('report-cards.student.results');
@@ -101,13 +113,6 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::get('/report-cards/{reportCard}/preview', [TeacherReportCardController::class, 'preview'])->name('report-cards.preview');
         Route::get('/report-cards/{reportCard}/render', [TeacherReportCardController::class, 'render'])->name('report-cards.render');
         Route::get('/class-performance', [TeacherReportCardController::class, 'classPerformance'])->name('class-performance');
-        Route::get('/timetable', [TeacherPortalController::class, 'timetable'])->name('timetable');
-        Route::get('/profile', [TeacherPortalController::class, 'profile'])->name('profile');
-        Route::get('/announcements', [TeacherPortalController::class, 'announcements'])->name('announcements');
-        Route::get('/parents', [AccountController::class, 'parentCommunication'])->name('parents');
-        Route::get('/assessments', [AccountController::class, 'assessments'])->name('assessments');
-        Route::get('/scores', [SubjectResultsController::class, 'scores'])->name('scores');
-        Route::post('/scores', [SubjectResultsController::class, 'store'])->name('scores.store');
     });
 
     Route::middleware(['auth', 'password.only', 'role:teacher,admin'])->prefix('teacher')->name('teacher.')->group(function () {
@@ -207,11 +212,21 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance');
         Route::post('/finance/fee-types', [FinanceController::class, 'createFeeType'])->name('finance.fee-types.store');
-        Route::post('/finance/payments', [FinanceController::class, 'createStudentFeePayment'])->name('finance.payments.store');
         Route::get('/finance/student-fees/{studentFee}', [FinanceController::class, 'showStudentFee'])->name('finance.student-fees.show');
-        Route::get('/finance/payments/{payment}/receipt', [FinanceController::class, 'paymentReceipt'])->name('finance.payments.receipt');
-        Route::get('/finance/search-students', [FinanceController::class, 'searchStudentFees'])->name('finance.search-students');
         Route::get('/finance/report/export', [FinanceController::class, 'exportFinancialReport'])->name('finance.report.export');
+
+        Route::prefix('finance/packages')->name('finance.packages.')->group(function () {
+            Route::get('/', [FeePackageController::class, 'index'])->name('index');
+            Route::get('/create', [FeePackageController::class, 'create'])->name('create');
+            Route::post('/', [FeePackageController::class, 'store'])->name('store');
+            Route::get('/{feePackage}', [FeePackageController::class, 'show'])->name('show');
+            Route::get('/{feePackage}/edit', [FeePackageController::class, 'edit'])->name('edit');
+            Route::put('/{feePackage}', [FeePackageController::class, 'update'])->name('update');
+            Route::delete('/{feePackage}', [FeePackageController::class, 'destroy'])->name('destroy');
+            Route::get('/assignments', [FeePackageController::class, 'assignments'])->name('assignments');
+            Route::post('/assign', [FeePackageController::class, 'assign'])->name('assign');
+            Route::put('/assignments/{assignment}/deactivate', [FeePackageController::class, 'deactivateAssignment'])->name('assignment.deactivate');
+        });
 
         Route::get('/announcements', [AnnouncementsController::class, 'index'])->name('announcements');
         Route::get('/announcements/create', [AnnouncementsController::class, 'create'])->name('announcements.create');
@@ -264,6 +279,7 @@ Route::middleware(['auth', 'password.only', 'role:bursar'])->prefix('bursar')->n
     Route::get('/student-fees/search-students', [BursarFeeController::class, 'searchStudentFees'])->name('student-fees.search');
     Route::get('/student-fees/{studentFee}', [BursarFeeController::class, 'showStudentFee'])->name('student-fees.show');
     Route::post('/payments', [BursarFeeController::class, 'createPayment'])->name('payments.store');
+    Route::post('/payments/reverse', [BursarFeeController::class, 'reversePayment'])->name('payments.reverse');
     Route::get('/payments/{payment}/receipt', [BursarFeeController::class, 'paymentReceipt'])->name('payments.receipt');
 
     Route::get('/fee-collections', [BursarReportController::class, 'index'])->name('fee-collections');
