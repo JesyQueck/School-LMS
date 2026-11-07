@@ -203,6 +203,7 @@ class SchoolAdminController extends Controller
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
+            'staff_id' => $data['staff_id'],
             'password' => Hash::make($temporaryPassword),
             'phone' => $data['phone'] ?? null,
             'role' => 'teacher',
@@ -214,7 +215,7 @@ class SchoolAdminController extends Controller
             'user_id' => $user->id,
             'qualification' => $data['qualification'],
             'phone' => $data['phone'] ?? null,
-            'employee_id' => $this->generateEmployeeId(),
+            'employee_id' => $data['staff_id'],
         ]);
 
         $this->persistImportCredentials(collect([
@@ -222,7 +223,7 @@ class SchoolAdminController extends Controller
                 'role' => 'teacher',
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'login_identifier' => $teacher->employee_id,
+                'login_identifier' => $user->loginIdentifier(),
                 'password' => $temporaryPassword,
                 'related_to' => null,
                 'user_id' => $user->id,
@@ -243,7 +244,7 @@ class SchoolAdminController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $temporaryPassword,
-                'login_identifier' => $teacher->employee_id,
+                'login_identifier' => $user->loginIdentifier(),
             ]);
     }
 
@@ -270,10 +271,17 @@ class SchoolAdminController extends Controller
     {
         $data = $request->validated();
 
+        $teacher->loadMissing('user');
+
+        $staffId = $data['staff_id']
+            ?? $teacher->user->staff_id
+            ?? $teacher->employee_id;
+
         $userUpdates = [
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'] ?? null,
+            'staff_id' => $staffId,
         ];
 
         if (! empty($data['password'])) {
@@ -283,6 +291,7 @@ class SchoolAdminController extends Controller
         $teacher->user()->update($userUpdates);
 
         $teacher->update([
+            'employee_id' => $staffId,
             'qualification' => $data['qualification'] ?? null,
         ]);
 

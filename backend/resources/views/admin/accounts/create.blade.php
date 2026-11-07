@@ -1,4 +1,4 @@
-<x-layouts.app title="Create Account">
+﻿<x-layouts.app title="Create Account">
     <div class="mb-6">
         <x-ui.breadcrumbs>
             <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
@@ -17,7 +17,7 @@
             <div class="flex items-start gap-3">
                 <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
-                    <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts → Credentials until changed.</p>
+                    <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts â†’ Credentials until changed.</p>
                     @foreach($cred as $accountCredential)
                         <p>
                             <strong>{{ ucfirst($accountCredential['role']) }}</strong> account created for {{ $accountCredential['name'] }}.
@@ -25,7 +25,7 @@
                             @if($accountCredential['email']) Email: {{ $accountCredential['email'] }}. @endif
                             @if(!empty($accountCredential['password']))
                                 Temporary password: <span class="font-mono font-medium">{{ $accountCredential['password'] }}</span>.
-                                Require a password change at first login. It can also be retrieved from Accounts → Credentials until changed.
+                                Require a password change at first login. It can also be retrieved from Accounts â†’ Credentials until changed.
                             @elseif($accountCredential['role'] === 'parent')
                                 Set or recover your password using the email password-recovery flow at <a class="underline" href="{{ url('/forgot-password') }}">{{ url('/forgot-password') }}</a>.
                             @endif
@@ -71,12 +71,26 @@
                         <input id="phone" name="phone" type="tel" placeholder="e.g. 08012345678" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
                     </div>
 
+                    <div id="staff-id-fields" class="hidden">
+                        <label for="staff_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Staff ID <span class="text-danger-500">*</span></label>
+                        <input id="staff_id" name="staff_id" type="text" value="{{ old('staff_id') }}" placeholder="e.g. T-001 or B-001" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        @error('staff_id')
+                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div id="teacher-fields" class="hidden">
                         <label for="qualification" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Qualification</label>
                         <input id="qualification" name="qualification" type="text" placeholder="e.g. B.Ed Mathematics" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
                     </div>
 
                         <div id="student-fields" class="hidden">
+                            <label for="admission_no" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Admission Number <span class="text-danger-500">*</span></label>
+                            <input id="admission_no" name="admission_no" type="text" value="{{ old('admission_no') }}" placeholder="e.g. ADM-001" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            @error('admission_no')
+                                <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                            @enderror
+
                             <label for="class_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Class</label>
                             <select id="class_id" name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
                                 <option value="">Assign to class</option>
@@ -156,7 +170,7 @@
                             <strong>Parent:</strong> Creates parent account that can link to multiple students
                         </div>
                         <div class="border-l-2 border-neutral-200 dark:border-dark-border pl-3">
-                            <strong>Bursar:</strong> Creates financial officer account with email login for finance management
+                            <strong>Bursar:</strong> Creates financial officer account with Staff ID login for finance management
                         </div>
                     </div>
                 </div>
@@ -168,6 +182,9 @@
         function toggleFields() {
             const type = document.getElementById('type').value;
             document.getElementById('teacher-fields').classList.toggle('hidden', type !== 'teacher');
+            document.getElementById('staff-id-fields').classList.toggle('hidden', !['teacher', 'bursar'].includes(type));
+            document.getElementById('staff_id').required = ['teacher', 'bursar'].includes(type);
+            document.getElementById('admission_no').required = type === 'student';
             document.getElementById('student-fields').classList.toggle('hidden', type !== 'student');
             document.getElementById('parent-fields').classList.toggle('hidden', type !== 'parent');
             const email = document.getElementById('email');
@@ -176,3 +193,6 @@
         }
     </script>
 </x-layouts.app>
+
+
+

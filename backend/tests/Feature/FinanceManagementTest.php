@@ -12,12 +12,70 @@ use App\Models\StudentFee;
 use App\Models\Term;
 use App\Models\User;
 use App\Services\FeeService;
+use App\Models\FeePackage;
+use App\Models\FeeComponent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class FinanceManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_fee_package_assignment_rejects_term_from_different_academic_session(): void
+{
+    $admin = User::factory()->create(['role' => 'admin']);
+    $this->actingAs($admin);
+
+    $sessionOne = AcademicSession::create([
+        'name' => '2026/2027',
+        'start_date' => '2026-09-01',
+        'end_date' => '2027-07-31',
+        'is_current' => true,
+    ]);
+
+    $sessionTwo = AcademicSession::create([
+        'name' => '2027/2028',
+        'start_date' => '2027-09-01',
+        'end_date' => '2028-07-31',
+        'is_current' => false,
+    ]);
+
+    $term = Term::create([
+        'academic_session_id' => $sessionOne->id,
+        'name' => 'First Term',
+        'start_date' => '2026-09-01',
+        'end_date' => '2026-12-20',
+        'is_current' => true,
+    ]);
+
+    $class = SchoolClass::create(['name' => 'JSS 1']);
+
+    $package = FeePackage::create([
+        'name' => 'Standard Package',
+        'description' => 'Regression test package',
+        'is_active' => true,
+        'created_by' => $admin->id,
+    ]);
+
+    FeeComponent::create([
+        'fee_package_id' => $package->id,
+        'name' => 'Tuition',
+        'amount' => 50000,
+        'sort_order' => 0,
+    ]);
+
+    $response = $this->post(route('admin.finance.packages.assign'), [
+        'fee_package_id' => $package->id,
+        'class_id' => $class->id,
+        'term_id' => $term->id,
+        'academic_session_id' => $sessionTwo->id,
+    ]);
+
+    $response->assertSessionHasErrors('term_id');
+
+    $this->assertDatabaseCount('fee_package_assignments', 0);
+    $this->assertDatabaseCount('student_fees', 0);
+}
 
     public function test_admin_can_create_fee_types(): void
     {

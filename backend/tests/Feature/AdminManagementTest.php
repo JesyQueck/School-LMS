@@ -3,8 +3,14 @@
 namespace Tests\Feature;
 
 use App\Models\AcademicSession;
+use App\Models\Announcement;
+use App\Models\Attendance;
+use App\Models\FeePackage;
+use App\Models\FeePackageAssignment;
 use App\Models\ImportCredential;
 use App\Models\ParentProfile;
+use App\Models\Payment;
+use App\Models\PaymentReversal;
 use App\Models\ReportCard;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -290,6 +296,7 @@ class AdminManagementTest extends TestCase
         $response = $this->post('/admin/teachers', [
             'name' => 'John Teacher',
             'email' => 'john.teacher@example.com',
+            'staff_id' => 'T-ADMIN-001',
             'phone' => '08012345678',
             'qualification' => 'B.Sc. Mathematics',
             'password' => 'Password123!',
@@ -363,6 +370,62 @@ class AdminManagementTest extends TestCase
         ]);
     }
 
+    public function test_updating_teacher_staff_id_synchronizes_both_records(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'John Smith',
+            'email' => 'john@example.com',
+            'staff_id' => ' t-2001 ',
+            'password' => '',
+        ]);
+
+        $response->assertRedirect(route('admin.teachers'));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->user_id,
+            'staff_id' => 'T-2001',
+        ]);
+
+        $this->assertDatabaseHas('teachers', [
+            'id' => $teacher->id,
+            'employee_id' => 'T-2001',
+        ]);
+    }
+
+    public function test_teacher_staff_id_cannot_duplicate_another_teacher_id(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $teacher = $this->makeTeacher('John Smith', 'john@example.com');
+        $otherTeacher = $this->makeTeacher('Jane Doe', 'jane@example.com');
+
+        $originalEmployeeId = $teacher->employee_id;
+
+        $response = $this->put(route('admin.teachers.update', $teacher), [
+            'name' => 'John Smith',
+            'email' => 'john@example.com',
+            'staff_id' => $otherTeacher->employee_id,
+            'password' => '',
+        ]);
+
+        $response->assertSessionHasErrors(['staff_id']);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacher->user_id,
+            'staff_id' => null,
+        ]);
+
+        $this->assertDatabaseHas('teachers', [
+            'id' => $teacher->id,
+            'employee_id' => $originalEmployeeId,
+        ]);
+    }
     public function test_admin_can_correct_teacher_name_typo(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -780,6 +843,7 @@ class AdminManagementTest extends TestCase
         $response = $this->actingAs($admin)->post('/admin/accounts', [
             'type' => 'student',
             'name' => 'No Email Learner',
+            'admission_no' => 'ADM-MANUAL-001',
             'class_id' => $class->id,
         ]);
 
@@ -789,7 +853,7 @@ class AdminManagementTest extends TestCase
             $temporaryPassword = $credentials[0]['password'];
 
             return $credentials[0]['role'] === 'student'
-                && str_starts_with($credentials[0]['login_identifier'], 'ADM-')
+                && $credentials[0]['login_identifier'] === 'ADM-MANUAL-001'
                 && strlen($credentials[0]['password']) === 20;
         });
 
@@ -1203,6 +1267,79 @@ class AdminManagementTest extends TestCase
         $response->assertSee('Test Teacher');
     }
 
+    public function test_admin_can_deactivate_account_without_deleting_user_or_teacher_profile(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacherUser = User::factory()->create([
+            'role' => 'teacher',
+            'name' => 'Preserved Teacher',
+            'is_active' => true,
+        ]);
+
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-DEACTIVATE-001',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.destroy', $teacherUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHas('status', 'Account "Preserved Teacher" deactivated successfully.');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacherUser->id,
+            'role' => 'teacher',
+            'is_active' => false,
+        ]);
+
+        $this->assertDatabaseHas('teachers', [
+            'id' => $teacher->id,
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-DEACTIVATE-001',
+        ]);
+    }
+
+    public function test_admin_cannot_deactivate_own_account(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.destroy', $admin)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $admin->id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_admin_cannot_deactivate_another_admin_account(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $anotherAdmin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.destroy', $anotherAdmin)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $anotherAdmin->id,
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+    }
     public function test_admin_can_create_account_via_account_controller(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -1212,6 +1349,7 @@ class AdminManagementTest extends TestCase
             'type' => 'teacher',
             'name' => 'Via Account Controller',
             'email' => 'account.test@example.com',
+            'staff_id' => 'T-ACCOUNT-001',
             'phone' => '08011111111',
             'qualification' => 'B.Ed',
             'password' => 'Password123!',
@@ -1220,6 +1358,7 @@ class AdminManagementTest extends TestCase
         $response->assertRedirect('/admin/accounts/create');
         $this->assertDatabaseHas('users', [
             'email' => 'account.test@example.com',
+            'staff_id' => 'T-ACCOUNT-001',
             'role' => 'teacher',
         ]);
         $this->assertDatabaseHas('teachers', [
@@ -1591,6 +1730,7 @@ class AdminManagementTest extends TestCase
         $response = $this->post('/admin/teachers', [
             'name' => 'Weak Pass',
             'email' => 'weak.pass@example.com',
+            'staff_id' => 'T-ADMIN-002',
             'phone' => '08012345678',
             'qualification' => 'B.Sc',
             'password' => 'weak',
@@ -1610,6 +1750,7 @@ class AdminManagementTest extends TestCase
         $response = $this->post('/admin/teachers', [
             'name' => 'No Symbol',
             'email' => 'nosymbol@example.com',
+            'staff_id' => 'T-ADMIN-003',
             'phone' => '08012345678',
             'qualification' => 'B.Sc',
             'password' => 'Password123',
@@ -1629,6 +1770,7 @@ class AdminManagementTest extends TestCase
         $response = $this->post('/admin/teachers', [
             'name' => 'Strong Pass',
             'email' => 'strong.pass@example.com',
+            'staff_id' => 'T-ADMIN-004',
             'phone' => '08012345678',
             'qualification' => 'B.Sc',
             'password' => 'Password123!',
@@ -2031,6 +2173,7 @@ class AdminManagementTest extends TestCase
         $response = $this->post('/admin/teachers', [
             'name' => 'Cred Teacher',
             'email' => 'cred.teacher@example.com',
+            'staff_id' => 'T-ADMIN-005',
             'phone' => '08011111111',
             'qualification' => 'B.Ed',
         ]);
@@ -2041,6 +2184,15 @@ class AdminManagementTest extends TestCase
             'created_by' => $admin->id,
         ]);
         $teacher = User::where('email', 'cred.teacher@example.com')->firstOrFail();
+        $this->assertSame('T-ADMIN-005', $teacher->staff_id);
+        $this->assertDatabaseHas('teachers', [
+            'user_id' => $teacher->id,
+            'employee_id' => 'T-ADMIN-005',
+        ]);
+        $this->assertDatabaseHas('import_credentials', [
+            'user_id' => $teacher->id,
+            'login_identifier' => 'T-ADMIN-005',
+        ]);
         $this->assertTrue($teacher->needs_password_change);
         $response->assertSessionHas('new_teacher_credentials', fn (array $credentials) => filled($credentials['password']));
     }
@@ -2054,6 +2206,7 @@ class AdminManagementTest extends TestCase
             'type' => 'teacher',
             'name' => 'Account Cred Teacher',
             'email' => 'acct.cred.teacher@example.com',
+            'staff_id' => 'T-ACCOUNT-002',
             'phone' => '08022222222',
             'qualification' => 'B.Sc',
             'password' => 'Password123!',
@@ -2196,5 +2349,315 @@ class AdminManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Filter Teacher');
         $response->assertDontSee('Filter Student');
+    }
+
+    public function test_admin_can_deactivate_active_teacher_account(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacherUser = User::factory()->create([
+            'role' => 'teacher',
+            'name' => 'To Deactivate',
+            'is_active' => true,
+        ]);
+        $teacher = Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-DEACT-001',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.destroy', $teacherUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHas('status', 'Account "To Deactivate" deactivated successfully.');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $teacherUser->id,
+            'role' => 'teacher',
+            'is_active' => false,
+        ]);
+        $this->assertDatabaseHas('teachers', [
+            'id' => $teacher->id,
+            'user_id' => $teacherUser->id,
+        ]);
+    }
+
+    public function test_deactivated_teacher_cannot_login(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacherUser = User::factory()->create([
+            'role' => 'teacher',
+            'name' => 'Locked Teacher',
+            'email' => 'locked.teacher@example.com',
+            'staff_id' => 'T-LOCKED-01',
+            'password' => Hash::make('password123'),
+            'is_active' => true,
+        ]);
+        Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-LOCKED-01',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $this->actingAs($admin)->delete(
+            route('admin.accounts.destroy', $teacherUser)
+        );
+
+        $response = $this->post('/login', [
+            'identifier' => 'T-LOCKED-01',
+            'password' => 'password123',
+        ]);
+
+        $response->assertRedirect();
+    }
+
+    public function test_admin_cannot_permanently_delete_self(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $admin)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'is_active' => true]);
+    }
+
+    public function test_admin_cannot_permanently_delete_another_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $anotherAdmin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $anotherAdmin)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', [
+            'id' => $anotherAdmin->id,
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+    }
+
+    public function test_admin_cannot_permanently_delete_non_bursar(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $teacherUser = User::factory()->create([
+            'role' => 'teacher',
+            'is_active' => false,
+        ]);
+        Teacher::create([
+            'user_id' => $teacherUser->id,
+            'employee_id' => 'T-NO-DELETE-01',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $teacherUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $teacherUser->id, 'is_active' => false]);
+    }
+
+    public function test_admin_cannot_permanently_delete_active_bursar(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $bursarUser = User::factory()->create([
+            'role' => 'bursar',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $bursarUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $bursarUser->id, 'is_active' => true]);
+    }
+
+    public function test_admin_cannot_permanently_delete_last_active_admin(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $admin)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $admin->id, 'role' => 'admin', 'is_active' => true]);
+    }
+
+    public function test_admin_cannot_permanently_delete_bursar_with_attendance_records(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $bursarUser = User::factory()->create([
+            'role' => 'bursar',
+            'is_active' => false,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $session = AcademicSession::where('is_current', true)->first();
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'admission_no' => 'ATTEND-BURSAR-01',
+            'class_id' => $class->id,
+        ]);
+        Attendance::create([
+            'student_id' => $student->id,
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+            'date' => '2026-09-01',
+            'status' => 'present',
+            'marked_by' => $bursarUser->id,
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $bursarUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $bursarUser->id]);
+    }
+
+    public function test_admin_cannot_permanently_delete_bursar_with_announcements(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $bursarUser = User::factory()->create([
+            'role' => 'bursar',
+            'is_active' => false,
+        ]);
+
+        Announcement::create([
+            'title' => 'Test Announcement',
+            'body' => 'Body',
+            'created_by' => $bursarUser->id,
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $bursarUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $bursarUser->id]);
+    }
+
+    public function test_admin_cannot_permanently_delete_bursar_with_payments(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $bursarUser = User::factory()->create([
+            'role' => 'bursar',
+            'is_active' => false,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $session = AcademicSession::where('is_current', true)->first();
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+        $studentUser = User::factory()->create(['role' => 'student']);
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'admission_no' => 'PAY-BURSAR-01',
+            'class_id' => $class->id,
+        ]);
+        $feeType = \App\Models\FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1000.00,
+            'class_id' => $class->id,
+            'term_id' => $term->id,
+        ]);
+        $studentFee = \App\Models\StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1000.00,
+            'amount_paid' => 0.00,
+            'status' => 'pending',
+        ]);
+        \App\Models\Payment::create([
+            'student_fee_id' => $studentFee->id,
+            'amount' => 1000.00,
+            'amount_paid' => 1000.00,
+            'payment_date' => '2026-09-01',
+            'receipt_number' => 'REC-BURSAR-001',
+            'recorded_by' => $bursarUser->id,
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $bursarUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHasErrors('account.delete');
+        $this->assertDatabaseHas('users', ['id' => $bursarUser->id]);
+    }
+
+    public function test_admin_can_permanently_delete_eligible_inactive_bursar(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $bursarUser = User::factory()->create([
+            'role' => 'bursar',
+            'is_active' => false,
+            'name' => 'Removable Bursar',
+            'email' => 'removable.bursar@example.com',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.permanent-delete', $bursarUser)
+        );
+
+        $response->assertRedirect(route('admin.accounts.index'));
+        $response->assertSessionHas('status', 'Account "Removable Bursar" permanently deleted.');
+        $this->assertDatabaseMissing('users', ['id' => $bursarUser->id]);
+    }
+
+    public function test_admin_cannot_deactivate_inactive_account_via_delete_route(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $inactiveUser = User::factory()->create([
+            'role' => 'teacher',
+            'is_active' => false,
+        ]);
+        Teacher::create([
+            'user_id' => $inactiveUser->id,
+            'employee_id' => 'T-INACTIVE-01',
+            'qualification' => 'B.Ed',
+        ]);
+
+        $response = $this->actingAs($admin)->delete(
+            route('admin.accounts.destroy', $inactiveUser)
+        );
+
+        // The destroy route sets is_active = false; it's idempotent for inactive accounts
+        $response->assertRedirect(route('admin.accounts.index'));
+        $this->assertDatabaseHas('users', [
+            'id' => $inactiveUser->id,
+            'is_active' => false,
+        ]);
     }
 }

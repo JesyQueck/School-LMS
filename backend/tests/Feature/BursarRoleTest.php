@@ -17,13 +17,14 @@ class BursarRoleTest extends TestCase
     {
         $bursar = User::factory()->create([
             'email' => 'bursar@example.com',
+            'staff_id' => 'B-LOGIN-001',
             'password' => Hash::make('secret123'),
             'role' => 'bursar',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'identifier' => 'bursar@example.com',
+            'identifier' => 'b-login-001',
             'password' => 'secret123',
         ]);
 
@@ -35,12 +36,13 @@ class BursarRoleTest extends TestCase
     {
         $bursar = User::factory()->create([
             'email' => 'bursar.test@example.com',
+            'staff_id' => 'B-LOGIN-002',
             'password' => Hash::make('secret123'),
             'role' => 'bursar',
         ]);
 
         $this->post('/login', [
-            'identifier' => '  BURSAR.TEST@example.com ',
+            'identifier' => ' b-login-002 ',
             'password' => 'secret123',
         ])->assertRedirect('/bursar/dashboard');
 
@@ -153,6 +155,7 @@ class BursarRoleTest extends TestCase
             'type' => 'bursar',
             'name' => 'John Bursar',
             'email' => 'john.bursar@example.com',
+            'staff_id' => 'B-009',
             'phone' => '08012345678',
         ]);
 
@@ -161,6 +164,7 @@ class BursarRoleTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'john.bursar@example.com',
+            'staff_id' => 'B-009',
             'role' => 'bursar',
         ]);
 
@@ -184,6 +188,7 @@ class BursarRoleTest extends TestCase
             'type' => 'bursar',
             'name' => 'Jane Bursar',
             'email' => 'jane.bursar@example.com',
+            'staff_id' => 'B-004',
         ]);
 
         $response = $this->get('/admin/accounts/credentials');
@@ -196,13 +201,14 @@ class BursarRoleTest extends TestCase
     {
         $bursar = User::factory()->create([
             'email' => 'audit.bursar@example.com',
+            'staff_id' => 'B-005',
             'password' => Hash::make('secret123'),
             'role' => 'bursar',
             'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'identifier' => 'audit.bursar@example.com',
+            'identifier' => 'B-005',
             'password' => 'secret123',
         ]);
 
@@ -216,13 +222,14 @@ class BursarRoleTest extends TestCase
     {
         $bursar = User::factory()->create([
             'email' => 'audit.bursar.logout@example.com',
+            'staff_id' => 'B-006',
             'password' => Hash::make('secret123'),
             'role' => 'bursar',
             'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'identifier' => 'audit.bursar.logout@example.com',
+            'identifier' => 'B-006',
             'password' => 'secret123',
         ]);
 
@@ -277,27 +284,29 @@ class BursarRoleTest extends TestCase
         $response->assertSee('Financial Activity');
     }
 
-    public function test_bursar_login_identifier_uses_email(): void
+    public function test_bursar_login_identifier_uses_staff_id(): void
     {
         $bursar = User::factory()->create([
             'email' => 'identifier.bursar@example.com',
+            'staff_id' => 'B-007',
             'role' => 'bursar',
         ]);
 
-        $this->assertEquals('identifier.bursar@example.com', $bursar->loginIdentifier());
+        $this->assertEquals('B-007', $bursar->loginIdentifier());
     }
 
     public function test_inactive_bursar_cannot_login(): void
     {
         $bursar = User::factory()->create([
             'email' => 'inactive.bursar@example.com',
+            'staff_id' => 'B-008',
             'password' => Hash::make('secret123'),
             'role' => 'bursar',
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
-            'identifier' => 'inactive.bursar@example.com',
+            'identifier' => 'B-008',
             'password' => 'secret123',
         ]);
 

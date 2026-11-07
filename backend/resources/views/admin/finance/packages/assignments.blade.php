@@ -25,47 +25,64 @@
             <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Assign Package</h3>
         </div>
         <form method="POST" action="{{ route('admin.finance.packages.assign') }}" class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            @csrf
-            <div>
-                <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Package <span class="text-danger-500">*</span></label>
-                <select name="fee_package_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
-                    <option value="">Select package</option>
-                    @foreach($packages as $package)
-                        <option value="{{ $package->id }}">{{ $package->name }} (₦{{ number_format($package->total, 2) }})</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class <span class="text-danger-500">*</span></label>
-                <select name="class_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
-                    <option value="">Select class</option>
-                    @foreach($classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term <span class="text-danger-500">*</span></label>
-                <select name="term_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
-                    <option value="">Select term</option>
-                    @foreach($terms as $term)
-                        <option value="{{ $term->id }}">{{ $term->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Academic Session <span class="text-danger-500">*</span></label>
-                <select name="academic_session_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
-                    <option value="">Select session</option>
-                    @foreach($academicSessions as $session)
-                        <option value="{{ $session->id }}">{{ $session->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="flex items-end">
-                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1.5 rounded-lg text-sm">Assign</button>
-            </div>
-        </form>
+    @csrf
+
+    <div>
+        <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Package <span class="text-danger-500">*</span></label>
+        <select name="fee_package_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+            <option value="">Select package</option>
+            @foreach($packages as $package)
+                <option value="{{ $package->id }}" {{ old('fee_package_id') == $package->id ? 'selected' : '' }}>{{ $package->name }} (₦{{ number_format($package->total, 2) }})</option>
+            @endforeach
+        </select>
+        @error('fee_package_id')
+            <p class="mt-1 text-xs text-danger-600">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div>
+        <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class <span class="text-danger-500">*</span></label>
+        <select name="class_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+            <option value="">Select class</option>
+            @foreach($classes as $class)
+                <option value="{{ $class->id }}" {{ old('class_id') == $class->id ? 'selected' : '' }}>{{ $class->name }}</option>
+            @endforeach
+        </select>
+        @error('class_id')
+            <p class="mt-1 text-xs text-danger-600">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div>
+        <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Term <span class="text-danger-500">*</span></label>
+        <select name="term_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+            <option value="">Select term</option>
+            @foreach($terms as $term)
+                <option value="{{ $term->id }}" {{ old('term_id') == $term->id ? 'selected' : '' }}>{{ $term->name }}</option>
+            @endforeach
+        </select>
+        @error('term_id')
+            <p class="mt-1 text-xs text-danger-600">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div>
+        <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Academic Session <span class="text-danger-500">*</span></label>
+        <select name="academic_session_id" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
+            <option value="">Select session</option>
+            @foreach($academicSessions as $session)
+                <option value="{{ $session->id }}" {{ old('academic_session_id') == $session->id ? 'selected' : '' }}>{{ $session->name }}</option>
+            @endforeach
+        </select>
+        @error('academic_session_id')
+            <p class="mt-1 text-xs text-danger-600">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div class="flex items-end">
+        <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-3 py-1.5 rounded-lg text-sm">Assign</button>
+    </div>
+</form>
     </x-ui.card>
 
     {{-- Filters --}}

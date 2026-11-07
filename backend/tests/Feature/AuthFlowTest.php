@@ -25,13 +25,14 @@ class AuthFlowTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Jane Teacher',
             'email' => 'teacher@example.com',
+            'staff_id' => 'T-001',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'teacher@example.com',
+                'identifier' => 'T-001',
             'password' => 'secret123',
         ]);
 
@@ -39,45 +40,70 @@ class AuthFlowTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
-    public function test_admin_can_login_with_email(): void
+    public function test_teacher_can_login_with_staff_id_but_not_email(): void
+{
+    $teacherUser = User::factory()->create([
+        'email' => 'teacher.id@example.com',
+        'staff_id' => 'T-009',
+        'password' => Hash::make('secret123'),
+        'role' => 'teacher',
+    ]);
+
+    Teacher::create([
+        'user_id' => $teacherUser->id,
+        'employee_id' => 'STAFF-009',
+    ]);
+
+    // Teacher can log in using Staff ID.
+    $this->post('/login', [
+        'identifier' => 't-009',
+        'password' => 'secret123',
+    ])->assertRedirect('/teacher/dashboard');
+
+    $this->assertAuthenticatedAs($teacherUser);
+
+    auth()->logout();
+
+    // Teacher cannot log in using email.
+    $this->from('/login')->post('/login', [
+        'identifier' => 'teacher.id@example.com',
+        'password' => 'secret123',
+    ])->assertSessionHasErrors([
+        'identifier' => __('auth.failed'),
+    ]);
+
+    $this->assertGuest();
+}
+
+    public function test_bursar_can_login_with_staff_id_but_not_email(): void
     {
-        $admin = User::factory()->create([
-            'email' => 'admin.login@example.com',
+        $bursarUser = User::factory()->create([
+            'name' => 'Jane Bursar',
+            'email' => 'bursar@example.com',
+            'staff_id' => 'B-001',
             'password' => Hash::make('secret123'),
-            'role' => 'admin',
+            'role' => 'bursar',
+            'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'identifier' => '  ADMIN.LOGIN@example.com ',
+            'identifier' => 'b-001',
             'password' => 'secret123',
-        ])->assertRedirect('/admin/dashboard');
+        ])->assertRedirect('/bursar/dashboard');
 
-        $this->assertAuthenticatedAs($admin);
-    }
-
-    public function test_teacher_can_login_with_staff_id_or_email(): void
-    {
-        $teacherUser = User::factory()->create([
-            'email' => 'teacher.id@example.com',
-            'password' => Hash::make('secret123'),
-            'role' => 'teacher',
-        ]);
-        Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'STAFF-009']);
-
-        $this->post('/login', [
-            'identifier' => ' staff-009 ',
-            'password' => 'secret123',
-        ])->assertRedirect('/teacher/dashboard');
-        $this->assertAuthenticatedAs($teacherUser);
+        $this->assertAuthenticatedAs($bursarUser);
 
         auth()->logout();
-        $this->post('/login', [
-            'identifier' => 'TEACHER.ID@example.com',
-            'password' => 'secret123',
-        ])->assertRedirect('/teacher/dashboard');
-        $this->assertAuthenticatedAs($teacherUser);
-    }
 
+        $this->from('/login')->post('/login', [
+            'identifier' => 'bursar@example.com',
+            'password' => 'secret123',
+        ])->assertSessionHasErrors([
+            'identifier' => __('auth.failed'),
+        ]);
+
+        $this->assertGuest();
+    }
     public function test_student_can_login_with_admission_number_without_email(): void
     {
         $studentUser = User::factory()->create([
@@ -169,11 +195,12 @@ class AuthFlowTest extends TestCase
 
     public function test_ambiguous_cross_role_identifier_is_rejected(): void
     {
-        $teacherUser = User::factory()->create([
+       $teacherUser = User::factory()->create([
             'email' => 'ambiguous@example.com',
+            'staff_id' => 'SHARED-LOGIN',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
-        ]);
+    ]);
         Teacher::create(['user_id' => $teacherUser->id, 'employee_id' => 'SHARED-LOGIN']);
 
         $studentUser = User::factory()->create([
@@ -199,12 +226,13 @@ class AuthFlowTest extends TestCase
         $teacherUser = User::factory()->create([
             'email' => 'remember.teacher@example.com',
             'password' => Hash::make('secret123'),
+            'staff_id' => 'T-010',
             'role' => 'teacher',
             'needs_password_change' => true,
         ]);
 
         $this->post('/login', [
-            'identifier' => $teacherUser->email,
+            'identifier' => 'T-010',
             'password' => 'secret123',
             'remember' => '1',
         ])->assertRedirect('/change-password');
@@ -217,16 +245,17 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'session.teacher@example.com',
+            'staff_id' => 'T-011',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
         ]);
 
         $this->withSession(['_token' => 'before-login-token'])
-            ->post('/login', [
-                'identifier' => $user->email,
-                'password' => 'secret123',
-            ])
-            ->assertSessionHas('_token', fn ($token) => $token !== 'before-login-token');
+    ->post('/login', [
+        'identifier' => 'T-011',
+        'password' => 'secret123',
+    ])
+    ->assertSessionHas('_token', fn ($token) => $token !== 'before-login-token');
     }
 
     public function test_intended_redirect_is_preserved_after_identifier_login(): void
@@ -234,15 +263,16 @@ class AuthFlowTest extends TestCase
         $teacherUser = User::factory()->create([
             'email' => 'intended.teacher@example.com',
             'password' => Hash::make('secret123'),
+            'staff_id' => 'T-012',
             'role' => 'teacher',
             'needs_password_change' => false,
         ]);
 
         $this->get('/teacher/dashboard')->assertRedirect('/login');
         $this->post('/login', [
-            'identifier' => $teacherUser->email,
-            'password' => 'secret123',
-        ])->assertRedirect('/teacher/dashboard');
+    'identifier' => 'T-012',
+    'password' => 'secret123',
+])->assertRedirect('/teacher/dashboard');
     }
 
     public function test_failed_login_surfaces_an_error_message_on_the_login_page(): void
@@ -276,17 +306,18 @@ class AuthFlowTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Jane Teacher',
             'email' => 'teacher@example.com',
+            'staff_id' => 'T-013',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'teacher@example.com',
+            'identifier' => 'T-013',
             'password' => 'secret123',
         ]);
 
-        $response->assertSessionHasErrors(['email' => __('auth.failed')]);
+        $response->assertSessionHasErrors(['identifier' => __('auth.failed')]);
     }
 
     public function test_inactive_user_is_not_left_authenticated_after_failed_login(): void
@@ -294,13 +325,14 @@ class AuthFlowTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Jane Teacher',
             'email' => 'teacher@example.com',
+            'staff_id' => 'T-014',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => false,
         ]);
 
         $this->post('/login', [
-            'email' => 'teacher@example.com',
+            'identifier' => 'T-014',
             'password' => 'secret123',
         ]);
 
@@ -312,21 +344,21 @@ class AuthFlowTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Jane Teacher',
             'email' => 'teacher@example.com',
+            'staff_id' => 'T-015',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => false,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'teacher@example.com',
+            'identifier' => 'T-015',
             'password' => 'secret123',
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('identifier');
         $this->assertGuest();
     }
-
     public function test_forgot_password_page_is_available(): void
     {
         $response = $this->get('/forgot-password');
@@ -536,13 +568,14 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'under-limit@example.com',
+            'staff_id' => 'T-016',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'under-limit@example.com',
+            'identifier' => 'T-016',
             'password' => 'secret123',
         ]);
 
@@ -568,6 +601,7 @@ class AuthFlowTest extends TestCase
     {
         User::factory()->create([
             'email' => 'throttled@example.com',
+            'staff_id' => 'T-017',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
@@ -575,13 +609,13 @@ class AuthFlowTest extends TestCase
 
         for ($i = 0; $i < 5; $i++) {
             $this->post('/login', [
-                'email' => 'throttled@example.com',
+                'identifier' => 'T-017',
                 'password' => 'wrong-password',
             ]);
         }
 
         $response = $this->post('/login', [
-            'email' => 'throttled@example.com',
+            'identifier' => 'T-017',
             'password' => 'wrong-password',
         ]);
 
@@ -593,6 +627,7 @@ class AuthFlowTest extends TestCase
     {
         User::factory()->create([
             'email' => 'throttle-status@example.com',
+            'staff_id' => 'T-018',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
@@ -600,13 +635,13 @@ class AuthFlowTest extends TestCase
 
         for ($i = 0; $i < 5; $i++) {
             $this->post('/login', [
-                'email' => 'throttle-status@example.com',
+                'identifier' => 'T-018',
                 'password' => 'wrong-password',
             ]);
         }
 
         $response = $this->post('/login', [
-            'email' => 'throttle-status@example.com',
+            'identifier' => 'T-018',
             'password' => 'wrong-password',
         ]);
 
@@ -617,18 +652,19 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'success-under-limit@example.com',
+            'staff_id' => 'T-019',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'email' => 'success-under-limit@example.com',
+            'identifier' => 'T-019',
             'password' => 'wrong-password',
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'success-under-limit@example.com',
+            'identifier' => 'T-019',
             'password' => 'secret123',
         ]);
 
@@ -640,6 +676,7 @@ class AuthFlowTest extends TestCase
     {
         User::factory()->create([
             'email' => 'inactive-rate@example.com',
+            'staff_id' => 'T-020',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => false,
@@ -647,13 +684,13 @@ class AuthFlowTest extends TestCase
 
         for ($i = 0; $i < 5; $i++) {
             $this->post('/login', [
-                'email' => 'inactive-rate@example.com',
+                'identifier' => 'T-020',
                 'password' => 'secret123',
             ]);
         }
 
         $response = $this->post('/login', [
-            'email' => 'inactive-rate@example.com',
+            'identifier' => 'T-020',
             'password' => 'secret123',
         ]);
 
@@ -665,13 +702,14 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'audit-login@example.com',
+            'staff_id' => 'T-021',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'audit-login@example.com',
+            'identifier' => 'T-021',
             'password' => 'secret123',
         ]);
 
@@ -687,13 +725,14 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'audit-owner@example.com',
+            'staff_id' => 'T-022',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'email' => 'audit-owner@example.com',
+            'identifier' => 'T-022',
             'password' => 'secret123',
         ]);
 
@@ -705,15 +744,16 @@ class AuthFlowTest extends TestCase
 
     public function test_login_audit_records_ip_address(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'audit-ip@example.com',
+            'staff_id' => 'T-023',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $this->withHeaders(['REMOTE_ADDR' => '10.0.0.50'])->post('/login', [
-            'email' => 'audit-ip@example.com',
+            'identifier' => 'T-023',
             'password' => 'secret123',
         ]);
 
@@ -725,8 +765,9 @@ class AuthFlowTest extends TestCase
 
     public function test_login_audit_records_user_agent(): void
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'audit-ua@example.com',
+            'staff_id' => 'T-024',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
@@ -735,7 +776,7 @@ class AuthFlowTest extends TestCase
         $userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)';
 
         $this->withHeaders(['User-Agent' => $userAgent])->post('/login', [
-            'email' => 'audit-ua@example.com',
+            'identifier' => 'T-024',
             'password' => 'secret123',
         ]);
 
@@ -749,17 +790,18 @@ class AuthFlowTest extends TestCase
     {
         User::factory()->create([
             'email' => 'audit-fail@example.com',
+            'staff_id' => 'T-025',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $response = $this->post('/login', [
-            'email' => 'audit-fail@example.com',
+            'identifier' => 'T-025',
             'password' => 'wrong-password',
         ]);
 
-        $response->assertSessionHasErrors(['email' => __('auth.failed')]);
+        $response->assertSessionHasErrors(['identifier' => __('auth.failed')]);
 
         $this->assertDatabaseMissing('audit_logs', [
             'action' => 'user.login',
@@ -770,13 +812,14 @@ class AuthFlowTest extends TestCase
     {
         User::factory()->create([
             'email' => 'audit-inactive@example.com',
+            'staff_id' => 'T-026',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => false,
         ]);
 
         $this->post('/login', [
-            'email' => 'audit-inactive@example.com',
+            'identifier' => 'T-026',
             'password' => 'secret123',
         ]);
 
@@ -789,13 +832,14 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'audit-logout@example.com',
+            'staff_id' => 'T-027',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'email' => 'audit-logout@example.com',
+            'identifier' => 'T-027',
             'password' => 'secret123',
         ]);
 
@@ -815,13 +859,14 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'audit-logout-owner@example.com',
+            'staff_id' => 'T-028',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
         ]);
 
         $this->post('/login', [
-            'email' => 'audit-logout-owner@example.com',
+            'identifier' => 'T-028',
             'password' => 'secret123',
         ]);
 
@@ -839,6 +884,7 @@ class AuthFlowTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'audit-logout-ua@example.com',
+            'staff_id' => 'T-029',
             'password' => Hash::make('secret123'),
             'role' => 'teacher',
             'is_active' => true,
@@ -847,7 +893,7 @@ class AuthFlowTest extends TestCase
         $userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)';
 
         $this->withHeaders(['User-Agent' => $userAgent])->post('/login', [
-            'email' => 'audit-logout-ua@example.com',
+            'identifier' => 'T-029',
             'password' => 'secret123',
         ]);
 
@@ -861,7 +907,6 @@ class AuthFlowTest extends TestCase
             'user_agent' => $userAgent,
         ]);
     }
-
     private function createUserForPasswordChange(string $role): User
     {
         return User::factory()->create([

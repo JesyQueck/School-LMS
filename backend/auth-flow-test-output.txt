@@ -1,0 +1,118 @@
+PHPUnit 12.5.33 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.11
+Configuration: C:\Users\USER\Desktop\School-LMS\backend\phpunit.xml
+
+[31;1mE[0m.[31;1mE[0m....[41;37mF[0m[31;1mE[0m[41;37mF[0m................[31;1mE[0m...[31;1mE[0m.[31;1mE[0m[41;37mF[0m[41;37mF[0m[41;37mF[0m...............               51 / 51 (100%)
+
+Time: 00:03.085, Memory: 66.00 MB
+
+There were 6 errors:
+
+1) Tests\Feature\AuthFlowTest::test_active_user_can_login_successfully
+Error: Call to a member function all() on array
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:81
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:47
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:433
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:207
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:38
+
+2) Tests\Feature\AuthFlowTest::test_teacher_can_login_with_staff_id_or_email
+Error: Call to a member function all() on array
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:81
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:47
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:433
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:207
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:70
+
+3) Tests\Feature\AuthFlowTest::test_remember_me_is_preserved_and_password_change_is_required
+Error: Call to a member function all() on array
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:81
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:47
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:433
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:207
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:210
+
+4) Tests\Feature\AuthFlowTest::test_login_succeeds_when_under_rate_limit
+Error: Call to a member function all() on array
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:81
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:47
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:433
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:207
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:549
+
+5) Tests\Feature\AuthFlowTest::test_successful_login_possible_when_under_limit
+Error: Call to a member function all() on array
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:81
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:47
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:433
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:207
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:635
+
+6) Tests\Feature\AuthFlowTest::test_successful_login_creates_login_audit_entry
+Error: Call to a member function all() on array
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:81
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:47
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:433
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:207
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:678
+
+--
+
+There were 5 failures:
+
+1) Tests\Feature\AuthFlowTest::test_ambiguous_cross_role_identifier_is_rejected
+Session is missing expected key [errors].
+Failed asserting that false is true.
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:1584
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:1695
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:193
+
+2) Tests\Feature\AuthFlowTest::test_session_token_is_regenerated_after_successful_login
+Failed asserting that false is true.
+
+The following errors occurred during the last request:
+
+These credentials do not match our records.
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponseAssert.php:45
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Testing\TestResponse.php:1589
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:229
+
+3) Tests\Feature\AuthFlowTest::test_login_audit_entry_belongs_to_authenticated_user
+Failed asserting that null is not null.
+
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:702
+
+4) Tests\Feature\AuthFlowTest::test_login_audit_records_ip_address
+Failed asserting that a row in the table [audit_logs] matches the attributes {
+    "action": "user.login",
+    "ip_address": "10.0.0.50"
+}.
+
+The table is empty.
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:51
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:720
+
+5) Tests\Feature\AuthFlowTest::test_login_audit_records_user_agent
+Failed asserting that a row in the table [audit_logs] matches the attributes {
+    "action": "user.login",
+    "user_agent": "Mozilla\/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+}.
+
+The table is empty.
+
+C:\Users\USER\Desktop\School-LMS\backend\vendor\laravel\framework\src\Illuminate\Foundation\Testing\Concerns\InteractsWithDatabase.php:51
+C:\Users\USER\Desktop\School-LMS\backend\tests\Feature\AuthFlowTest.php:742
+
+[37;41mERRORS![0m
+[37;41mTests: 51[0m[37;41m, Assertions: 186[0m[37;41m, Errors: 6[0m[37;41m, Failures: 5[0m[37;41m.[0m

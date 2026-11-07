@@ -31,6 +31,16 @@
             </div>
 
             <div>
+                <label for="staff_id" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Staff ID <span class="text-danger-500">*</span></label>
+                <input id="staff_id" name="staff_id" type="text"
+                    value="{{ old('staff_id', $teacher->user->staff_id ?: $teacher->employee_id) }}"
+                    required maxlength="255" placeholder="e.g. T-1001"
+                    class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                @error('staff_id')
+                    <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
                 <label for="phone" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Phone Number</label>
                 <input id="phone" name="phone" type="tel" value="{{ old('phone', $teacher->user->phone ?? '') }}"
                     class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base placeholder-neutral-400 dark:placeholder-neutral-400 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"

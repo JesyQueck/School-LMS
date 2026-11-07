@@ -12,10 +12,20 @@ class StoreTeacherRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        $normalized = [];
+
         if ($this->has('email')) {
             $email = $this->input('email');
-            $this->merge(['email' => filled($email) ? strtolower(trim((string) $email)) : null]);
+            $normalized['email'] = filled($email)
+                ? strtolower(trim((string) $email))
+                : null;
         }
+
+        if ($this->has('staff_id')) {
+            $normalized['staff_id'] = strtoupper(trim((string) $this->input('staff_id')));
+        }
+
+        $this->merge($normalized);
     }
 
     public function authorize(): bool
@@ -34,10 +44,35 @@ class StoreTeacherRequest extends FormRequest
                 'unique:users,email',
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     $identifier = mb_strtolower(trim((string) $value));
-                    if (User::whereRaw('LOWER(email) = ?', [$identifier])->exists()
+
+                    if (
+                        User::whereRaw('LOWER(email) = ?', [$identifier])->exists()
+                        || User::whereRaw('LOWER(staff_id) = ?', [$identifier])->exists()
                         || Student::whereRaw('LOWER(admission_no) = ?', [$identifier])->exists()
-                        || Teacher::whereRaw('LOWER(employee_id) = ?', [$identifier])->exists()) {
+                        || Teacher::whereRaw('LOWER(employee_id) = ?', [$identifier])->exists()
+                    ) {
                         $fail('This email conflicts with another login ID.');
+                    }
+                },
+            ],
+            'staff_id' => [
+                'required',
+                'string',
+                'max:255',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (blank($value)) {
+                        return;
+                    }
+
+                    $identifier = mb_strtolower(trim((string) $value));
+
+                    if (
+                        User::whereRaw('LOWER(staff_id) = ?', [$identifier])->exists()
+                        || Teacher::whereRaw('LOWER(employee_id) = ?', [$identifier])->exists()
+                        || User::whereRaw('LOWER(email) = ?', [$identifier])->exists()
+                        || Student::whereRaw('LOWER(admission_no) = ?', [$identifier])->exists()
+                    ) {
+                        $fail('This Staff ID is already used by another login identifier.');
                     }
                 },
             ],

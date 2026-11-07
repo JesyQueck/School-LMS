@@ -163,42 +163,63 @@ class FeePackageController extends Controller
         ]);
     }
 
-    public function assign(Request $request)
-    {
-        $data = $request->validate([
-            'fee_package_id' => ['required', 'exists:fee_packages,id'],
-            'class_id' => ['required', 'exists:classes,id'],
-            'term_id' => ['required', 'exists:terms,id'],
-            'academic_session_id' => ['required', 'exists:academic_sessions,id'],
+   public function assign(Request $request)
+{
+    $data = $request->validate([
+        'fee_package_id' => ['required', 'exists:fee_packages,id'],
+        'class_id' => ['required', 'exists:classes,id'],
+        'term_id' => ['required', 'exists:terms,id'],
+        'academic_session_id' => ['required', 'exists:academic_sessions,id'],
+    ]);
+
+    // Ensure the selected term belongs to the selected academic session.
+    $term = Term::findOrFail($data['term_id']);
+
+    if ((int) $term->academic_session_id !== (int) $data['academic_session_id']) {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'term_id' => 'The selected term does not belong to the selected academic session.',
+        ]);
+    }
+
+    $assignment = FeePackageAssignment::firstOrCreate(
+        [
+            'fee_package_id' => $data['fee_package_id'],
+            'class_id' => $data['class_id'],
+            'term_id' => $data['term_id'],
+        ],
+        [
+            'academic_session_id' => $data['academic_session_id'],
+            'is_active' => true,
+            'assigned_by' => auth()->id(),
+        ]
+    );
+
+    if ($assignment->wasRecentlyCreated) {
+        $this->feeService->createStudentFeesForPackageAssignment($assignment);
+        $message = 'Package assigned and student fees generated.';
+    } else {
+        $assignment->update([
+            'is_active' => true,
+            'assigned_by' => auth()->id(),
         ]);
 
-        $assignment = FeePackageAssignment::firstOrCreate(
-            [
-                'fee_package_id' => $data['fee_package_id'],
-                'class_id' => $data['class_id'],
-                'term_id' => $data['term_id'],
-            ],
-            [
-                'academic_session_id' => $data['academic_session_id'],
-                'is_active' => true,
-                'assigned_by' => auth()->id(),
-            ]
-        );
-
-        if ($assignment->wasRecentlyCreated) {
-            $this->feeService->createStudentFeesForPackageAssignment($assignment);
-            $message = 'Package assigned and student fees generated.';
-        } else {
-            $assignment->update(['is_active' => true, 'assigned_by' => auth()->id()]);
-            $this->feeService->createStudentFeesForPackageAssignment($assignment);
-            $message = 'Package assignment reactivated and student fees synchronized.';
-        }
-
-        $this->audit($request, 'fee_package.assigned', FeePackageAssignment::class, $assignment->id, null, $data);
-
-        return redirect()->route('admin.finance.packages.assignments')
-            ->with('status', $message);
+        $this->feeService->createStudentFeesForPackageAssignment($assignment);
+        $message = 'Package assignment reactivated and student fees synchronized.';
     }
+
+    $this->audit(
+        $request,
+        'fee_package.assigned',
+        FeePackageAssignment::class,
+        $assignment->id,
+        null,
+        $data
+    );
+
+    return redirect()
+        ->route('admin.finance.packages.assignments')
+        ->with('status', $message);
+}
 
     public function deactivateAssignment(FeePackageAssignment $assignment)
     {

@@ -65,8 +65,8 @@
         </div>
     </x-ui.card>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6 items-stretch">
-        <div class="lg:col-span-7">
+    <div class="grid grid-cols-1 gap-6 mb-6 items-stretch">
+        <div class="col-span-full">
             {{-- Student Fees --}}
             <x-ui.card class="h-full flex flex-col" elevated>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
@@ -121,7 +121,6 @@
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Paid</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Balance</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Status</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
@@ -147,17 +146,6 @@
                                     <td class="px-3 py-2 text-sm">
                                         <span class="inline-flex items-center rounded-full {{ $statusConfig['bg'] }} px-2 py-0.5 text-xs font-medium {{ $statusConfig['text'] }}">{{ $statusConfig['label'] }}</span>
                                     </td>
-                                    <td class="px-3 py-2 text-sm">
-                                        @if($fee->computed_status !== 'paid')
-                                            <button type="button"
-                                                onclick="openPaymentModal({{ $fee->id }}, '{{ addslashes($fee->student->full_name) }}', '{{ $fee->feeType->name }}', {{ $fee->amount_expected }}, {{ $balance }})"
-                                                class="px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 border border-primary-600 dark:border-primary-400 rounded hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
-                                                Record Payment
-                                            </button>
-                                        @else
-                                            <span class="text-xs text-neutral-400 dark:text-neutral-500">Fully Paid</span>
-                                        @endif
-                                    </td>
                                 </tr>
                             @empty
                                 <tr><td colspan="8" class="px-3 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No student fees found.</td></tr>
@@ -171,7 +159,7 @@
             </x-ui.card>
         </div>
 
-        <div class="lg:col-span-5">
+        <div class="col-span-full">
             {{-- Record Payment --}}
             <x-ui.card class="h-full flex flex-col" elevated>
                 <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">

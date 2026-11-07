@@ -16,11 +16,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-
 class AccountController extends Controller
 {
     use AuditsActions;
@@ -61,6 +61,7 @@ class AccountController extends Controller
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'] ?? null,
+            'staff_id' => $data['staff_id'] ?? null,
             'password' => Hash::make($temporaryPassword),
             'phone' => $data['phone'] ?? null,
             'role' => $data['type'],
@@ -188,6 +189,7 @@ class AccountController extends Controller
             'search' => ['nullable', 'string', 'max:100'],
             'password_status' => ['nullable', Rule::in(['required', 'changed'])],
         ]);
+
         $filters['search'] = trim($filters['search'] ?? '');
         $query = $this->credentialsQuery($filters);
 
@@ -213,6 +215,116 @@ class AccountController extends Controller
             'Content-Type' => 'text/csv; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="all-credentials.csv"',
         ]);
+    }
+
+    public function destroy(User $user)
+    {
+        // Prevent deactivation of the currently authenticated admin.
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'You cannot deactivate your own account.']);
+        }
+
+        // Prevent deactivation of admin accounts.
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Admin accounts cannot be deactivated.']);
+        }
+
+        try {
+            $user->update(['is_active' => false]);
+
+            return redirect()->route('admin.accounts.index')
+                ->with('status', 'Account "' . e($user->name) . '" deactivated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Account deactivation failed.', [
+                'user_id' => $user->id,
+                'admin_id' => auth()->id(),
+                'exception' => $e,
+            ]);
+
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Failed to deactivate account. Please try again or contact the system administrator.']);
+        }
+    }
+
+    public function permanentDelete(Request $request, User $user)
+    {
+        // Prevent self-deletion.
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'You cannot delete your own account.']);
+        }
+
+        // Prevent deletion of administrator accounts.
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Administrator accounts cannot be permanently deleted.']);
+        }
+
+        // Protect the last active administrator.
+        $adminCount = User::where('role', 'admin')->where('is_active', true)->count();
+        if ($adminCount <= 1 && User::where('id', $user->id)->where('role', 'admin')->where('is_active', true)->exists()) {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Cannot delete the last active administrator.']);
+        }
+
+        // Only bursar accounts may be permanently deleted (no dependent profile table).
+        if ($user->role !== 'bursar') {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Only bursar accounts are eligible for permanent deletion. Other roles must be deactivated instead.']);
+        }
+
+        // Only inactive bursar accounts may be permanently deleted.
+        if ($user->is_active) {
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Only inactive bursar accounts are eligible for permanent deletion. Deactivate the account first.']);
+        }
+
+        // Inspect every dependent record before allowing deletion.
+        $dependentChecks = [
+            'teacher profile' => $user->teacher()->exists(),
+            'student profile' => $user->student()->exists(),
+            'parent profile' => $user->parentProfile()->exists(),
+            'attendance records' => \App\Models\Attendance::where('marked_by', $user->id)->exists(),
+            'announcements' => \App\Models\Announcement::where('created_by', $user->id)->exists(),
+            'payment records' => \App\Models\Payment::where('recorded_by', $user->id)->exists(),
+            'payment reversals' => \App\Models\PaymentReversal::where('reversed_by', $user->id)->exists(),
+            'fee packages' => \App\Models\FeePackage::where('created_by', $user->id)->exists(),
+            'fee package assignments' => \App\Models\FeePackageAssignment::where('assigned_by', $user->id)->exists(),
+            'import credentials created' => \App\Models\ImportCredential::where('created_by', $user->id)->exists(),
+        ];
+
+        foreach ($dependentChecks as $label => $exists) {
+            if ($exists) {
+                return redirect()->route('admin.accounts.index')
+                    ->withErrors(['account.delete' => 'Cannot permanently delete "' . e($user->name) . '": ' . ucfirst($label) . ' exist and must be preserved. Deactivate the account instead.']);
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($request, $user): void {
+                $this->audit($request, 'account.permanently_deleted', User::class, $user->id, null, [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ]);
+
+                $user->delete();
+            });
+
+            return redirect()->route('admin.accounts.index')
+                ->with('status', 'Account "' . e($user->name) . '" permanently deleted.');
+        } catch (\Exception $e) {
+            Log::error('Account permanent deletion failed.', [
+                'user_id' => $user->id,
+                'admin_id' => auth()->id(),
+                'exception' => $e,
+            ]);
+
+            return redirect()->route('admin.accounts.index')
+                ->withErrors(['account.delete' => 'Failed to permanently delete account. Please try again or contact the system administrator.']);
+        }
     }
 
     protected function persistAccountCredential(User $user, string $role, ?string $loginIdentifier): void
@@ -318,7 +430,7 @@ class AccountController extends Controller
             'user_id' => $user->id,
             'qualification' => $request->input('qualification'),
             'phone' => $request->input('phone'),
-            'employee_id' => $this->generateEmployeeId(),
+            'employee_id' => $request->staff_id,
         ]);
     }
 
@@ -326,7 +438,7 @@ class AccountController extends Controller
     {
         $student = Student::create([
             'user_id' => $user->id,
-            'admission_no' => $this->generateAdmissionNo(),
+            'admission_no' => $request->admission_no,
             'class_id' => $request->input('class_id'),
             'gender' => $request->input('gender'),
             'date_of_birth' => $request->input('date_of_birth'),
@@ -409,6 +521,8 @@ class AccountController extends Controller
     {
         // Bursar accounts don't need a separate profile table - they use the User model directly
         // The User model already has all necessary fields (name, email, phone, etc.)
+        // Staff ID is already saved on the User record during account creation.
+        $user->save();
         return $user;
     }
 
@@ -427,3 +541,6 @@ class AccountController extends Controller
         return view('teacher.profile');
     }
 }
+
+
+

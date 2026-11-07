@@ -114,7 +114,6 @@
                     $item('Fee Collections & Reports', route('bursar.fee-collections'), 'bar-chart-3'),
                     $item('Staff Salary Payments', route('bursar.staff-salaries'), 'calculator'),
                     $item('School Expenses', route('bursar.expenses'), 'file-text'),
-                    $item('Financial Activity', route('bursar.financial-activity'), 'clipboard'),
                 ],
             ],
             [

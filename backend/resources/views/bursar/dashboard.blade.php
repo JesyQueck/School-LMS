@@ -143,10 +143,6 @@
                         <div class="h-8 w-8 rounded-lg bg-danger-200 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
                         <div><p class="text-sm font-medium text-neutral-900 dark:text-white">School Expenses</p><p class="text-xs text-neutral-500 dark:text-neutral-400">Record & track expenses (coming soon)</p></div>
                     </a>
-                    <a href="{{ route('bursar.financial-activity') }}" class="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-700 hover:bg-primary-200 dark:hover:bg-primary-900/10 transition-colors">
-                        <div class="h-8 w-8 rounded-lg bg-accent-200 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300 ring-1 ring-neutral-200 dark:ring-dark-border flex items-center justify-center"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
-                        <div><p class="text-sm font-medium text-neutral-900 dark:text-white">Financial Activity</p><p class="text-xs text-neutral-500 dark:text-neutral-400">Audit logs & activity</p></div>
-                    </a>
                 </div>
             </x-ui.card>
 
@@ -172,33 +168,6 @@
                         </div>
                     @empty
                         <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">No recent payments.</p>
-                    @endforelse
-                </div>
-            </x-ui.card>
-        </div>
-    </div>
-
-    {{-- Financial Activity --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-12">
-            <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Financial Activity Log</h3>
-                    <a href="{{ route('bursar.financial-activity') }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
-                </div>
-                <div class="p-6">
-                    @forelse($recentActivity->take(5) as $activity)
-                        <div class="flex items-start gap-3 py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                            <div class="h-2 w-2 mt-2 rounded-full bg-primary-500 shrink-0"></div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $activity->user->name ?? 'System' }} — {{ $actionLabels[$activity->action] ?? $activity->action }}</p>
-                                <p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">
-                                    {{ $activity->user->name ?? 'System' }} &middot; {{ $activity->created_at->diffForHumans() }}
-                                </p>
-                            </div>
-                        </div>
-                    @empty
-                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-4">No recent financial activity.</p>
                     @endforelse
                 </div>
             </x-ui.card>

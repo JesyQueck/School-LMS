@@ -78,33 +78,50 @@ class LoginController extends Controller
         };
     }
 
-    protected function resolveUser(string $identifier): ?User
-    {
-        $users = User::query()
-            ->where(function ($query) use ($identifier) {
-                $query->where(function ($query) use ($identifier) {
-                    $query->whereIn('role', ['admin', 'bursar', 'teacher', 'parent'])
-                        ->whereRaw('LOWER(email) = ?', [$identifier]);
-                })->orWhere(function ($query) use ($identifier) {
-                    $query->where('role', 'teacher')
-                        ->whereHas('teacher', fn ($teacher) => $teacher
-                            ->whereRaw('LOWER(employee_id) = ?', [$identifier]));
-                })->orWhere(function ($query) use ($identifier) {
-                    $query->where('role', 'student')
-                        ->whereHas('student', fn ($student) => $student
-                            ->whereRaw('LOWER(admission_no) = ?', [$identifier]));
-                });
+protected function resolveUser(string $identifier): ?User
+{
+    $identifier = mb_strtolower(trim($identifier));
 
-                if (preg_match('/^parent-([1-9]\d*)$/i', $identifier, $matches)) {
-                    $query->orWhere(function ($query) use ($matches) {
-                        $query->where('role', 'parent')
-                            ->whereHas('parentProfile', fn ($parent) => $parent->whereKey((int) $matches[1]));
-                    });
-                }
+    $users = User::query()
+        ->where(function ($query) use ($identifier) {
+
+            // Admin: email
+            $query->where(function ($q) use ($identifier) {
+                $q->where('role', 'admin')
+                    ->whereRaw('LOWER(email) = ?', [$identifier]);
             })
-            ->limit(2)
-            ->get();
 
-        return $users->count() === 1 ? $users->first() : null;
-    }
+            // Teacher and Bursar: shared Staff ID
+            ->orWhere(function ($q) use ($identifier) {
+                $q->whereIn('role', ['teacher', 'bursar'])
+                    ->whereRaw('LOWER(staff_id) = ?', [$identifier]);
+            })
+
+            // Student: admission number
+            ->orWhere(function ($q) use ($identifier) {
+                $q->where('role', 'student')
+                    ->whereHas('student', function ($student) use ($identifier) {
+                        $student->whereRaw('LOWER(admission_no) = ?', [$identifier]);
+                    });
+            })
+
+            // Parent: email or PARENT-{id}
+            ->orWhere(function ($q) use ($identifier) {
+                $q->where('role', 'parent')
+                    ->where(function ($parentQuery) use ($identifier) {
+                        $parentQuery->whereRaw('LOWER(email) = ?', [$identifier]);
+
+                        if (preg_match('/^parent-([1-9]\d*)$/i', $identifier, $matches)) {
+                            $parentQuery->orWhereHas('parentProfile', function ($parent) use ($matches) {
+                                $parent->whereKey((int) $matches[1]);
+                            });
+                        }
+                    });
+            });
+        })
+        ->limit(2)
+        ->get();
+
+    return $users->count() === 1 ? $users->first() : null;
+}
 }

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'phone', 'profile_photo', 'is_active', 'needs_password_change'])]
+#[Fillable(['name', 'email', 'password', 'role', 'phone', 'profile_photo', 'is_active', 'needs_password_change', 'staff_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -57,8 +57,8 @@ class User extends Authenticatable
     {
         return match ($this->role) {
             'admin' => $this->email,
-            'bursar' => $this->email,
-            'teacher' => $this->teacher?->employee_id,
+            'teacher' => $this->staff_id,
+'bursar' => $this->staff_id,
             'student' => $this->student?->admission_no,
             'parent' => $this->parentProfile ? 'PARENT-'.$this->parentProfile->id : null,
             default => null,
