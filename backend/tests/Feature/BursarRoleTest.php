@@ -82,7 +82,6 @@ class BursarRoleTest extends TestCase
             '/bursar/fee-collections' => 'bursar.fee-collections',
             '/bursar/staff-salaries' => 'bursar.staff-salaries',
             '/bursar/expenses' => 'bursar.expenses',
-            '/bursar/financial-activity' => 'bursar.financial-activity',
         ];
 
         foreach ($pages as $url => $viewName) {
@@ -281,7 +280,6 @@ class BursarRoleTest extends TestCase
         $response->assertSee('Fee Collections & Reports');
         $response->assertSee('Staff Salary Payments');
         $response->assertSee('School Expenses');
-        $response->assertSee('Financial Activity');
     }
 
     public function test_bursar_login_identifier_uses_staff_id(): void

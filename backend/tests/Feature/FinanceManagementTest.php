@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\FeeService;
 use App\Models\FeePackage;
 use App\Models\FeeComponent;
+use App\Models\StudentFeeComponentSnapshot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -962,5 +963,402 @@ class FinanceManagementTest extends TestCase
         $this->assertEquals(0, $summary['paid']);
         $this->assertEquals(0, $summary['partial']);
         $this->assertEquals(0, $summary['unpaid']);
+    }
+
+    public function test_payment_exceeding_outstanding_balance_is_rejected(): void
+    {
+        $feeService = new FeeService;
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-08-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-PAY-001',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1000.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1000.00,
+            'status' => 'unpaid',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $feeService->recordPayment($studentFee, [
+            'amount_paid' => 1500.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-01',
+        ], $studentUser);
+    }
+
+    public function test_concurrent_payments_together_exceed_balance_second_is_rejected(): void
+    {
+        $feeService = new FeeService;
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-08-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-CONC-001',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1000.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1000.00,
+            'status' => 'unpaid',
+        ]);
+
+        // First payment of 600 (within balance)
+        $payment1 = $feeService->recordPayment($studentFee, [
+            'amount_paid' => 600.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-01',
+        ], $studentUser);
+
+        $this->assertNotNull($payment1->id);
+        $this->assertEquals(600.00, $payment1->amount_paid);
+        $this->assertEquals('partial', $studentFee->fresh()->status);
+
+        // Second payment of 500 would make total 1100 > 1000 balance, should be rejected
+        $this->expectException(\InvalidArgumentException::class);
+        $feeService->recordPayment($studentFee, [
+            'amount_paid' => 500.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-02',
+        ], $studentUser);
+
+        // Verify the second payment was not recorded (rollback)
+        $this->assertEquals(1, $studentFee->fresh()->payments()->count());
+        $this->assertEquals(600.00, $studentFee->fresh()->payments()->sum('amount_paid'));
+    }
+
+    public function test_payment_reversal_then_repayment_restores_balance(): void
+    {
+        $feeService = new FeeService;
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-08-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-REV-001',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1000.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1000.00,
+            'status' => 'unpaid',
+        ]);
+
+        // Record payment of 1000 (fully paid)
+        $payment = $feeService->recordPayment($studentFee, [
+            'amount_paid' => 1000.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-01',
+        ], $studentUser);
+
+        $this->assertEquals('paid', $studentFee->fresh()->status);
+
+        // Reverse the payment
+        $reversal = $feeService->reversePayment($payment, 'Test reversal reason', $studentUser);
+
+        $this->assertNotNull($reversal->id);
+        $this->assertEquals(1000.00, $reversal->amount_reversed);
+        $this->assertEquals('unpaid', $studentFee->fresh()->status);
+
+        // Re-payment after reversal should work
+        $payment2 = $feeService->recordPayment($studentFee, [
+            'amount_paid' => 500.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-02',
+        ], $studentUser);
+
+        $this->assertNotNull($payment2->id);
+        $this->assertEquals(500.00, $payment2->amount_paid);
+        $this->assertEquals('partial', $studentFee->fresh()->status);
+    }
+
+    public function test_already_reversed_payment_cannot_be_reversed_again(): void
+    {
+        $feeService = new FeeService;
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-08-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-DOUBLE-001',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Tuition Fee',
+            'amount' => 1000.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'term_id' => $term->id,
+            'amount_expected' => 1000.00,
+            'status' => 'unpaid',
+        ]);
+
+        $payment = $feeService->recordPayment($studentFee, [
+            'amount_paid' => 1000.00,
+            'payment_method' => 'cash',
+            'payment_date' => '2026-09-01',
+        ], $studentUser);
+
+        // First reversal
+        $feeService->reversePayment($payment, 'First reversal', $studentUser);
+
+        // Second reversal should fail
+        $this->expectException(\InvalidArgumentException::class);
+        $feeService->reversePayment($payment, 'Second reversal', $studentUser);
+    }
+
+    public function test_fee_package_cannot_be_deleted_with_generated_student_fees(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $package = FeePackage::create([
+            'name' => 'Deletable Package',
+            'description' => 'Test package',
+            'is_active' => true,
+            'created_by' => $admin->id,
+        ]);
+
+        FeeComponent::create([
+            'fee_package_id' => $package->id,
+            'name' => 'Tuition',
+            'amount' => 500.00,
+            'sort_order' => 1,
+        ]);
+
+        // Create a student fee referencing this package
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-08-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-DEL-001',
+        ]);
+
+        $feeType = FeeType::create([
+            'name' => 'Package Fee',
+            'amount' => 500.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'fee_source_type' => 'fee_package',
+            'fee_package_id' => $package->id,
+            'term_id' => $term->id,
+            'amount_expected' => 500.00,
+            'status' => 'unpaid',
+        ]);
+
+        $response = $this->delete(route('admin.finance.packages.destroy', $package));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertDatabaseHas('fee_packages', ['id' => $package->id]);
+    }
+
+    public function test_fee_package_cannot_update_components_with_existing_snapshots(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $session = AcademicSession::create([
+            'name' => '2026/2027',
+            'start_date' => '2026-09-01',
+            'end_date' => '2027-08-31',
+            'is_current' => true,
+        ]);
+
+        $term = Term::create([
+            'academic_session_id' => $session->id,
+            'name' => 'First Term',
+            'start_date' => '2026-09-01',
+            'end_date' => '2026-12-20',
+            'is_current' => true,
+        ]);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $studentUser = User::factory()->create();
+        $student = Student::create([
+            'user_id' => $studentUser->id,
+            'class_id' => $class->id,
+            'admission_no' => 'ADM-SNAP-001',
+        ]);
+
+        $package = FeePackage::create([
+            'name' => 'Snapshot Package',
+            'description' => 'Test',
+            'is_active' => true,
+            'created_by' => $admin->id,
+        ]);
+
+        $component = FeeComponent::create([
+            'fee_package_id' => $package->id,
+            'name' => 'Tuition',
+            'amount' => 500.00,
+            'sort_order' => 1,
+        ]);
+
+        // Create student fee with snapshot referencing this component
+        $feeType = FeeType::create([
+            'name' => 'Snapshot Fee',
+            'amount' => 500.00,
+            'term_id' => $term->id,
+            'class_id' => $class->id,
+        ]);
+
+        $studentFee = StudentFee::create([
+            'student_id' => $student->id,
+            'fee_type_id' => $feeType->id,
+            'fee_source_type' => 'fee_package',
+            'fee_package_id' => $package->id,
+            'term_id' => $term->id,
+            'amount_expected' => 500.00,
+            'status' => 'unpaid',
+        ]);
+
+        StudentFeeComponentSnapshot::create([
+            'student_fee_id' => $studentFee->id,
+            'fee_component_id' => $component->id,
+            'component_name' => 'Tuition',
+            'component_amount' => 500.00,
+            'component_description' => null,
+        ]);
+
+        // Attempt to update package components (should fail due to snapshot reference)
+        $response = $this->put(route('admin.finance.packages.update', $package), [
+            'name' => 'Updated Package',
+            'description' => 'Updated',
+            'is_active' => true,
+            'components' => [
+                ['name' => 'New Tuition', 'amount' => 600.00, 'description' => ''],
+            ],
+        ]);
+
+        $response->assertSessionHasErrors();
+        $this->assertDatabaseHas('fee_components', ['id' => $component->id, 'name' => 'Tuition']);
     }
 }

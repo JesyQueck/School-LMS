@@ -246,12 +246,22 @@ class FeeService
         $expected = (float) StudentFee::sum('amount_expected');
         $collected = (float) Payment::whereDoesntHave('reversal')->sum('amount_paid');
 
-        $paid = StudentFee::whereRaw('amount_expected <= (SELECT COALESCE(SUM(amount_paid), 0) FROM payments WHERE payments.student_fee_id = student_fees.id AND NOT EXISTS (SELECT 1 FROM payment_reversals WHERE payment_reversals.payment_id = payments.id))')->count();
-        $unpaid = StudentFee::whereDoesntHave('payments', function ($query) {
-    $query->whereDoesntHave('reversal');
-})->count();
-        $total = StudentFee::count();
-        $partial = max(0, $total - $paid - $unpaid);
+        // Count paid/partial/unpaid using the same status logic as recomputeStatus(),
+        // which excludes reversed payments from the outstanding balance calculation.
+        $paid = 0;
+        $unpaid = 0;
+        $partial = 0;
+
+        StudentFee::chunk(500, function ($fees) use (&$paid, &$partial, &$unpaid) {
+            foreach ($fees as $fee) {
+                $status = $this->recomputeStatus($fee);
+                match ($status) {
+                    'paid' => $paid++,
+                    'partial' => $partial++,
+                    default => $unpaid++,
+                };
+            }
+        });
 
         return [
             'expected' => $expected,

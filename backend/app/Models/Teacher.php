@@ -47,6 +47,11 @@ class Teacher extends Model
             ->whereHas('academicSession', fn ($q) => $q->where('is_current', true));
     }
 
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class, 'user_id', 'user_id');
+    }
+
     public function hasClassAssignmentForSession($sessionId): bool
     {
         return $this->classAssignments()

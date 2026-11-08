@@ -10,10 +10,13 @@ use App\Models\FeeComponent;
 use App\Models\FeePackage;
 use App\Models\FeePackageAssignment;
 use App\Models\SchoolClass;
+use App\Models\StudentFee;
+use App\Models\StudentFeeComponentSnapshot;
 use App\Models\Term;
 use App\Services\FeeService;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FeePackageController extends Controller
 {
@@ -95,32 +98,48 @@ class FeePackageController extends Controller
         $data = $request->validated();
         $components = $data['components'] ?? [];
 
-        DB::transaction(function () use ($feePackage, $data, $components) {
-            $feePackage->update([
-                'name' => $data['name'],
-                'description' => $data['description'] ?? null,
-                'is_active' => $data['is_active'] ?? true,
-            ]);
-
-            // Delete existing components and create new ones
-            // Note: This only works if the package has no assignments yet
-            // For assigned packages, we should prevent component changes
-            if ($feePackage->assignments()->exists()) {
-                throw new \InvalidArgumentException('Cannot modify components of an assigned package. Create a new package instead.');
-            }
-
-            $feePackage->components()->delete();
-
-            foreach ($components as $index => $component) {
-                FeeComponent::create([
-                    'fee_package_id' => $feePackage->id,
-                    'name' => $component['name'],
-                    'description' => $component['description'] ?? null,
-                    'amount' => $component['amount'],
-                    'sort_order' => $index,
+        try {
+            DB::transaction(function () use ($feePackage, $data, $components) {
+                $feePackage->update([
+                    'name' => $data['name'],
+                    'description' => $data['description'] ?? null,
+                    'is_active' => $data['is_active'] ?? true,
                 ]);
-            }
-        });
+
+                // Delete existing components and create new ones
+                // Note: This only works if the package has no assignments yet
+                // For assigned packages, we should prevent component changes
+                if ($feePackage->assignments()->exists()) {
+                    throw new \InvalidArgumentException('Cannot modify components of an assigned package. Create a new package instead.');
+                }
+
+                // Prevent deleting components referenced by historical snapshots
+                $snapshotReferencedComponentIds = StudentFeeComponentSnapshot::whereIn(
+                    'fee_component_id',
+                    $feePackage->components->pluck('id')
+                )->pluck('fee_component_id');
+
+                if ($snapshotReferencedComponentIds->isNotEmpty()) {
+                    throw new \InvalidArgumentException(
+                        'Cannot modify components that are referenced by historical fee snapshots. Create a new package instead.'
+                    );
+                }
+
+                $feePackage->components()->delete();
+
+                foreach ($components as $index => $component) {
+                    FeeComponent::create([
+                        'fee_package_id' => $feePackage->id,
+                        'name' => $component['name'],
+                        'description' => $component['description'] ?? null,
+                        'amount' => $component['amount'],
+                        'sort_order' => $index,
+                    ]);
+                }
+            });
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['fee_package' => $e->getMessage()]);
+        }
 
         $this->audit($request, 'fee_package.updated', FeePackage::class, $feePackage->id, null, $data);
 
@@ -132,6 +151,12 @@ class FeePackageController extends Controller
     {
         if ($feePackage->assignments()->exists()) {
             return back()->with('error', 'Cannot delete a package that has assignments. Deactivate it instead.');
+        }
+
+        // Prevent deletion if student fees were generated from this package
+        $studentFeeCount = StudentFee::where('fee_package_id', $feePackage->id)->count();
+        if ($studentFeeCount > 0) {
+            return back()->with('error', 'Cannot delete a package that has generated student fees. Deactivate it instead.');
         }
 
         $feePackage->components()->delete();

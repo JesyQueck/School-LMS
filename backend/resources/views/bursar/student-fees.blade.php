@@ -19,9 +19,9 @@
 
     {{-- Finance Summary --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <x-ui.stat-card label="Total Expected" :value="'₦' . number_format($finance['expected'], 2)" icon="wallet" compact="true" />
-        <x-ui.stat-card label="Amount Collected" :value="'₦' . number_format($finance['collected'], 2)" icon="wallet" compact="true" :trend="['direction' => 'up', 'value' => 'Collected']" />
-        <x-ui.stat-card label="Still Owed" :value="'₦' . number_format($finance['outstanding'], 2)" icon="wallet" compact="true" :trend="['direction' => 'down', 'value' => 'Outstanding']" />
+        <x-ui.stat-card label="Total Expected" :value="chr(0xE2) . chr(0x82) . chr(0xA6) . number_format($finance['expected'], 2)" icon="wallet" compact="true" />
+        <x-ui.stat-card label="Amount Collected" :value="chr(0xE2) . chr(0x82) . chr(0xA6) . number_format($finance['collected'], 2)" icon="wallet" compact="true" :trend="['direction' => 'up', 'value' => 'Collected']" />
+        <x-ui.stat-card label="Still Owed" :value="chr(0xE2) . chr(0x82) . chr(0xA6) . number_format($finance['outstanding'], 2)" icon="wallet" compact="true" :trend="['direction' => 'down', 'value' => 'Outstanding']" />
         <x-ui.stat-card label="Collection Rate" :value="$finance['collection_rate'] . '%'" icon="chart" compact="true" :trend="['direction' => $finance['collection_rate'] >= 70 ? 'up' : 'neutral', 'value' => 'of fees collected']" />
     </div>
 
@@ -48,9 +48,9 @@
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                             <td class="px-6 py-3.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $cs['class'] }}</td>
                             <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $cs['total'] }}</td>
-                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['expected'], 2) }}</td>
-                            <td class="px-6 py-3.5 text-sm text-success-600 dark:text-success-400 text-right">₦{{ number_format($cs['collected'], 2) }}</td>
-                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($cs['outstanding'], 2) }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">&#8358;{{ number_format($cs['expected'], 2) }}</td>
+                            <td class="px-6 py-3.5 text-sm text-success-600 dark:text-success-400 text-right">&#8358;{{ number_format($cs['collected'], 2) }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">&#8358;{{ number_format($cs['outstanding'], 2) }}</td>
                             <td class="px-6 py-3.5 text-right">
                                 <span class="inline-flex items-center rounded-full {{ $cs['collection_rate'] >= 70 ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-300' : ($cs['collection_rate'] >= 40 ? 'bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300' : 'bg-danger-100 dark:bg-danger-900/30 text-danger-700 dark:text-danger-300') }} px-2 py-0.5 text-xs font-medium">
                                     {{ $cs['collection_rate'] }}%
@@ -73,7 +73,7 @@
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Student Fees</h3>
                     <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">View and filter individual student fee obligations.</p>
                 </div>
-                <form method="GET" class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 border-b border-neutral-200 dark:border-dark-border">
+                <form id="student-fees-filter-form" method="GET" class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 border-b border-neutral-200 dark:border-dark-border">
                     <div>
                         <label class="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Class</label>
                         <select name="class_id" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-2 py-1.5 text-sm">
@@ -110,7 +110,7 @@
                         <a href="{{ route('bursar.student-fees') }}" class="text-sm text-neutral-500 dark:text-neutral-400 hover:underline">Reset</a>
                     </div>
                 </form>
-                <div class="overflow-x-auto mt-3 flex-1">
+                <div id="student-fees-results" class="overflow-x-auto mt-3 flex-1">
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
                         <thead class="bg-neutral-50 dark:bg-dark-surface">
                             <tr>
@@ -140,9 +140,9 @@
                                     </td>
                                     <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $fee->student->schoolClass->name ?? 'N/A' }}</td>
                                     <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">{{ $fee->feeType->name ?? 'N/A' }}</td>
-                                    <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">₦{{ number_format($fee->amount_expected, 2) }}</td>
-                                    <td class="px-3 py-2 text-sm text-success-600 dark:text-success-400">₦{{ number_format($paid, 2) }}</td>
-                                    <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">₦{{ number_format($balance, 2) }}</td>
+                                    <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">&#8358;{{ number_format($fee->amount_expected, 2) }}</td>
+                                    <td class="px-3 py-2 text-sm text-success-600 dark:text-success-400">&#8358;{{ number_format($paid, 2) }}</td>
+                                    <td class="px-3 py-2 text-sm text-neutral-600 dark:text-neutral-400">&#8358;{{ number_format($balance, 2) }}</td>
                                     <td class="px-3 py-2 text-sm">
                                         <span class="inline-flex items-center rounded-full {{ $statusConfig['bg'] }} px-2 py-0.5 text-xs font-medium {{ $statusConfig['text'] }}">{{ $statusConfig['label'] }}</span>
                                     </td>
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (₦) <span class="text-danger-500">*</span></label>
+                        <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (&#8358;) <span class="text-danger-500">*</span></label>
                         <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
                     <div class="mb-4">
@@ -228,10 +228,10 @@
                     <div class="border-t border-neutral-200 dark:border-dark-border pt-4 space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Outstanding Balance</label>
-                            <p class="text-2xl font-bold text-danger-600 dark:text-danger-400" id="modal_outstanding">₦0.00</p>
+                            <p class="text-2xl font-bold text-danger-600 dark:text-danger-400" id="modal_outstanding">&#8358;0.00</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (₦) <span class="text-danger-500">*</span></label>
+                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (&#8358;) <span class="text-danger-500">*</span></label>
                             <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" id="modal_amount_paid">
                         </div>
                         <div>
@@ -292,7 +292,7 @@
                                     var div = document.createElement('div');
                                     div.className = 'px-3 py-2 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800';
                                     div.innerHTML = '<div class="font-medium text-sm text-neutral-900 dark:text-white">' + item.student_name + '</div>' +
-                                        '<div class="text-xs text-neutral-500 dark:text-neutral-400">' + item.fee_type + ' - ' + item.class + ' (₦' + item.amount_expected + ')</div>';
+                                        '<div class="text-xs text-neutral-500 dark:text-neutral-400">' + item.fee_type + ' - ' + item.class + ' (&#8358;' + item.amount_expected + ')</div>';
                                     div.onclick = function() {
                                         searchInput.value = item.label;
                                         hiddenInput.value = item.id;
@@ -324,7 +324,7 @@
                         }
                     });
                 }
-
+            }
             /* Payment Modal handling */
             var paymentModal = document.getElementById('payment-modal');
             var modalFeeId = document.getElementById('modal_fee_id');
@@ -336,8 +336,8 @@
             window.openPaymentModal = function(feeId, studentName, feeTypeName, amountExpected, balance) {
                 modalFeeId.value = feeId;
                 modalStudentName.textContent = studentName;
-                modalFeeInfo.textContent = feeTypeName + ' (Expected: ₦' + Number(amountExpected).toLocaleString(undefined, {minimumFractionDigits: 2}) + ')';
-                modalOutstanding.textContent = '₦' + Number(balance).toLocaleString(undefined, {minimumFractionDigits: 2});
+                modalFeeInfo.textContent = feeTypeName + ' (Expected: &#8358;' + Number(amountExpected).toLocaleString(undefined, {minimumFractionDigits: 2}) + ')';
+                modalOutstanding.textContent = '&#8358;' + Number(balance).toLocaleString(undefined, {minimumFractionDigits: 2});
                 modalAmountPaid.value = balance;
                 modalAmountPaid.max = balance;
                 paymentModal.classList.remove('hidden');
@@ -415,6 +415,120 @@
             if (showReceipt) {
                 var modal = document.getElementById('receipt-modal-' + showReceipt);
                 if (modal) { openReceipt(showReceipt); }
+            }
+
+            /* Student Fees AJAX filtering and pagination */
+            var filterForm = document.getElementById('student-fees-filter-form');
+            var resultsContainer = document.getElementById('student-fees-results');
+            var abortController = null;
+
+            function fetchResults(url, replaceUrl) {
+                if (abortController) {
+                    abortController.abort();
+                }
+                abortController = new AbortController();
+
+                return fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html'
+                    },
+                    signal: abortController.signal
+                })
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Server responded with status ' + response.status);
+                    }
+                    return response.text();
+                })
+                .then(function(html) {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var newResults = doc.querySelector('#student-fees-results');
+                    if (newResults && resultsContainer) {
+                        resultsContainer.innerHTML = newResults.innerHTML;
+                        if (replaceUrl) {
+                            window.history.pushState({}, '', url);
+                        }
+                        return true;
+                    } else {
+                        console.error('Could not find #student-fees-results in AJAX response');
+                        return false;
+                    }
+                })
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        return false;
+                    }
+                    console.error('AJAX error:', err);
+                    alert('Failed to load filtered results. Please try again.');
+                    return false;
+                });
+            }
+
+            function resetFilterForm() {
+                var selects = filterForm.querySelectorAll('select');
+                selects.forEach(function(sel) { sel.selectedIndex = 0; });
+                var inputs = filterForm.querySelectorAll('input[type="text"]');
+                inputs.forEach(function(input) { input.value = ''; });
+            }
+
+            function populateFormFromUrl(url) {
+                var parsedUrl = new URL(url);
+                var searchParams = parsedUrl.searchParams;
+                var classSelect = filterForm.querySelector('select[name="class_id"]');
+                var termSelect = filterForm.querySelector('select[name="term_id"]');
+                var statusSelect = filterForm.querySelector('select[name="status"]');
+                var searchInput = filterForm.querySelector('input[name="search"]');
+
+                if (classSelect) {
+                    classSelect.value = searchParams.has('class_id') ? searchParams.get('class_id') : '';
+                }
+                if (termSelect) {
+                    termSelect.value = searchParams.has('term_id') ? searchParams.get('term_id') : '';
+                }
+                if (statusSelect) {
+                    statusSelect.value = searchParams.has('status') ? searchParams.get('status') : '';
+                }
+                if (searchInput) {
+                    searchInput.value = searchParams.has('search') ? searchParams.get('search') : '';
+                }
+            }
+
+            if (filterForm && resultsContainer) {
+                filterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var formData = new FormData(filterForm);
+                    var params = new URLSearchParams(formData);
+                    var url = filterForm.action + '?' + params.toString();
+                    fetchResults(url, true);
+                });
+
+                resultsContainer.addEventListener('click', function(e) {
+                    var link = e.target.closest('a[href]');
+                    if (link && link.getAttribute('href') && link.getAttribute('href').indexOf('?page=') !== -1) {
+                        e.preventDefault();
+                        fetchResults(link.getAttribute('href'), true);
+                    }
+                });
+            }
+
+            window.addEventListener('popstate', function() {
+                fetchResults(window.location.href, false);
+                populateFormFromUrl(window.location.href);
+            });
+
+            var resetLink = filterForm ? filterForm.querySelector('a[href]') : null;
+            if (resetLink) {
+                resetLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var url = resetLink.getAttribute('href');
+                    fetchResults(url, true).then(function(success) {
+                        if (success) {
+                            resetFilterForm();
+                        }
+                    });
+                });
             }
         });
     </script>

@@ -154,10 +154,13 @@ class FeeController extends Controller
         ->when($request->filled('q'), function ($q) use ($request) {
             $search = $request->input('q');
 
+            $search = trim($search);
+
             $q->whereHas('student', function ($s) use ($search) {
-                $s->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('admission_no', 'like', "%{$search}%");
+                $s->where('first_name', 'like', "{$search}%")
+                    ->orWhere('middle_name', 'like', "{$search}%")
+                    ->orWhere('last_name', 'like', "{$search}%")
+                    ->orWhere('admission_no', 'like', "{$search}%");
             });
         })
         ->limit(20)
