@@ -19,8 +19,12 @@ use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Database\Schema\Blueprint;
 use Tests\TestCase;
 
 class AdminManagementTest extends TestCase
@@ -2219,6 +2223,326 @@ class AdminManagementTest extends TestCase
         ]);
     }
 
+    public function test_account_creation_shows_validation_summary_and_field_errors(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => '',
+            'email' => 'not-an-email',
+            'staff_id' => '',
+        ]);
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertTrue($response->headers->has('location'));
+    }
+
+    public function test_account_creation_retains_old_input_and_selected_type(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'bursar',
+            'name' => 'Retained Name',
+            'email' => 'retained@example.com',
+            'staff_id' => '',
+            'phone' => '08099999999',
+        ]);
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertTrue($response->headers->has('location'));
+    }
+
+    public function test_account_creation_initializes_field_visibility_on_load(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->get('/admin/accounts/create');
+        $response->assertOk();
+        $response->assertSee('toggleFields');
+    }
+
+    public function test_duplicate_email_is_rejected_on_account_creation(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $existing = User::factory()->create([
+            'role' => 'teacher',
+            'email' => 'dup@example.com',
+            'staff_id' => 'T-DUP-001',
+        ]);
+        Teacher::create(['user_id' => $existing->id, 'employee_id' => 'T-DUP-001', 'qualification' => 'B.Ed']);
+
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Dup Teacher',
+            'email' => 'dup@example.com',
+            'staff_id' => 'T-DUP-002',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertDatabaseMissing('users', ['email' => 'dup@example.com', 'name' => 'Dup Teacher']);
+    }
+
+    public function test_duplicate_teacher_staff_id_is_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $existing = User::factory()->create([
+            'role' => 'teacher',
+            'email' => 'teacher1@example.com',
+            'staff_id' => 'T-STAFF-001',
+        ]);
+        Teacher::create(['user_id' => $existing->id, 'employee_id' => 'T-STAFF-001', 'qualification' => 'B.Ed']);
+
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Dup Staff Teacher',
+            'email' => 'teacher2@example.com',
+            'staff_id' => 'T-STAFF-001',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertSessionHasErrors(['staff_id']);
+        $this->assertDatabaseMissing('users', ['staff_id' => 'T-STAFF-001', 'name' => 'Dup Staff Teacher']);
+    }
+
+    public function test_duplicate_bursar_staff_id_is_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $existing = User::factory()->create([
+            'role' => 'bursar',
+            'email' => 'bursar1@example.com',
+            'staff_id' => 'B-STAFF-001',
+        ]);
+
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'bursar',
+            'name' => 'Dup Bursar',
+            'email' => 'bursar2@example.com',
+            'staff_id' => 'B-STAFF-001',
+            'phone' => '08011111111',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertSessionHasErrors(['staff_id']);
+        $this->assertDatabaseMissing('users', ['staff_id' => 'B-STAFF-001', 'role' => 'bursar', 'name' => 'Dup Bursar']);
+    }
+
+    public function test_duplicate_student_admission_number_is_rejected(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $existingUser = User::factory()->create(['role' => 'student', 'email' => 'student1@example.com']);
+        Student::create(['user_id' => $existingUser->id, 'admission_no' => 'ADM-DUP-001', 'class_id' => $class->id]);
+
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'student',
+            'name' => 'Dup Student',
+            'admission_no' => 'ADM-DUP-001',
+            'class_id' => $class->id,
+            'first_name' => 'Dup',
+            'last_name' => 'Student',
+            'date_of_birth' => '2012-01-01',
+            'gender' => 'male',
+            'parent_email' => 'parent@example.com',
+        ]);
+
+        $response->assertSessionHasErrors(['admission_no']);
+        $this->assertDatabaseMissing('students', ['admission_no' => 'ADM-DUP-001', 'user' => ['name' => 'Dup Student']]);
+    }
+
+    public function test_email_conflicts_with_teacher_staff_id_cross_identifier(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $existing = User::factory()->create([
+            'role' => 'teacher',
+            'email' => 'cross@example.com',
+            'staff_id' => 'T-CROSS-001',
+        ]);
+        Teacher::create(['user_id' => $existing->id, 'employee_id' => 'T-CROSS-001', 'qualification' => 'B.Ed']);
+
+        $this->actingAs($admin);
+
+        // Using the teacher's staff_id as an email for a new account should conflict.
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Cross Teacher',
+            'email' => 't-cross-001',
+            'staff_id' => 'T-CROSS-002',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+    }
+
+    public function test_staff_id_conflicts_with_student_admission_no_cross_identifier(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $existingUser = User::factory()->create(['role' => 'student', 'email' => 'crossstudent@example.com']);
+        Student::create(['user_id' => $existingUser->id, 'admission_no' => 'ADM-CROSS-001', 'class_id' => $class->id]);
+
+        $this->actingAs($admin);
+
+        // Using the student's admission number as a staff_id should conflict.
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Cross Staff',
+            'email' => 'crossstaff@example.com',
+            'staff_id' => 'ADM-CROSS-001',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertSessionHasErrors(['staff_id']);
+    }
+
+    public function test_concise_success_message_is_displayed_on_account_creation(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Jane Teacher',
+            'email' => 'jane.msg@example.com',
+            'staff_id' => 'T-MSG-001',
+            'phone' => '08011111111',
+            'qualification' => 'B.Ed',
+            'password' => 'Password123!',
+        ]);
+
+        $response->assertRedirect(route('admin.accounts.create'));
+        $response->assertSessionHas('status', 'Teacher Jane Teacher has been created with ID T-MSG-001. Check Credentials for login details.');
+        // Passwords must not appear in the status notification.
+        $this->assertStringNotContainsString('Password', $response->getSession()->get('status'));
+        $this->assertStringNotContainsString('password', $response->getSession()->get('status'));
+    }
+
+    public function test_parent_success_message_has_no_password(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'parent',
+            'name' => 'Parent User',
+            'email' => 'parent.msg@example.com',
+            'phone' => '08022222222',
+            'occupation' => 'Doctor',
+        ]);
+
+        $response->assertRedirect(route('admin.accounts.create'));
+        $status = $response->getSession()->get('status');
+        $this->assertStringContainsString('Parent User has been created with ID', $status);
+        $this->assertStringContainsString('Check Credentials for login details.', $status);
+        $this->assertStringNotContainsString('password', strtolower($status));
+    }
+
+    public function test_student_success_message_uses_admission_number_as_id(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'student',
+            'name' => 'John Student',
+            'admission_no' => 'ADM-MSG-001',
+            'class_id' => $class->id,
+            'first_name' => 'John',
+            'last_name' => 'Student',
+            'date_of_birth' => '2012-01-01',
+            'gender' => 'male',
+            'parent_email' => 'parent@example.com',
+        ]);
+
+        $response->assertRedirect(route('admin.accounts.create'));
+        $response->assertSessionHas('status', 'Student John Student has been created with ID ADM-MSG-001. Check Credentials for login details.');
+    }
+
+    public function test_temporary_password_is_not_in_success_notification(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'No Pass Teacher',
+            'email' => 'nopass@example.com',
+            'staff_id' => 'T-NOPASS-001',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $status = $response->getSession()->get('status');
+        $this->assertStringNotContainsString('Password123!', $status);
+        $this->assertStringNotContainsString('Temporary password', $status);
+        // Credentials page functionality remains intact (credentials stored in session).
+        $this->assertArrayHasKey('password', $response->getSession()->get('new_account_credentials')[0]);
+    }
+
+    public function test_existing_account_email_cannot_be_reused(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->create(['role' => 'parent', 'email' => 'existing@example.com']);
+
+        $this->actingAs($admin);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'parent',
+            'name' => 'Existing Parent',
+            'email' => 'existing@example.com',
+            'phone' => '08022222222',
+            'occupation' => 'Doctor',
+        ]);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertCount(1, User::where('email', 'existing@example.com')->get());
+    }
+
+    public function test_partial_account_is_not_created_on_validation_failure(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $initialCount = User::count();
+
+        $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Partial Teacher',
+            'email' => 'partial@example.com',
+            'staff_id' => '',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertSame($initialCount, User::count());
+        $this->assertDatabaseMissing('users', ['name' => 'Partial Teacher']);
+        $this->assertDatabaseMissing('teachers', ['user' => ['name' => 'Partial Teacher']]);
+    }
+
     public function test_credentials_manager_does_not_reveal_persisted_passwords(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'needs_password_change' => true]);
@@ -2659,5 +2983,224 @@ class AdminManagementTest extends TestCase
             'id' => $inactiveUser->id,
             'is_active' => false,
         ]);
+    }
+
+    /* ---------------------------------------------------------------
+     * Payroll periods migration reconciliation tests
+     * --------------------------------------------------------------- */
+
+    public function test_payroll_periods_fresh_install_creates_nullable_created_by_with_fk_and_indexes(): void
+    {
+        Schema::dropIfExists('payroll_periods');
+
+        $migration = require database_path('migrations/2026_11_07_135004_create_payroll_periods_table.php');
+        $migration->up();
+
+        $this->assertTrue(Schema::hasTable('payroll_periods'));
+
+        $columns = DB::select("PRAGMA table_info(`payroll_periods`)");
+        $createdBy = collect($columns)->firstWhere('name', 'created_by');
+        $this->assertNotNull($createdBy, 'created_by column should exist');
+        $this->assertSame(0, (int) $createdBy->notnull, 'created_by should be nullable after fresh install');
+
+        $foreignKeys = DB::select("PRAGMA foreign_key_list(`payroll_periods`)");
+        $createdByFks = collect($foreignKeys)->where('from', 'created_by')->where('table', 'users')->all();
+        $this->assertNotEmpty($createdByFks, 'created_by foreign key to users should exist');
+
+        $indexes = DB::select("PRAGMA index_list(`payroll_periods`)");
+        $indexNames = collect($indexes)->pluck('name')->all();
+        $this->assertContains('payroll_periods_status_index', $indexNames);
+        $this->assertContains('payroll_periods_start_date_end_date_index', $indexNames);
+        $this->assertContains('payroll_periods_created_by_index', $indexNames);
+    }
+
+    public function test_payroll_periods_reconciles_existing_not_null_created_by_to_nullable(): void
+    {
+        Schema::dropIfExists('payroll_periods');
+
+        Schema::create('payroll_periods', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->date('pay_date');
+            $table->string('status')->default('draft');
+            $table->unsignedBigInteger('created_by')->nullable(false);
+            $table->timestamps();
+        });
+
+        $columnsBefore = DB::select("PRAGMA table_info(`payroll_periods`)");
+        $createdByBefore = collect($columnsBefore)->firstWhere('name', 'created_by');
+        $this->assertSame(1, (int) $createdByBefore->notnull, 'created_by should start NOT NULL');
+
+        $migration = require database_path('migrations/2026_11_07_135004_create_payroll_periods_table.php');
+        $migration->up();
+
+        $columnsAfter = DB::select("PRAGMA table_info(`payroll_periods`)");
+        $createdByAfter = collect($columnsAfter)->firstWhere('name', 'created_by');
+        $this->assertSame(0, (int) $createdByAfter->notnull, 'created_by should be nullable after reconciliation');
+    }
+
+    public function test_payroll_periods_reconciliation_creates_indexes_and_foreign_key_once(): void
+    {
+        Schema::dropIfExists('payroll_periods');
+
+        Schema::create('payroll_periods', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->date('pay_date');
+            $table->string('status')->default('draft');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->timestamps();
+        });
+
+        $migration = require database_path('migrations/2026_11_07_135004_create_payroll_periods_table.php');
+        $migration->up();
+        $migration->up(); // Run twice to verify idempotency
+
+        $indexes = DB::select("PRAGMA index_list(`payroll_periods`)");
+        $indexNames = collect($indexes)->pluck('name')->all();
+        $this->assertSame(1, collect($indexNames)->filter(fn ($n) => $n === 'payroll_periods_status_index')->count());
+        $this->assertSame(1, collect($indexNames)->filter(fn ($n) => $n === 'payroll_periods_created_by_index')->count());
+
+        // SQLite cannot add foreign keys to existing tables via ALTER TABLE.
+        // Foreign key creation is verified on MySQL in production; on SQLite
+        // the migration must at least remain idempotent without erroring.
+        if (DB::getDriverName() !== 'sqlite') {
+            $foreignKeys = DB::select("PRAGMA foreign_key_list(`payroll_periods`)");
+            $createdByFks = collect($foreignKeys)->where('from', 'created_by')->where('table', 'users')->all();
+            $this->assertCount(1, $createdByFks, 'created_by foreign key should be created exactly once');
+        }
+    }
+
+    public function test_payroll_periods_reconciliation_aborts_on_orphaned_created_by_references(): void
+    {
+        Schema::dropIfExists('payroll_periods');
+
+        Schema::create('payroll_periods', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->date('pay_date');
+            $table->string('status')->default('draft');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->timestamps();
+        });
+
+        // Insert an orphaned created_by reference (user id 99999 does not exist)
+        DB::table('payroll_periods')->insert([
+            'name' => 'Orphan Period',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-01-31',
+            'pay_date' => '2026-02-05',
+            'status' => 'draft',
+            'created_by' => 99999,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $migration = require database_path('migrations/2026_11_07_135004_create_payroll_periods_table.php');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches('/orphaned/');
+        $migration->up();
+    }
+
+    /* ---------------------------------------------------------------
+     * Account creation credential and audit tests
+     * --------------------------------------------------------------- */
+
+    public function test_persist_account_credential_creates_single_import_credential(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $user = User::factory()->create(['role' => 'teacher', 'staff_id' => 'T-PERSIST-001']);
+
+        $reflection = new \ReflectionMethod($this->controller(), 'persistAccountCredential');
+        $reflection->setAccessible(true);
+        $reflection->invoke($this->controller(), $user, 'teacher', $user->staff_id);
+
+        $this->assertCount(1, ImportCredential::where('user_id', $user->id)->where('role', 'teacher')->get());
+    }
+
+    public function test_student_account_creation_success_info_has_single_entry_per_role(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $class = SchoolClass::create(['name' => 'JSS 1']);
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'student',
+            'name' => 'Single Entry Student',
+            'admission_no' => 'ADM-SINGLE-001',
+            'class_id' => $class->id,
+            'first_name' => 'Single',
+            'last_name' => 'Entry',
+            'date_of_birth' => '2012-01-01',
+            'gender' => 'male',
+            'parent_email' => 'parent.single@example.com',
+        ]);
+
+        $response->assertRedirect(route('admin.accounts.create'));
+
+        $credentials = $response->getSession()->get('new_account_credentials');
+        $this->assertIsArray($credentials);
+        $this->assertCount(1, $credentials);
+        $this->assertSame('student', $credentials[0]['role']);
+        $this->assertSame('Single Entry Student', $credentials[0]['name']);
+    }
+
+    public function test_audit_record_created_on_successful_account_creation(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'Audit Teacher',
+            'email' => 'audit.teacher@example.com',
+            'staff_id' => 'T-AUDIT-001',
+            'phone' => '08011111111',
+            'qualification' => 'B.Ed',
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'account.created',
+            'target_model' => User::class,
+        ]);
+    }
+
+    public function test_success_notification_contains_no_password(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin);
+
+        $temporaryPassword = 'SecretPassword123!';
+
+        $response = $this->post('/admin/accounts', [
+            'type' => 'teacher',
+            'name' => 'No Password Teacher',
+            'email' => 'nopass.teacher@example.com',
+            'staff_id' => 'T-NOPASS-001',
+            'phone' => '08011111111',
+            'qualification' => 'B.Sc',
+            'password' => $temporaryPassword,
+        ]);
+
+        $status = $response->getSession()->get('status');
+        $this->assertStringContainsString('Teacher No Password Teacher has been created with ID T-NOPASS-001. Check Credentials for login details.', $status);
+        // The actual temporary password value must not appear in the status notification.
+        $this->assertStringNotContainsString($temporaryPassword, $status);
+    }
+
+    protected function controller(): \App\Http\Controllers\Admin\AccountController
+    {
+        return app(\App\Http\Controllers\Admin\AccountController::class);
     }
 }

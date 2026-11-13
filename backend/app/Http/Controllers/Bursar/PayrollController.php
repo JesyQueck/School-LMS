@@ -34,7 +34,7 @@ class PayrollController extends Controller
             ->limit(10)
             ->get();
 
-        return view('bursar.payroll.index', [
+        return view('bursar.staff-salaries', [
             'employees' => $employees,
             'periods' => $periods,
             'recentRecords' => $payrollRecords,
@@ -146,7 +146,7 @@ class PayrollController extends Controller
     public function recordPayment(RecordPayrollPaymentRequest $request, PayrollRecord $payrollRecord)
     {
         try {
-            $this->payrollService->recordPayment($payrollRecord, $request->validated(), $request->user());
+            $this->payrollService->recordPayment($payrollRecord, $request->validatedData(), $request->user());
 
             $this->audit($request, 'payroll.payment_recorded', PayrollRecord::class, $payrollRecord->id, null, [
                 'record_id' => $payrollRecord->id,

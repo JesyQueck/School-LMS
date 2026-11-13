@@ -20,13 +20,14 @@ class RecordPayrollPaymentRequest extends FormRequest
         ];
     }
 
-    public function validated(): array
+    public function validatedData(): array
     {
-        $data = parent::validated();
+        $data = $this->validated();
 
-        $data['payment_method'] = $data['payment_method'] ?? 'bank_transfer';
-        $data['paid_at'] = $data['paid_at'] ?? now()->toDateTimeString();
-
-        return $data;
+        return [
+            'payment_method' => $data['payment_method'] ?? 'bank_transfer',
+            'payment_reference' => $data['payment_reference'] ?? null,
+            'paid_at' => $data['paid_at'] ?? now()->toDateTimeString(),
+        ];
     }
 }

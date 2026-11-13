@@ -58,50 +58,62 @@ class AccountController extends Controller
         $data = $request->validated();
         $temporaryPassword = $data['password'] ?? Str::random(20);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'] ?? null,
-            'staff_id' => $data['staff_id'] ?? null,
-            'password' => Hash::make($temporaryPassword),
-            'phone' => $data['phone'] ?? null,
-            'role' => $data['type'],
-            'is_active' => true,
-            'needs_password_change' => true,
-        ]);
+        $user = null;
+        $account = null;
+        $loginIdentifier = null;
+        $oneTimeCredentials = [];
 
-        $account = match ($data['type']) {
-            'teacher' => $this->createTeacherAccount($user, $request),
-            'student' => $this->createStudentAccount($user, $request),
-            'parent' => $this->createParentAccount($user, $request),
-            'bursar' => $this->createBursarAccount($user, $request),
-        };
+        DB::transaction(function () use ($data, $temporaryPassword, $request, &$user, &$account, &$loginIdentifier, &$oneTimeCredentials) {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'] ?? null,
+                'staff_id' => $data['staff_id'] ?? null,
+                'password' => Hash::make($temporaryPassword),
+                'phone' => $data['phone'] ?? null,
+                'role' => $data['type'],
+                'is_active' => true,
+                'needs_password_change' => true,
+            ]);
 
-        $loginIdentifier = $user->loginIdentifier();
-        $this->persistAccountCredential($user, $data['type'], $loginIdentifier);
+            $account = match ($data['type']) {
+                'teacher' => $this->createTeacherAccount($user, $request),
+                'student' => $this->createStudentAccount($user, $request),
+                'parent' => $this->createParentAccount($user, $request),
+                'bursar' => $this->createBursarAccount($user, $request),
+            };
 
-        $oneTimeCredentials = [[
-            'role' => $data['type'],
-            'name' => $user->name,
-            'email' => $user->email,
-            'login_identifier' => $loginIdentifier,
-            'password' => in_array($data['type'], ['student', 'teacher', 'bursar'], true) ? $temporaryPassword : null,
-        ]];
+            $loginIdentifier = $user->loginIdentifier();
+            $this->persistAccountCredential($user, $data['type'], $loginIdentifier);
 
-        if (in_array($data['type'], ['student', 'teacher', 'bursar'], true)) {
-            ImportCredential::storeTemporaryPassword($user, $temporaryPassword, (int) auth()->id());
-        }
+            if (in_array($data['type'], ['student', 'teacher', 'bursar'], true)) {
+                ImportCredential::storeTemporaryPassword($user, $temporaryPassword, (int) auth()->id());
+            }
 
-        $parentProfile = $account instanceof Student ? $account->parents()->with('user')->first() : null;
-        if ($parentProfile && $parentProfile->user->getAttribute('initial_password')) {
-            $this->persistAccountCredential($parentProfile->user, 'parent', $parentProfile->user->loginIdentifier());
-            $oneTimeCredentials[] = [
-                'role' => 'parent',
-                'name' => $parentProfile->user->name,
-                'email' => $parentProfile->user->email,
-                'login_identifier' => $parentProfile->user->loginIdentifier(),
-                'password' => null,
-            ];
-        }
+            $oneTimeCredentials = [[
+                'role' => $data['type'],
+                'name' => $user->name,
+                'email' => $user->email,
+                'login_identifier' => $loginIdentifier,
+                'password' => in_array($data['type'], ['student', 'teacher', 'bursar'], true) ? $temporaryPassword : null,
+            ]];
+
+            $parentProfile = $account instanceof Student ? $account->parents()->with('user')->first() : null;
+            if ($parentProfile && $parentProfile->user->getAttribute('initial_password')) {
+                $this->persistAccountCredential($parentProfile->user, 'parent', $parentProfile->user->loginIdentifier());
+
+                $oneTimeCredentials[] = [
+                    'role' => 'parent',
+                    'name' => $parentProfile->user->name,
+                    'email' => $parentProfile->user->email,
+                    'login_identifier' => $parentProfile->user->loginIdentifier(),
+                    'password' => null,
+                ];
+            }
+
+            $this->audit($request, 'account.created', User::class, $user->id, null, [
+                'type' => $data['type'],
+            ]);
+        });
 
         try {
             if ($user->email) {
@@ -110,12 +122,10 @@ class AccountController extends Controller
         } catch (\Exception $e) {
         }
 
-        $this->audit($request, 'account.created', User::class, $user->id, null, [
-            'type' => $data['type'],
-        ]);
+        $roleLabel = ucfirst(str_replace('_', ' ', $data['type']));
 
         return redirect()->route('admin.accounts.create')
-            ->with('status', 'Account created successfully.')
+            ->with('status', "{$roleLabel} {$user->name} has been created with ID {$loginIdentifier}. Check Credentials for login details.")
             ->with('new_account_credentials', $oneTimeCredentials);
     }
 

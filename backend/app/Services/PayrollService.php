@@ -184,7 +184,7 @@ class PayrollService
             throw new \InvalidArgumentException('Only calculated payroll records can be approved.');
         }
 
-        if ($record->payrollPeriod->status === PayrollPeriod::STATUS_PAID || $record->payrollPeriod->status === PayrollPeriod::STATUS_LOCKED) {
+        if ($record->period->status === PayrollPeriod::STATUS_PAID || $record->period->status === PayrollPeriod::STATUS_LOCKED) {
             throw new \InvalidArgumentException('Cannot approve payroll for a paid or locked period.');
         }
 
@@ -224,7 +224,7 @@ class PayrollService
             throw new \InvalidArgumentException('Only approved payroll records can be paid.');
         }
 
-        if ($record->payrollPeriod->status === PayrollPeriod::STATUS_PAID || $record->payrollPeriod->status === PayrollPeriod::STATUS_LOCKED) {
+        if ($record->period->status === PayrollPeriod::STATUS_PAID || $record->period->status === PayrollPeriod::STATUS_LOCKED) {
             throw new \InvalidArgumentException('Cannot record payment for a paid or locked period.');
         }
 

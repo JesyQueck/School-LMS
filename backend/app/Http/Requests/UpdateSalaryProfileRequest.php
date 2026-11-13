@@ -21,9 +21,9 @@ class UpdateSalaryProfileRequest extends FormRequest
         ];
     }
 
-    public function validated(): array
+    public function validated($key = null, $default = null): array
     {
-        $data = parent::validated();
+        $data = parent::validated($key, $default);
 
         $data['is_active'] = filter_var($data['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN);
 

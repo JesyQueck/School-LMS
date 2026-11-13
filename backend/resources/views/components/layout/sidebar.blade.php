@@ -83,6 +83,7 @@
                 'label' => 'FINANCE',
                 'items' => [
                     $item('Fees / Payments', route('admin.finance'), 'wallet'),
+                    $item('Payroll Management', route('admin.payroll.index'), 'calculator'),
                 ],
             ],
             [

@@ -134,7 +134,7 @@ class PayrollController extends Controller
     public function recordPayment(RecordPayrollPaymentRequest $request, PayrollRecord $payrollRecord)
     {
         try {
-            $this->payrollService->recordPayment($payrollRecord, $request->validated(), $request->user());
+            $this->payrollService->recordPayment($payrollRecord, $request->validatedData(), $request->user());
 
             $this->audit($request, 'payroll.payment_recorded', PayrollRecord::class, $payrollRecord->id, null, [
                 'record_id' => $payrollRecord->id,

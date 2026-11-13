@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\FeePackageController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\PayrollController as AdminPayrollController;
+use App\Http\Controllers\Admin\PayrollPeriodController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
 use App\Http\Controllers\Admin\SalaryComponentController;
@@ -284,11 +285,11 @@ Route::middleware(['auth', 'password.only'])->group(function () {
                 Route::get('/', [PayrollPeriodController::class, 'index'])->name('index');
                 Route::get('/create', [PayrollPeriodController::class, 'create'])->name('create');
                 Route::post('/', [PayrollPeriodController::class, 'store'])->name('store');
-                Route::get('/{payrollPeriod}', [PayrollPeriodController::class, 'show'])->name('show');
-                Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit'])->name('edit');
-                Route::put('/{payrollPeriod}', [PayrollPeriodController::class, 'update'])->name('update');
-                Route::delete('/{payrollPeriod}', [PayrollPeriodController::class, 'destroy'])->name('destroy');
-                Route::post('/{payrollPeriod}/generate', [AdminPayrollController::class, 'generate'])->name('generate');
+                Route::get('/{period}', [PayrollPeriodController::class, 'show'])->name('show');
+                Route::get('/{period}/edit', [PayrollPeriodController::class, 'edit'])->name('edit');
+                Route::put('/{period}', [PayrollPeriodController::class, 'update'])->name('update');
+                Route::delete('/{period}', [PayrollPeriodController::class, 'destroy'])->name('destroy');
+                Route::post('/{period}/generate', [AdminPayrollController::class, 'generate'])->name('generate');
             });
 
             Route::prefix('employees')->name('employees.')->group(function () {
@@ -345,6 +346,15 @@ Route::middleware(['auth', 'password.only', 'role:bursar'])->prefix('bursar')->n
     Route::get('/reports/debtors', [BursarReportController::class, 'outstandingDebtorsReport'])->name('reports.debtors');
     Route::get('/reports/student-statement/{student}', [BursarReportController::class, 'studentStatement'])->name('reports.student-statement');
 
-    Route::get('/staff-salaries', fn () => view('bursar.staff-salaries'))->name('staff-salaries');
+    Route::get('/staff-salaries', [BursarPayrollController::class, 'index'])->name('staff-salaries');
+    Route::get('/staff-salaries/employees', [BursarPayrollController::class, 'employees'])->name('staff-salaries.employees');
+    Route::get('/staff-salaries/periods', [BursarPayrollController::class, 'periods'])->name('staff-salaries.periods');
+    Route::get('/staff-salaries/periods/{period}/prepare', [BursarPayrollController::class, 'prepare'])->name('staff-salaries.prepare');
+    Route::post('/staff-salaries/periods/{period}/generate', [BursarPayrollController::class, 'generate'])->name('staff-salaries.generate');
+    Route::get('/staff-salaries/periods/{period}/records', [BursarPayrollController::class, 'records'])->name('staff-salaries.records');
+    Route::get('/staff-salaries/records/{payrollRecord}/breakdown', [BursarPayrollController::class, 'breakdown'])->name('staff-salaries.breakdown');
+    Route::get('/staff-salaries/payment-history', [BursarPayrollController::class, 'paymentHistory'])->name('staff-salaries.payment-history');
+    Route::post('/staff-salaries/records/{payrollRecord}/payment', [BursarPayrollController::class, 'recordPayment'])->name('staff-salaries.payment');
+    Route::get('/staff-salaries/records/{payrollRecord}/payslip', [BursarPayrollController::class, 'payslip'])->name('staff-salaries.payslip');
     Route::get('/expenses', fn () => view('bursar.expenses'))->name('expenses');
 });

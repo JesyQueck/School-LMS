@@ -9,28 +9,26 @@
         <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">Create user accounts for teachers, students, and parents.</p>
     </div>
 
-    @if(session('new_account_credentials'))
-        @php
-            $cred = session('new_account_credentials');
-        @endphp
+    @if(session('status'))
         <x-ui.alert variant="success" class="mb-6">
             <div class="flex items-start gap-3">
                 <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
-                    <p class="font-semibold mb-2">Initial credentials. Student and teacher temporary passwords remain retrievable from Accounts â†’ Credentials until changed.</p>
-                    @foreach($cred as $accountCredential)
-                        <p>
-                            <strong>{{ ucfirst($accountCredential['role']) }}</strong> account created for {{ $accountCredential['name'] }}.
-                            Login ID: <span class="font-mono font-medium">{{ $accountCredential['login_identifier'] }}</span>.
-                            @if($accountCredential['email']) Email: {{ $accountCredential['email'] }}. @endif
-                            @if(!empty($accountCredential['password']))
-                                Temporary password: <span class="font-mono font-medium">{{ $accountCredential['password'] }}</span>.
-                                Require a password change at first login. It can also be retrieved from Accounts â†’ Credentials until changed.
-                            @elseif($accountCredential['role'] === 'parent')
-                                Set or recover your password using the email password-recovery flow at <a class="underline" href="{{ url('/forgot-password') }}">{{ url('/forgot-password') }}</a>.
-                            @endif
-                        </p>
-                    @endforeach
+                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
+            </div>
+        </x-ui.alert>
+    @endif
+
+    @if ($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-danger-600 dark:text-danger-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Please fix the following errors:</h4>
+                    <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             </div>
         </x-ui.alert>
@@ -49,26 +47,38 @@
                         <label for="type" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Account Type <span class="text-danger-500">*</span></label>
                         <select id="type" name="type" required onchange="toggleFields()" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none">
                             <option value="">Select account type</option>
-                            <option value="teacher">Teacher</option>
-                            <option value="student">Student</option>
-                            <option value="parent">Parent</option>
-                            <option value="bursar">Bursar / Financial Officer</option>
+                            <option value="teacher" {{ old('type') === 'teacher' ? 'selected' : '' }}>Teacher</option>
+                            <option value="student" {{ old('type') === 'student' ? 'selected' : '' }}>Student</option>
+                            <option value="parent" {{ old('type') === 'parent' ? 'selected' : '' }}>Parent</option>
+                            <option value="bursar" {{ old('type') === 'bursar' ? 'selected' : '' }}>Bursar / Financial Officer</option>
                         </select>
+                        @error('type')
+                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label for="name" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Full Name <span class="text-danger-500">*</span></label>
-                        <input id="name" name="name" type="text" required placeholder="e.g. John Doe" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <input id="name" name="name" type="text" required placeholder="e.g. John Doe" value="{{ old('name') }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 @error('name') border-danger-500 @enderror">
+                        @error('name')
+                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label id="email-label" for="email" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Email Address</label>
-                        <input id="email" name="email" type="email" placeholder="e.g. john@example.com (optional for students)" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <input id="email" name="email" type="email" placeholder="e.g. john@example.com (optional for students)" value="{{ old('email') }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 @error('email') border-danger-500 @enderror">
+                        @error('email')
+                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div>
                         <label for="phone" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Phone Number</label>
-                        <input id="phone" name="phone" type="tel" placeholder="e.g. 08012345678" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <input id="phone" name="phone" type="tel" placeholder="e.g. 08012345678" value="{{ old('phone') }}" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text placeholder-neutral-400 dark:placeholder-neutral-400 px-3 py-2 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 @error('phone') border-danger-500 @enderror">
+                        @error('phone')
+                            <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div id="staff-id-fields" class="hidden">
@@ -191,6 +201,9 @@
             email.required = type !== 'student';
             document.getElementById('email-label').innerHTML = type === 'student' ? 'Email Address (Optional)' : 'Email Address';
         }
+
+        // Initialize field visibility based on retained account type on page load
+        document.addEventListener('DOMContentLoaded', toggleFields);
     </script>
 </x-layouts.app>
 

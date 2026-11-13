@@ -48,8 +48,20 @@ class SalaryProfileController extends Controller
     public function store(StoreSalaryProfileRequest $request)
     {
         $data = $request->validated();
+        $componentsData = $request->input('components', []);
 
         $profile = SalaryProfile::create($data);
+
+        foreach ($componentsData as $cid => $comp) {
+            if (! empty($comp['enabled'])) {
+                $profile->components()->create([
+                    'salary_component_id' => $comp['component_id'] ?? $cid,
+                    'configured_value' => $comp['value'] ?? 0,
+                    'effective_from' => $data['effective_from'],
+                    'effective_to' => $comp['effective_to'] ?? null,
+                ]);
+            }
+        }
 
         $this->audit($request, 'salary_profile.created', SalaryProfile::class, $profile->id, null, $data);
 
