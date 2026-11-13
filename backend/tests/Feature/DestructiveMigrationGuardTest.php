@@ -67,32 +67,32 @@ class DestructiveMigrationGuardTest extends TestCase
 
     public function test_normal_migrate_permitted_on_school_lms(): void
     {
-        // migrate is not in the blocked list, so our guard should not throw
-        try {
-            Artisan::call('migrate');
-        } catch (\Throwable $e) {
-            $message = $e->getMessage();
-            if (str_contains($message, 'Destructive migration')) {
-                $this->fail('migrate was blocked by guard: ' . $e->getMessage());
-            }
-        }
-    }
+        // Verify the ordinary migrate command remains Laravel's native command.
+        // Do not execute it here: pending migrations must not run against school_lms.
+        $command = Artisan::all()['migrate'] ?? null;
 
+        $this->assertInstanceOf(
+            \Illuminate\Database\Console\Migrations\MigrateCommand::class,
+            $command
+        );
+    }
     public function test_destructive_commands_allowed_on_sqlite(): void
     {
         Config::set('database.default', 'sqlite');
+
         foreach (['migrate:rollback', 'migrate:reset', 'migrate:fresh', 'migrate:refresh'] as $commandName) {
             try {
-                Artisan::call($commandName);
+                Artisan::call($commandName, ['--database' => 'sqlite']);
+                $this->assertTrue(true, "{$commandName} was not blocked on SQLite.");
             } catch (\Throwable $e) {
-                $message = $e->getMessage();
-                if (str_contains($message, 'Destructive migration')) {
-                    $this->fail('Command was blocked by guard: ' . $e->getMessage());
-                }
+                $this->assertStringNotContainsString(
+                    'Destructive migration',
+                    $e->getMessage(),
+                    "{$commandName} was incorrectly blocked on SQLite."
+                );
             }
         }
     }
-
     public function test_unknown_database_fails_closed(): void
     {
         $this->expectException(\RuntimeException::class);

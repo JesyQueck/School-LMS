@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('payroll_record_id')->constrained()->restrictOnDelete();
             $table->string('payslip_number')->unique();
             $table->timestamp('generated_at');
-            $table->foreignId('generated_by')->constrained('users')->nullOnDelete();
+            $table->foreignId('generated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('pdf_path')->nullable();
             $table->timestamps();
 

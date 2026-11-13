@@ -586,6 +586,52 @@ class PayrollFoundationTest extends TestCase
         $this->assertCount(2, $profile->components);
     }
 
+    public function test_multiple_component_assignments_with_null_effective_date_are_allowed(): void
+    {
+        $employee = Employee::create([
+            'employee_number' => 'EMP-COMP-NULL-001',
+            'employment_type' => 'full-time',
+            'date_employed' => '2026-01-15',
+            'employment_status' => 'active',
+        ]);
+
+        $component = SalaryComponent::create([
+            'name' => 'Transport Allowance',
+            'description' => 'Monthly transport allowance',
+            'component_type' => 'allowance',
+            'calculation_type' => 'fixed',
+            'default_value' => 10000.00,
+            'is_taxable' => true,
+            'is_active' => true,
+        ]);
+
+        $profile = SalaryProfile::create([
+            'employee_id' => $employee->id,
+            'basic_salary' => 50000.00,
+            'effective_from' => '2026-01-01',
+            'is_active' => true,
+        ]);
+
+        SalaryProfileComponent::create([
+            'salary_profile_id' => $profile->id,
+            'salary_component_id' => $component->id,
+            'configured_value' => 10000.00,
+            'effective_from' => null,
+        ]);
+
+        SalaryProfileComponent::create([
+            'salary_profile_id' => $profile->id,
+            'salary_component_id' => $component->id,
+            'configured_value' => 15000.00,
+            'effective_from' => null,
+        ]);
+
+        $this->assertDatabaseCount('salary_profile_components', 2);
+        $this->assertSame(
+            2,
+            $profile->components()->whereNull('effective_from')->count()
+        );
+    }
     public function test_salary_profile_deletion_restricted_when_components_exist(): void
     {
         $employee = Employee::create([
@@ -684,5 +730,102 @@ class PayrollFoundationTest extends TestCase
         // Deleting a payroll record with existing component snapshots must be restricted
         $this->expectException(\Illuminate\Database\QueryException::class);
         $record->delete();
+    }
+
+    public function test_overlapping_payroll_period_creation_is_rejected(): void
+    {
+        $this->createPayrollPeriodForTest('January 2026', '2026-01-01', '2026-01-31');
+
+        try {
+            $this->createPayrollPeriodForTest('January-February 2026', '2026-01-15', '2026-02-15');
+            $this->fail('An overlapping payroll period should be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('start_date', $exception->errors());
+        }
+    }
+
+    public function test_overlapping_payroll_period_update_is_rejected(): void
+    {
+        $this->createPayrollPeriodForTest('January 2026', '2026-01-01', '2026-01-31');
+        $period = $this->createPayrollPeriodForTest('March 2026', '2026-03-01', '2026-03-31');
+
+        try {
+            $period->update([
+                'start_date' => '2026-01-15',
+                'end_date' => '2026-03-31',
+            ]);
+
+            $this->fail('Updating a payroll period to overlap another should be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('start_date', $exception->errors());
+        }
+    }
+
+    public function test_payroll_period_update_does_not_overlap_itself(): void
+    {
+        $period = $this->createPayrollPeriodForTest(
+            'January 2026',
+            '2026-01-01',
+            '2026-01-31'
+        );
+
+        $period->update(['name' => 'January Payroll 2026']);
+
+        $this->assertDatabaseHas('payroll_periods', [
+            'id' => $period->id,
+            'name' => 'January Payroll 2026',
+        ]);
+    }
+
+    public function test_adjacent_payroll_periods_are_allowed(): void
+    {
+        $this->createPayrollPeriodForTest('January 2026', '2026-01-01', '2026-01-31');
+
+        $period = $this->createPayrollPeriodForTest(
+            'February 2026',
+            '2026-02-01',
+            '2026-02-28'
+        );
+
+        $this->assertNotNull($period->id);
+    }
+
+    public function test_payroll_period_end_date_cannot_precede_start_date(): void
+    {
+        try {
+            $this->createPayrollPeriodForTest(
+                'Invalid Period',
+                '2026-02-01',
+                '2026-01-31'
+            );
+
+            $this->fail('A payroll period ending before it starts should be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('end_date', $exception->errors());
+        }
+    }
+
+    private function createPayrollPeriodForTest(
+        string $name,
+        string $startDate,
+        string $endDate
+    ): PayrollPeriod {
+        $creator = User::create([
+            'name' => 'Payroll Test Creator',
+            'email' => 'payroll-test-' . bin2hex(random_bytes(6)) . '@example.com',
+            'password' => 'password123',
+            'role' => 'bursar',
+            'staff_id' => 'PAY-' . strtoupper(bin2hex(random_bytes(4))),
+            'is_active' => true,
+        ]);
+
+        return PayrollPeriod::create([
+            'name' => $name,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'pay_date' => date('Y-m-d', strtotime($endDate . ' +5 days')),
+            'status' => 'draft',
+            'created_by' => $creator->id,
+        ]);
     }
 }

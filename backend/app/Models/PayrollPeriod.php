@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\ValidationException;
 
 class PayrollPeriod extends Model
 {
@@ -36,6 +37,37 @@ class PayrollPeriod extends Model
         'status' => 'string',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (PayrollPeriod $period): void {
+            $startDate = $period->start_date;
+            $endDate = $period->end_date;
+
+            if (! $startDate || ! $endDate) {
+                return;
+            }
+
+            if ($startDate->gt($endDate)) {
+                throw ValidationException::withMessages([
+                    'end_date' => 'The payroll period end date must be on or after its start date.',
+                ]);
+            }
+
+            $overlapQuery = static::query()
+                ->whereDate('start_date', '<=', $endDate->toDateString())
+                ->whereDate('end_date', '>=', $startDate->toDateString());
+
+            if ($period->exists) {
+                $overlapQuery->where('id', '!=', $period->getKey());
+            }
+
+            if ($overlapQuery->exists()) {
+                throw ValidationException::withMessages([
+                    'start_date' => 'This payroll period overlaps an existing payroll period.',
+                ]);
+            }
+        });
+    }
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

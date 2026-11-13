@@ -1,16 +1,17 @@
 <?php
 
-use App\Http\Controllers\Bursar\DashboardController as BursarDashboardController;
-use App\Http\Controllers\Bursar\FeeController as BursarFeeController;
-use App\Http\Controllers\Bursar\ReportController as BursarReportController;
 use App\Http\Controllers\Admin\AcademicStructureController;
 use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\AnnouncementsController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\FeePackageController;
 use App\Http\Controllers\Admin\FinanceController;
+use App\Http\Controllers\Admin\PayrollController as AdminPayrollController;
 use App\Http\Controllers\Admin\ReportCardController;
 use App\Http\Controllers\Admin\ResultsController;
+use App\Http\Controllers\Admin\SalaryComponentController;
+use App\Http\Controllers\Admin\SalaryProfileController;
 use App\Http\Controllers\Admin\SchoolAdminController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\TeacherAssignmentController;
@@ -18,6 +19,10 @@ use App\Http\Controllers\Admin\TimetableController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordChangeController;
 use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Bursar\DashboardController as BursarDashboardController;
+use App\Http\Controllers\Bursar\FeeController as BursarFeeController;
+use App\Http\Controllers\Bursar\PayrollController as BursarPayrollController;
+use App\Http\Controllers\Bursar\ReportController as BursarReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Parent\AnnouncementsController as ParentAnnouncementsController;
 use App\Http\Controllers\Parent\AttendanceController as ParentAttendanceController;
@@ -41,8 +46,6 @@ use App\Http\Controllers\Teacher\ReportCardController as TeacherReportCardContro
 use App\Http\Controllers\Teacher\SubjectResultsController;
 use App\Http\Controllers\TeacherPortalController;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/', [PublicController::class, 'home'])->name('home');
 Route::get('/about', [PublicController::class, 'about'])->name('about');
 Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 Route::get('/admissions', [PublicController::class, 'admissions'])->name('admissions');
@@ -271,6 +274,59 @@ Route::middleware(['auth', 'password.only'])->group(function () {
         Route::delete('/timetable/cell/{timetable}', [TimetableController::class, 'destroyCell'])->name('timetable.cell.destroy');
         Route::delete('/admin/accounts/{user}', [AccountController::class, 'destroy'])->name('accounts.destroy');
         Route::delete('/admin/accounts/{user}/permanent-delete', [AccountController::class, 'permanentDelete'])->name('accounts.permanent-delete');
+
+        Route::prefix('payroll')->name('payroll.')->group(function () {
+            Route::get('/', [AdminPayrollController::class, 'index'])->name('index');
+            Route::get('/history', [AdminPayrollController::class, 'history'])->name('history');
+            Route::get('/records/{payrollRecord}', [AdminPayrollController::class, 'show'])->name('records.show');
+
+            Route::prefix('periods')->name('periods.')->group(function () {
+                Route::get('/', [PayrollPeriodController::class, 'index'])->name('index');
+                Route::get('/create', [PayrollPeriodController::class, 'create'])->name('create');
+                Route::post('/', [PayrollPeriodController::class, 'store'])->name('store');
+                Route::get('/{payrollPeriod}', [PayrollPeriodController::class, 'show'])->name('show');
+                Route::get('/{payrollPeriod}/edit', [PayrollPeriodController::class, 'edit'])->name('edit');
+                Route::put('/{payrollPeriod}', [PayrollPeriodController::class, 'update'])->name('update');
+                Route::delete('/{payrollPeriod}', [PayrollPeriodController::class, 'destroy'])->name('destroy');
+                Route::post('/{payrollPeriod}/generate', [AdminPayrollController::class, 'generate'])->name('generate');
+            });
+
+            Route::prefix('employees')->name('employees.')->group(function () {
+                Route::get('/', [EmployeeController::class, 'index'])->name('index');
+                Route::get('/create', [EmployeeController::class, 'create'])->name('create');
+                Route::post('/', [EmployeeController::class, 'store'])->name('store');
+                Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show');
+                Route::get('/{employee}/edit', [EmployeeController::class, 'edit'])->name('edit');
+                Route::put('/{employee}', [EmployeeController::class, 'update'])->name('update');
+                Route::patch('/{employee}/deactivate', [EmployeeController::class, 'deactivate'])->name('deactivate');
+            });
+
+            Route::prefix('components')->name('components.')->group(function () {
+                Route::get('/', [SalaryComponentController::class, 'index'])->name('index');
+                Route::get('/create', [SalaryComponentController::class, 'create'])->name('create');
+                Route::post('/', [SalaryComponentController::class, 'store'])->name('store');
+                Route::get('/{salaryComponent}', [SalaryComponentController::class, 'show'])->name('show');
+                Route::get('/{salaryComponent}/edit', [SalaryComponentController::class, 'edit'])->name('edit');
+                Route::put('/{salaryComponent}', [SalaryComponentController::class, 'update'])->name('update');
+                Route::delete('/{salaryComponent}', [SalaryComponentController::class, 'destroy'])->name('destroy');
+            });
+
+            Route::prefix('profiles')->name('profiles.')->group(function () {
+                Route::get('/', [SalaryProfileController::class, 'index'])->name('index');
+                Route::get('/create', [SalaryProfileController::class, 'create'])->name('create');
+                Route::post('/', [SalaryProfileController::class, 'store'])->name('store');
+                Route::get('/{salaryProfile}', [SalaryProfileController::class, 'show'])->name('show');
+                Route::get('/{salaryProfile}/edit', [SalaryProfileController::class, 'edit'])->name('edit');
+                Route::put('/{salaryProfile}', [SalaryProfileController::class, 'update'])->name('update');
+                Route::delete('/{salaryProfile}', [SalaryProfileController::class, 'destroy'])->name('destroy');
+                Route::post('/{salaryProfile}/components', [SalaryProfileController::class, 'addComponent'])->name('components.store');
+                Route::delete('/components/{salaryProfileComponent}', [SalaryProfileController::class, 'removeComponent'])->name('components.destroy');
+            });
+
+            Route::post('/records/{payrollRecord}/approve', [AdminPayrollController::class, 'approve'])->name('records.approve');
+            Route::post('/records/{payrollRecord}/reject', [AdminPayrollController::class, 'reject'])->name('records.reject');
+            Route::post('/records/{payrollRecord}/payment', [AdminPayrollController::class, 'recordPayment'])->name('records.payment');
+        });
     });
 });
 

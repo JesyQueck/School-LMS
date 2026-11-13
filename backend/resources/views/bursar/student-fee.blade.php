@@ -66,13 +66,8 @@
 
             {{-- Payment History --}}
             <x-ui.card>
-                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border flex items-center justify-between">
+                <div class="px-6 py-4 border-b border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Payment History</h3>
-                    @if($outstanding > 0)
-                        <button type="button" onclick="openPaymentModal({{ $studentFee->id }}, '{{ addslashes($studentFee->student->full_name) }}', '{{ $studentFee->feeType->name }}', {{ $studentFee->amount_expected }}, {{ $outstanding }})" class="px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 border border-primary-600 dark:border-primary-400 rounded hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors">
-                            Record Payment
-                        </button>
-                    @endif
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -167,61 +162,7 @@
         </div>
     </div>
 
-    {{-- Payment Modal (for inline payment recording) --}}
-    <div id="payment-modal" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50 overflow-y-auto p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col" style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <form method="POST" action="{{ route('bursar.payments.store') }}" class="flex-1 flex flex-col">
-                @csrf
-                <div class="px-4 py-3 border-b">
-                    <h2 class="text-lg font-semibold" style="color: #000000;">Record Payment</h2>
-                </div>
-                <div class="p-4 overflow-y-auto space-y-4">
-                    <input type="hidden" name="student_fee_id" id="modal_fee_id">
-                    <div>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white" id="modal_student_name"></p>
-                        <p class="text-xs text-neutral-500 dark:text-neutral-400" id="modal_fee_info"></p>
-                    </div>
-                    <div class="border-t border-neutral-200 dark:border-dark-border pt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Outstanding Balance</label>
-                            <p class="text-2xl font-bold text-danger-600 dark:text-danger-400" id="modal_outstanding">₦0.00</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (₦) <span class="text-danger-500">*</span></label>
-                            <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" id="modal_amount_paid">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Method</label>
-                            <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                                <option value="cash">Cash</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="card">Card</option>
-                                <option value="cheque">Cheque</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Date <span class="text-danger-500">*</span></label>
-                            <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Reference (optional)</label>
-                            <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Notes (optional)</label>
-                            <textarea name="notes" rows="2" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="px-4 py-3 border-t border-neutral-200 dark:border-dark-border flex gap-2">
-                    <button type="button" onclick="closePaymentModal()" class="flex-1 px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:underline">Cancel</button>
-                    <button type="submit" class="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg">Record Payment</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    {{-- Reversal Modal --}}
+        {{-- Reversal Modal --}}
     <div id="reversal-modal" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50 overflow-y-auto p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col" style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
             <form method="POST" action="{{ route('bursar.payments.reverse') }}" class="flex-1 flex flex-col">
@@ -376,37 +317,6 @@
                     printWindow.focus();
                     printWindow.print();
                 });
-            });
-
-            /* Payment Modal handling */
-            var paymentModal = document.getElementById('payment-modal');
-            var modalFeeId = document.getElementById('modal_fee_id');
-            var modalStudentName = document.getElementById('modal_student_name');
-            var modalFeeInfo = document.getElementById('modal_fee_info');
-            var modalOutstanding = document.getElementById('modal_outstanding');
-            var modalAmountPaid = document.getElementById('modal_amount_paid');
-
-            window.openPaymentModal = function(feeId, studentName, feeTypeName, amountExpected, balance) {
-                modalFeeId.value = feeId;
-                modalStudentName.textContent = studentName;
-                modalFeeInfo.textContent = feeTypeName + ' (Expected: ₦' + Number(amountExpected).toLocaleString(undefined, {minimumFractionDigits: 2}) + ')';
-                modalOutstanding.textContent = '₦' + Number(balance).toLocaleString(undefined, {minimumFractionDigits: 2});
-                modalAmountPaid.value = balance;
-                modalAmountPaid.max = balance;
-                paymentModal.classList.remove('hidden');
-                paymentModal.classList.add('flex');
-                modalAmountPaid.focus();
-            };
-
-            window.closePaymentModal = function() {
-                paymentModal.classList.add('hidden');
-                paymentModal.classList.remove('flex');
-            };
-
-            document.addEventListener('click', function(e) {
-                if (e.target === paymentModal) {
-                    closePaymentModal();
-                }
             });
 
             /* Reversal Modal handling */

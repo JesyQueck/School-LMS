@@ -2,18 +2,23 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Input\InputInterface;
-use Illuminate\Console\Output\OutputInterface;
-use Illuminate\Foundation\Console\ResetCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Illuminate\Database\Console\Migrations\ResetCommand;
 
 class GuardedResetCommand extends ResetCommand
 {
-    protected $signature = 'migrate:reset';
-
     public function run(InputInterface $input, OutputInterface $output): int
     {
-        $connectionName = $input->getOption('database')
-            ?? config('database.default');
+        // Bind the command definition before reading options.
+        $this->mergeApplicationDefinition();
+        $input->bind($this->getDefinition());
+
+        $connectionName = $input->getOption('database');
+
+        if ($connectionName === null) {
+            $connectionName = config('database.default');
+        }
 
         if (! $connectionName || ! is_string($connectionName)) {
             throw new \RuntimeException(

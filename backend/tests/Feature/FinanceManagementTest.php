@@ -304,7 +304,7 @@ class FinanceManagementTest extends TestCase
             'notes' => 'Paid via direct bank transfer.',
         ]);
 
-        $paymentResponse->assertRedirect('/bursar/student-fees')->assertSessionHas('status');
+        $paymentResponse->assertRedirect(route('bursar.student-fees.show', $studentFee))->assertSessionHas('status');
         $this->assertDatabaseHas('payments', [
             'student_fee_id' => $studentFee->id,
             'receipt_number' => 'RCPT-REF-001',
@@ -586,7 +586,7 @@ class FinanceManagementTest extends TestCase
             'payment_date' => '2026-07-15',
         ]);
 
-        $paymentResponse->assertRedirect('/bursar/student-fees')->assertSessionHas('status');
+        $paymentResponse->assertRedirect(route('bursar.student-fees.show', $studentFee))->assertSessionHas('status');
         $this->assertDatabaseHas('student_fees', ['id' => $studentFee->id, 'status' => 'partial']);
     }
 

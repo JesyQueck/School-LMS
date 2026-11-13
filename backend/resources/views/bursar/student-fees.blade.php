@@ -173,95 +173,56 @@
                         <div class="relative">
                             <input type="text" name="student_search" placeholder="Type student name or admission no..."
                                 class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                value="{{ old('student_search') }}"
                                 autocomplete="off">
-                            <input type="hidden" name="student_fee_id" id="selected_fee_id">
+                            <input type="hidden" name="student_fee_id" id="selected_fee_id" value="{{ old('student_fee_id') }}">
                             <div id="student_fee_dropdown" class="absolute z-10 w-full mt-1 bg-white dark:bg-dark-surface border border-neutral-300 dark:border-dark-border rounded-lg shadow-lg max-h-48 overflow-y-auto hidden"></div>
                         </div>
+                        @error('student_fee_id')
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (&#8358;) <span class="text-danger-500">*</span></label>
-                        <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                        <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                               value="{{ old('amount_paid') }}">
+                        </div>
+                        @error('amount_paid')
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Method</label>
                         <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                            <option value="cash">Cash</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="card">Card</option>
-                            <option value="cheque">Cheque</option>
+                            <option value="cash" {{ old('payment_method') === 'cash' ? 'selected' : '' }}>Cash</option>
+                            <option value="bank_transfer" {{ old('payment_method') === 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                            <option value="card" {{ old('payment_method') === 'card' ? 'selected' : '' }}>Card</option>
+                            <option value="cheque" {{ old('payment_method') === 'cheque' ? 'selected' : '' }}>Cheque</option>
                         </select>
+                        @error('payment_method')
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Date <span class="text-danger-500">*</span></label>
-                        <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                        <input name="payment_date" type="date" value="{{ old('payment_date') ?? now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
                     </div>
+                    @error('payment_date')
+                    <p class="text-xs text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
+                    @enderror
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Reference (optional)</label>
-                        <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
+                        <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" value="{{ old('reference') }}">
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Notes (optional)</label>
-                        <textarea name="notes" rows="2" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"></textarea>
+                        <textarea name="notes" rows="2" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">{{ old('notes') }}</textarea>
                     </div>
                     <div class="mt-auto">
                         <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Record Payment</button>
                     </div>
                 </form>
             </x-ui.card>
-        </div>
-    </div>
-
-    {{-- Payment Modal (for inline payment recording) --}}
-    <div id="payment-modal" class="fixed inset-0 bg-black/30 hidden items-center justify-center z-50 overflow-y-auto p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col" style="font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-            <form method="POST" action="{{ route('bursar.payments.store') }}" class="flex-1 flex flex-col">
-                @csrf
-                <div class="px-4 py-3 border-b">
-                    <h2 class="text-lg font-semibold" style="color: #000000;">Record Payment</h2>
-                </div>
-                <div class="p-4 overflow-y-auto space-y-4">
-                    <input type="hidden" name="student_fee_id" id="modal_fee_id">
-                    <div>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white" id="modal_student_name"></p>
-                        <p class="text-xs text-neutral-500 dark:text-neutral-400" id="modal_fee_info"></p>
-                    </div>
-                    <div class="border-t border-neutral-200 dark:border-dark-border pt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Outstanding Balance</label>
-                            <p class="text-2xl font-bold text-danger-600 dark:text-danger-400" id="modal_outstanding">&#8358;0.00</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Amount Paid (&#8358;) <span class="text-danger-500">*</span></label>
-                            <input name="amount_paid" type="number" step="0.01" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none" id="modal_amount_paid">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Method</label>
-                            <select name="payment_method" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                                <option value="cash">Cash</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="card">Card</option>
-                                <option value="cheque">Cheque</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Payment Date <span class="text-danger-500">*</span></label>
-                            <input name="payment_date" type="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Reference (optional)</label>
-                            <input name="reference" type="text" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5">Notes (optional)</label>
-                            <textarea name="notes" rows="2" class="w-full rounded-lg border border-neutral-300 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="px-4 py-3 border-t border-neutral-200 dark:border-dark-border flex gap-2">
-                    <button type="button" onclick="closePaymentModal()" class="flex-1 px-3 py-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:underline">Cancel</button>
-                    <button type="submit" class="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg">Record Payment</button>
-                </div>
-            </form>
         </div>
     </div>
 
@@ -314,6 +275,20 @@
                     }
                 });
 
+                document.addEventListener('click', function(e) {
+                    if (e.target !== searchInput && !searchInput.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+                // Restore selected student on validation failure
+                var oldFeeId = '{{ old('student_fee_id') }}';
+                var oldStudentName = '{{ old('student_search') }}';
+                if (oldFeeId && oldStudentName) {
+                    hiddenInput.value = oldFeeId;
+                    searchInput.value = oldStudentName;
+                }
+
                 var mainForm = searchInput ? searchInput.closest('form') : null;
                 if (mainForm) {
                     mainForm.addEventListener('submit', function(e) {
@@ -325,36 +300,6 @@
                     });
                 }
             }
-            /* Payment Modal handling */
-            var paymentModal = document.getElementById('payment-modal');
-            var modalFeeId = document.getElementById('modal_fee_id');
-            var modalStudentName = document.getElementById('modal_student_name');
-            var modalFeeInfo = document.getElementById('modal_fee_info');
-            var modalOutstanding = document.getElementById('modal_outstanding');
-            var modalAmountPaid = document.getElementById('modal_amount_paid');
-
-            window.openPaymentModal = function(feeId, studentName, feeTypeName, amountExpected, balance) {
-                modalFeeId.value = feeId;
-                modalStudentName.textContent = studentName;
-                modalFeeInfo.textContent = feeTypeName + ' (Expected: &#8358;' + Number(amountExpected).toLocaleString(undefined, {minimumFractionDigits: 2}) + ')';
-                modalOutstanding.textContent = '&#8358;' + Number(balance).toLocaleString(undefined, {minimumFractionDigits: 2});
-                modalAmountPaid.value = balance;
-                modalAmountPaid.max = balance;
-                paymentModal.classList.remove('hidden');
-                paymentModal.classList.add('flex');
-                modalAmountPaid.focus();
-            };
-
-            window.closePaymentModal = function() {
-                paymentModal.classList.add('hidden');
-                paymentModal.classList.remove('flex');
-            };
-
-            document.addEventListener('click', function(e) {
-                if (e.target === paymentModal) {
-                    closePaymentModal();
-                }
-            });
 
             /* Receipt modal handling */
             var receiptCSS = '.center { text-align: center; } .line { border-top: 1px solid #e5e5e5; margin: 16px 0; } .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; } .label { color: #666; } .sub { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; } .amount { font-size: 28px; font-weight: 700; color: #047857; } .print-btn { margin: 24px auto; display: block; padding: 10px 24px; background: #047857; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; } .receipt-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; max-width: 70%; height: auto; opacity: 0.06; pointer-events: none; z-index: 0; } .receipt-body { position: relative; z-index: 1; } @media print { .no-print { display: none !important; } .receipt-watermark { opacity: 0.05; } }';

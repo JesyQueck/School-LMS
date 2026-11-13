@@ -192,7 +192,7 @@ class BursarFeeTest extends TestCase
             'notes' => 'Full payment',
         ]);
 
-        $response->assertRedirect('/bursar/student-fees');
+        $response->assertRedirect(route('bursar.student-fees.show', $this->studentFee));
         $response->assertSessionHas('status', 'Payment recorded for '.$this->student->full_name.'.');
 
         $this->assertDatabaseHas('payments', [
@@ -216,7 +216,7 @@ class BursarFeeTest extends TestCase
             'reference' => 'REF-002',
         ]);
 
-        $response->assertRedirect('/bursar/student-fees');
+        $response->assertRedirect(route('bursar.student-fees.show', $this->studentFee));
         $this->assertDatabaseHas('student_fees', ['id' => $this->studentFee->id, 'status' => 'partial']);
     }
 
@@ -234,6 +234,59 @@ class BursarFeeTest extends TestCase
 
         $response->assertSessionHasErrors();
         $this->assertDatabaseMissing('payments', ['student_fee_id' => $this->studentFee->id, 'amount_paid' => 2000.00]);
+    }
+
+    public function test_bursar_can_pay_exact_outstanding_balance(): void
+    {
+        $this->withoutMiddleware();
+        $this->actingAs($this->bursar);
+
+        // Record a partial payment of 500 first
+        $this->post('/bursar/payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => '500.00',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-07-15',
+            'reference' => 'REF-001',
+        ]);
+
+        // Outstanding is now 1000.00. Pay exactly 1000.00
+        $response = $this->post('/bursar/payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => '1000.00',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-07-16',
+            'reference' => 'REF-002',
+        ]);
+
+        $response->assertSessionHas('status');
+        $this->assertDatabaseHas('payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => 1000.00,
+        ]);
+        $this->assertDatabaseHas('student_fees', ['id' => $this->studentFee->id, 'status' => 'paid']);
+    }
+
+    public function test_bursar_payment_sets_receipt_session_data(): void
+    {
+        $this->withoutMiddleware();
+        $this->actingAs($this->bursar);
+
+        $response = $this->post('/bursar/payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => '1500.00',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-07-15',
+            'reference' => 'REF-001',
+            'notes' => 'Full payment',
+        ]);
+
+        $response->assertSessionHas('status');
+        $response->assertSessionHas('show_receipt');
+        $this->assertDatabaseHas('payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => 1500.00,
+        ]);
     }
 
     public function test_bursar_cannot_pay_future_date(): void
@@ -553,4 +606,49 @@ public function test_payment_cannot_be_reversed_twice(): void
 
         $response->assertOk();
     }
-}
+
+    public function test_bursar_cannot_pay_more_than_outstanding_balance(): void
+    {
+        $this->withoutMiddleware();
+        $this->actingAs($this->bursar);
+
+        // First payment: ₦500
+        $firstResponse = $this->post('/bursar/payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => '500.00',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-07-15',
+            'reference' => 'REF-001',
+        ]);
+
+        $firstResponse->assertRedirect();
+
+        $this->assertDatabaseHas('payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => 500.00,
+        ]);
+
+        $this->assertEquals(
+            1000.00,
+            app(FeeService::class)->outstandingBalance($this->studentFee->fresh())
+        );
+
+        // Second payment: ₦1,001, exceeding the remaining balance.
+        $response = $this->post('/bursar/payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => '1001.00',
+            'payment_method' => 'cash',
+            'payment_date' => '2026-07-16',
+            'reference' => 'REF-002',
+        ]);
+
+        $errors = $response->getSession()->get('errors')->getBag('default')->messages();
+        $this->assertArrayHasKey('amount_paid', $errors);
+
+        $this->assertDatabaseMissing('payments', [
+            'student_fee_id' => $this->studentFee->id,
+            'amount_paid' => 1001.00,
+        ]);
+    }
+
+    }

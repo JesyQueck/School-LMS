@@ -103,7 +103,7 @@ class FeeController extends Controller
 
         $this->audit($request, 'payment.created', Payment::class, $payment->id, null, $data);
 
-        return redirect()->route('bursar.student-fees')
+        return redirect()->route('bursar.student-fees.show', $studentFee)
             ->with('status', 'Payment recorded for '.$studentFee->student->full_name.'.')
             ->with('show_receipt', $payment->id);
     }

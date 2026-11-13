@@ -34,7 +34,7 @@ class FeeService
 
         if ($amountPaid > $outstanding) {
             throw new \InvalidArgumentException(
-                'Payment amount exceeds the outstanding balance.'
+                'Payment amount ₦' . number_format($amountPaid, 2) . ' exceeds the outstanding balance of ₦' . number_format($outstanding, 2) . '. Maximum payable: ₦' . number_format($outstanding, 2) . '.'
             );
         }
 

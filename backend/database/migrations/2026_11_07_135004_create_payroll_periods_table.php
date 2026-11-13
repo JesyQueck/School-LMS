@@ -15,7 +15,7 @@ return new class extends Migration
             $table->date('end_date');
             $table->date('pay_date');
             $table->string('status')->default('draft')->comment('draft, processed, paid, locked');
-            $table->foreignId('created_by')->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
             $table->index(['status']);
