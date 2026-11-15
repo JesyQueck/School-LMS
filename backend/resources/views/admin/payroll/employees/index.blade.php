@@ -40,6 +40,53 @@
         </x-ui.alert>
     @endif
 
+    <x-ui.card class="mb-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <div>
+                <h2 class="text-base font-semibold text-neutral-900 dark:text-white">Staff Accounts Awaiting Employee Profiles</h2>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">These admin, teacher and bursar accounts have not yet been added to payroll.</p>
+            </div>
+            <span class="rounded-full bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-300 px-3 py-1 text-sm font-semibold whitespace-nowrap">
+                {{ $pendingStaffAccounts->count() }} Pending
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
+                <thead class="bg-neutral-50 dark:bg-dark-surface">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Name</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Role</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Staff ID</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Email</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                    @forelse($pendingStaffAccounts as $staffAccount)
+                        <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                            <td class="px-4 py-3.5 text-sm font-medium text-neutral-900 dark:text-white whitespace-nowrap">{{ $staffAccount->name }}</td>
+                            <td class="px-4 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ ucfirst($staffAccount->role) }}</td>
+                            <td class="px-4 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $staffAccount->staff_id ?? '—' }}</td>
+                            <td class="px-4 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $staffAccount->email ?? '—' }}</td>
+                            <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                                <a href="{{ route('admin.payroll.employees.create', ['user_id' => $staffAccount->id]) }}"
+                                   class="text-sm font-medium text-success-700 dark:text-success-400 hover:underline">
+                                    Complete Profile
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-4 py-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                                All existing staff accounts have employee profiles.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-ui.card>
     <x-ui.card class="mb-6" elevated>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -65,9 +112,9 @@
                         @endphp
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                             <td class="px-6 py-3.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $employee->employee_number }}</td>
-                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $employee->user?->name ?? 'No User Linked' }}</td>
-                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $employee->department ?? '—' }}</td>
-                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $employee->designation ?? '—' }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $employee->name ?: ($employee->user?->name ?? 'No User Linked') }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $employee->department ?? 'â€”' }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $employee->designation ?? 'â€”' }}</td>
                             <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ ucfirst($employee->employment_type) }}</td>
                             <td class="px-6 py-3.5 text-center">
                                 <span class="inline-flex items-center rounded-full {{ $statusConfig['bg'] }} px-2 py-0.5 text-xs font-medium {{ $statusConfig['text'] }}">{{ ucfirst(str_replace('_', ' ', $employee->employment_status)) }}</span>
@@ -97,3 +144,4 @@
         </div>
     </x-ui.card>
 </x-layouts.app>
+

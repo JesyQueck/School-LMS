@@ -35,6 +35,14 @@
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Employee Number <span class="text-danger-500">*</span></label>
                     <input name="employee_number" type="text" required value="{{ old('employee_number', $employee->employee_number) }}" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
+                                <div class="lg:col-span-2">
+                    <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Employee Name <span class="text-danger-500">*</span></label>
+                    <input name="name" type="text" maxlength="255"
+                        value="{{ old('name', $employee->name ?: ($employee->user?->name ?? '')) }}"
+                        placeholder="Enter employee full name"
+                        class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Required when no user account is linked.</p>
+                </div>
                 <div>
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Linked User</label>
                     <select name="user_id" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">

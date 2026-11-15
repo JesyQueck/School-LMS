@@ -1,116 +1,250 @@
 <x-layouts.app title="Employee Details - Payroll">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.payroll.index') }}">Payroll</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.payroll.employees.index') }}">Employees</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Employee Details</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Employee Details</h1>
-    </div>
+    <div class="space-y-6">
 
-    @if(session('status'))
-        <x-ui.alert variant="success" class="mb-6">
-            <div class="flex items-start gap-3">
-                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
-            </div>
-        </x-ui.alert>
-    @endif
-
-    <div class="flex items-center justify-between gap-4 mb-6">
+        {{-- Breadcrumbs and page heading --}}
         <div>
-            <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $employee->employee_number }}</h2>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $employee->user?->name ?? 'No user linked' }}</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.payroll.employees.edit', $employee) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Edit</a>
-            <a href="{{ route('admin.payroll.employees.index') }}" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50">Back</a>
-        </div>
-    </div>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.payroll.index') }}">Payroll</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.payroll.employees.index') }}">Employees</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Employee Details</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-        <div class="lg:col-span-3">
-            <x-ui.card class="mb-6" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Employment Details</h3>
+            <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Employee Details</h1>
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        View employment information, salary profiles and payroll history.
+                    </p>
                 </div>
-                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Employee Number</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->employee_number }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Employment Type</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ ucfirst($employee->employment_type) }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Employment Status</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ ucfirst(str_replace('_', ' ', $employee->employment_status)) }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Department</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->department ?? '—' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Designation</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->designation ?? '—' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Date Employed</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->date_employed?->format('d M Y') ?? '—' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Date Left</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->date_left?->format('d M Y') ?? '—' }}</p>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Linked User</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->user?->name ?? 'None' }} ({{ $employee->user?->email ?? '—' }})</p>
-                    </div>
-                </div>
-            </x-ui.card>
 
-            <x-ui.card class="mb-6" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Salary Profiles</h3>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('admin.payroll.employees.index') }}"
+                       class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-neutral-300 dark:border-dark-border text-sm font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-dark-surface transition">
+                        Back to Employees
+                    </a>
+
+                    <a href="{{ route('admin.payroll.employees.edit', $employee) }}"
+                       class="inline-flex items-center justify-center px-5 py-2.5 rounded-lg !bg-green-800 hover:!bg-green-900 !text-white text-sm font-bold shadow-sm transition">
+                        Edit Employee
+                    </a>
                 </div>
-                <div class="p-5">
-                    @forelse($employee->salaryProfiles as $profile)
-                        <div class="p-4 border border-neutral-200 dark:border-dark-border rounded-xl mb-3">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-neutral-900 dark:text-white">{{ $profile->basic_salary ? '₦'.number_format($profile->basic_salary, 2) : '₦0.00' }}</span>
-                                <span class="text-xs {{ $profile->is_active ? 'bg-success-100 text-success-700' : 'bg-neutral-100 text-neutral-700' }} dark:{{ $profile->is_active ? 'bg-success-900/30 text-success-300' : 'bg-neutral-800/30 text-neutral-300' }} px-2 py-0.5 rounded">{{ $profile->is_active ? 'Active' : 'Inactive' }}</span>
-                            </div>
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400">Effective: {{ $profile->effective_from->format('d M Y') }}{{ $profile->effective_to ? ' to '.$profile->effective_to->format('d M Y') : ' — Present' }}</p>
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{{ $profile->components->count() }} component(s) assigned</p>
+            </div>
+        </div>
+
+        @if(session('status'))
+            <x-ui.alert variant="success" class="mb-2">
+                <div class="flex items-start gap-3">
+                    <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">
+                        {{ session('status') }}
+                    </div>
+                </div>
+            </x-ui.alert>
+        @endif
+
+        {{-- Employee identity summary --}}
+        <div class="rounded-xl border border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-card shadow-sm p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2m16-13a4 4 0 11-8 0 4 4 0 018 0zm4 13v-2a4 4 0 00-3-3.87M18 3.13a4 4 0 010 7.75"/>
+                    </svg>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-xl font-bold text-neutral-900 dark:text-white">
+                        {{ $employee->name ?: ($employee->user?->name ?? $employee->employee_number) }}
+                    </h2>
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        {{ $employee->employee_number }}
+                        @if($employee->designation)
+                            <span class="mx-1">·</span>{{ $employee->designation }}
+                        @endif
+                        @if($employee->department)
+                            <span class="mx-1">·</span>{{ $employee->department }}
+                        @endif
+                    </p>
+                </div>
+
+                <span class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold
+                    {{ $employee->employment_status === 'active'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                        : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300' }}">
+                    {{ ucfirst(str_replace('_', ' ', $employee->employment_status)) }}
+                </span>
+            </div>
+        </div>
+
+        {{-- Main content and payroll sidebar --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+            <div class="lg:col-span-2 space-y-6">
+
+                {{-- Employment details --}}
+                <x-ui.card padding="false" elevated>
+                    <div class="px-5 sm:px-6 py-5 border-b border-neutral-200 dark:border-dark-border">
+                        <h3 class="text-base font-bold text-neutral-900 dark:text-white">Employment Information</h3>
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Employee identification and employment details.</p>
+                    </div>
+
+                    <div class="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employee Number</p>
+                            <p class="mt-1.5 text-sm font-semibold text-neutral-900 dark:text-white">{{ $employee->employee_number }}</p>
                         </div>
-                    @empty
-                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-6">No salary profiles assigned.</p>
-                    @endforelse
-                </div>
-            </x-ui.card>
-        </div>
 
-        <div class="lg:col-span-1">
-            <x-ui.card class="h-full flex flex-col" padding="false" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Payroll Records</h3>
-                </div>
-                <div class="p-5 flex-1 overflow-y-auto">
-                    @forelse($employee->payrollRecords->sortDesc() as $record)
-                        <div class="p-3 border border-neutral-200 dark:border-dark-border rounded-lg mb-3">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-sm font-medium text-neutral-900 dark:text-white">{{ $record->period->name }}</span>
-                                <span class="text-xs {{ $record->status === 'paid' ? 'bg-success-100 text-success-700' : ($record->status === 'approved' ? 'bg-blue-100 text-blue-700' : 'bg-neutral-100 text-neutral-700') }} dark:{{ $record->status === 'paid' ? 'bg-success-900/30 text-success-300' : ($record->status === 'approved' ? 'bg-blue-900/30 text-blue-300' : 'bg-neutral-800/30 text-neutral-300') }} px-2 py-0.5 rounded">{{ ucfirst($record->status) }}</span>
-                            </div>
-                            <p class="text-xs text-neutral-500 dark:text-neutral-400">Net Pay: <span class="text-sm font-medium text-neutral-900 dark:text-white">₦{{ number_format($record->net_pay, 2) }}</span></p>
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employment Type</p>
+                            <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ ucfirst($employee->employment_type) }}</p>
                         </div>
-                    @empty
-                        <p class="text-sm text-neutral-500 dark:text-neutral-400 text-center py-6">No payroll records.</p>
-                    @endforelse
-                </div>
-            </x-ui.card>
+
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employment Status</p>
+                            <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ ucfirst(str_replace('_', ' ', $employee->employment_status)) }}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Department</p>
+                            <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $employee->department ?: '—' }}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Designation</p>
+                            <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $employee->designation ?: '—' }}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Date Employed</p>
+                            <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $employee->date_employed?->format('d M Y') ?? '—' }}</p>
+                        </div>
+
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Date Left</p>
+                            <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $employee->date_left?->format('d M Y') ?? '—' }}</p>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Linked Account</p>
+                            @if($employee->user)
+                                <p class="mt-1.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $employee->user->name }}</p>
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $employee->user->email ?? 'No email address' }}</p>
+                            @else
+                                <p class="mt-1.5 text-sm text-neutral-500 dark:text-neutral-400">No login account linked</p>
+                            @endif
+                        </div>
+                    </div>
+                </x-ui.card>
+
+                {{-- Salary profiles --}}
+                <x-ui.card padding="false" elevated>
+                    <div class="px-5 sm:px-6 py-5 border-b border-neutral-200 dark:border-dark-border">
+                        <h3 class="text-base font-bold text-neutral-900 dark:text-white">Salary Profiles</h3>
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Salary arrangements assigned to this employee.</p>
+                    </div>
+
+                    <div class="p-5 sm:p-6">
+                        @forelse($employee->salaryProfiles as $profile)
+                            <div class="rounded-xl border border-neutral-200 dark:border-dark-border p-4 mb-3 last:mb-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Basic Salary</p>
+                                        <p class="mt-1 text-xl font-bold text-neutral-900 dark:text-white">
+                                            ₦{{ number_format($profile->basic_salary ?? 0, 2) }}
+                                        </p>
+                                    </div>
+
+                                    <span class="inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold
+                                        {{ $profile->is_active
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                            : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300' }}">
+                                        {{ $profile->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-4 pt-3 border-t border-neutral-100 dark:border-dark-border grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <p class="text-xs text-neutral-500 dark:text-neutral-400">Effective From</p>
+                                        <p class="mt-1 text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                            {{ $profile->effective_from?->format('d M Y') ?? '—' }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-neutral-500 dark:text-neutral-400">Effective To</p>
+                                        <p class="mt-1 text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                                            {{ $profile->effective_to?->format('d M Y') ?? 'Present' }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p class="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+                                    {{ $profile->components->count() }} salary component(s) assigned
+                                </p>
+                            </div>
+                        @empty
+                            <div class="py-10 text-center">
+                                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                                    <svg class="h-6 w-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 2v8m0 0v2m0-2c-1.657 0-3-.895-3-2m6 0c0 1.105-1.343 2-3 2"/>
+                                    </svg>
+                                </div>
+                                <p class="mt-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">No salary profiles assigned</p>
+                                <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Salary configuration has not yet been created for this employee.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </x-ui.card>
+            </div>
+
+            {{-- Payroll records --}}
+            <div class="lg:col-span-1">
+                <x-ui.card padding="false" elevated>
+                    <div class="px-5 py-5 border-b border-neutral-200 dark:border-dark-border">
+                        <h3 class="text-base font-bold text-neutral-900 dark:text-white">Payroll Records</h3>
+                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Payroll history and payment status.</p>
+                    </div>
+
+                    <div class="p-5">
+                        @forelse($employee->payrollRecords->sortDesc() as $record)
+                            <div class="rounded-lg border border-neutral-200 dark:border-dark-border p-4 mb-3 last:mb-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p class="text-sm font-semibold text-neutral-900 dark:text-white">
+                                        {{ $record->period?->name ?? 'Payroll Period' }}
+                                    </p>
+
+                                    <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold
+                                        {{ $record->status === 'paid'
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                            : ($record->status === 'approved'
+                                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300') }}">
+                                        {{ ucfirst($record->status) }}
+                                    </span>
+                                </div>
+
+                                <div class="mt-3 pt-3 border-t border-neutral-100 dark:border-dark-border">
+                                    <p class="text-xs text-neutral-500 dark:text-neutral-400">Net Pay</p>
+                                    <p class="mt-1 text-lg font-bold text-neutral-900 dark:text-white">
+                                        ₦{{ number_format($record->net_pay, 2) }}
+                                    </p>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="py-10 text-center">
+                                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+                                    <svg class="h-6 w-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    </svg>
+                                </div>
+                                <p class="mt-3 text-sm font-medium text-neutral-700 dark:text-neutral-300">No payroll records yet</p>
+                                <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Records will appear here after payroll is generated.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </x-ui.card>
+            </div>
         </div>
     </div>
 </x-layouts.app>

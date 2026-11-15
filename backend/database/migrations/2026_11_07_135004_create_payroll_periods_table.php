@@ -78,8 +78,10 @@ return new class extends Migration
         });
 
         // Add missing indexes only if absent.
-        $indexes = $this->existingIndexes($table, $driver);
-
+        // Detection is based on the ordered column set, not the index name, so
+        // that an index auto-created by MySQL (e.g. a foreign-key
+        // supporting index named payroll_periods_created_by_foreign) correctly satisfies
+        // the requirement and no duplicate index is created.
         $indexDefinitions = [
             'payroll_periods_status_index' => ['status'],
             'payroll_periods_start_date_end_date_index' => ['start_date', 'end_date'],
@@ -87,9 +89,9 @@ return new class extends Migration
         ];
 
         foreach ($indexDefinitions as $indexName => $columns) {
-            if (!isset($indexes[$indexName])) {
+            if (! $this->indexExistsOnColumns($table, $driver, $columns)) {
                 Schema::table($table, function (Blueprint $table) use ($indexName, $columns) {
-                    $table->index($columns)->name($indexName);
+                    $table->index($columns, $indexName);
                 });
             }
         }
@@ -198,21 +200,86 @@ return new class extends Migration
     }
 
     /**
-     * Get existing index names for a table.
+     * Determine whether an index already exists on the given ordered column set.
      *
-     * @return array<string, bool>
+     * This avoids creating duplicate indexes when an index on the same columns
+     * already exists under a different name (for example, a foreign-key
+     * supporting index auto-created by MySQL).
+     *
+     * Uses case-insensitive column access to remain robust against different
+     * PDO fetch modes (FETCH_OBJ vs FETCH_ASSOC) and column name casings
+     * returned by SHOW INDEX across MySQL versions.
+     *
+     * @param  array<int, string>  $columns
+     * @return bool
      */
-    protected function existingIndexes(string $table, string $driver): array
+    protected function indexExistsOnColumns(string $table, string $driver, array $columns): bool
     {
         if ($driver === 'sqlite') {
-            $rows = DB::select("PRAGMA index_list(`{$table}`)");
+            $indexes = DB::select("PRAGMA index_list(`{$table}`)");
 
-            return collect($rows)->mapWithKeys(fn ($row) => [$row->name => true])->all();
+            foreach ($indexes as $index) {
+                $row = is_array($index) ? $index : (array) $index;
+                $row = array_change_key_case($row, CASE_LOWER);
+                $indexName = $row['name'] ?? null;
+                if ($indexName === null) {
+                    continue;
+                }
+
+                $cols = DB::select("PRAGMA index_info(`{$indexName}`)");
+                $indexColumns = [];
+                foreach ($cols as $col) {
+                    $c = is_array($col) ? $col : (array) $col;
+                    $c = array_change_key_case($c, CASE_LOWER);
+                    $indexColumns[] = $c['name'] ?? null;
+                }
+
+                if ($indexColumns === $columns) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         $rows = DB::select("SHOW INDEX FROM `{$table}`");
+        $grouped = [];
 
-        return collect($rows)->mapWithKeys(fn ($row) => [$row->Key_name => true])->all();
+        foreach ($rows as $row) {
+            $r = is_array($row) ? $row : (array) $row;
+            $r = array_change_key_case($r, CASE_LOWER);
+            $keyName = $r['key_name'] ?? null;
+            if ($keyName === null || strtolower((string) $keyName) === 'primary') {
+                continue;
+            }
+
+            $grouped[$keyName][] = $row;
+        }
+
+        foreach ($grouped as $keyName => $indexRows) {
+            usort($indexRows, function ($a, $b) {
+                $aArr = is_array($a) ? $a : (array) $a;
+                $bArr = is_array($b) ? $b : (array) $b;
+                $aArr = array_change_key_case($aArr, CASE_LOWER);
+                $bArr = array_change_key_case($bArr, CASE_LOWER);
+                $seqA = $aArr['seq_in_index'] ?? 0;
+                $seqB = $bArr['seq_in_index'] ?? 0;
+                return (int) $seqA <=> (int) $seqB;
+            });
+
+            $indexColumns = [];
+            foreach ($indexRows as $row) {
+                $r = is_array($row) ? $row : (array) $row;
+                $r = array_change_key_case($r, CASE_LOWER);
+                $indexColumns[] = $r['column_name'] ?? null;
+            }
+
+            if ($indexColumns === $columns) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

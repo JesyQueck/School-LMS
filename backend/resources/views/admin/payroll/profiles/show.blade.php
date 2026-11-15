@@ -18,19 +18,26 @@
         </x-ui.alert>
     @endif
 
+    @php
+        $employee = $profile->employee;
+        $displayName = $employee->user?->name ?: ($employee->name ?: 'Name unavailable');
+    @endphp
     <div class="flex items-center justify-between gap-4 mb-6">
         <div>
-            <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $profile->employee->employee_number }}</h2>
+            <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $employee->employee_number }} &mdash; {{ $displayName }}</h2>
             <p class="text-sm text-neutral-500 dark:text-neutral-400">Salary Profile</p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('admin.payroll.profiles.edit', $profile) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Edit</a>
+            @if($profile->is_active && !$profile->effective_to)
+                <a href="{{ route('admin.payroll.profiles.revise', $profile) }}" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Revise Salary</a>
+            @endif
+            <a href="{{ route('admin.payroll.profiles.edit', $profile) }}" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Edit</a>
             <a href="{{ route('admin.payroll.profiles.index') }}" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50">Back</a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div class="lg:col-span-2">
+    <div class="mb-6">
+        <div>
             <x-ui.card class="mb-6" elevated>
                 <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
                     <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Profile Details</h3>
@@ -38,11 +45,11 @@
                 <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Employee</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">{{ $profile->employee->employee_number }}</p>
+                        <p class="text-sm text-neutral-900 dark:text-white">{{ $employee->employee_number }} &mdash; {{ $displayName }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Basic Salary</p>
-                        <p class="text-sm text-neutral-900 dark:text-white">₦{{ number_format($profile->basic_salary, 2) }}</p>
+                        <p class="text-sm text-neutral-900 dark:text-white">&#8358;{{ number_format($profile->basic_salary, 2) }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Effective From</p>
@@ -78,7 +85,7 @@
                                 <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
                                     <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $component->salaryComponent->name }}</td>
                                     <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ ucfirst($component->salaryComponent->component_type) }}</td>
-                                    <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($component->configured_value, 2) }}</td>
+                                    <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">&#8358;{{ number_format($component->configured_value, 2) }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="3" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No components assigned.</td></tr>
@@ -88,17 +95,9 @@
                 </div>
             </x-ui.card>
         </div>
-
-        <div class="lg:col-span-1">
-            <x-ui.card class="h-full flex flex-col" padding="false" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Actions</h3>
-                </div>
-                <div class="p-5 flex-1 flex flex-col gap-3">
-                    <a href="{{ route('admin.payroll.profiles.edit', $profile) }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors text-center">Edit Profile</a>
-                    <a href="{{ route('admin.payroll.employees.show', $profile->employee) }}" class="w-full text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 text-center">Back to Employee</a>
-                </div>
-            </x-ui.card>
-        </div>
     </div>
 </x-layouts.app>
+
+
+
+

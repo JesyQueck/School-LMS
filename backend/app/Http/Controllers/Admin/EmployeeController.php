@@ -14,14 +14,18 @@ class EmployeeController extends Controller
 {
     use AuditsActions;
 
+    private const STAFF_ROLES = ['admin', 'teacher', 'bursar'];
+
     public function index(Request $request)
     {
         $query = Employee::with('user')->orderBy('employee_number');
 
         if ($request->filled('search')) {
             $search = $request->search;
+
             $query->where(function ($q) use ($search) {
                 $q->where('employee_number', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
                     ->orWhere('department', 'like', "%{$search}%")
                     ->orWhere('designation', 'like', "%{$search}%")
                     ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
@@ -34,19 +38,46 @@ class EmployeeController extends Controller
 
         $employees = $query->paginate(15)->withQueryString();
 
+        $pendingStaffAccounts = User::query()
+            ->whereIn('role', self::STAFF_ROLES)
+            ->whereDoesntHave('employee')
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->search;
+
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('staff_id', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
         return view('admin.payroll.employees.index', [
             'employees' => $employees,
+            'pendingStaffAccounts' => $pendingStaffAccounts,
             'statuses' => Employee::STATUSES,
             'filters' => $request->only(['search', 'status']),
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $users = User::whereDoesntHave('employee')->orderBy('name')->get();
+        $users = User::query()
+            ->whereIn('role', self::STAFF_ROLES)
+            ->whereDoesntHave('employee')
+            ->orderBy('name')
+            ->get();
+
+        $selectedUser = null;
+
+        if ($request->filled('user_id')) {
+            $selectedUser = $users->firstWhere('id', (int) $request->user_id);
+        }
 
         return view('admin.payroll.employees.create', [
             'users' => $users,
+            'selectedUser' => $selectedUser,
             'employmentTypes' => Employee::EMPLOYMENT_TYPES,
             'statuses' => Employee::STATUSES,
         ]);
@@ -76,7 +107,19 @@ class EmployeeController extends Controller
 
     public function edit(Employee $employee)
     {
-        $users = User::whereDoesntHave('employee')->orWhere('id', $employee->user_id)->orderBy('name')->get();
+        $users = User::query()
+            ->where(function ($query) use ($employee) {
+                $query->where(function ($staffQuery) {
+                    $staffQuery->whereIn('role', self::STAFF_ROLES)
+                        ->whereDoesntHave('employee');
+                });
+
+                if ($employee->user_id) {
+                    $query->orWhere('id', $employee->user_id);
+                }
+            })
+            ->orderBy('name')
+            ->get();
 
         return view('admin.payroll.employees.edit', [
             'employee' => $employee,

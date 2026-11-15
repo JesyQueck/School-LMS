@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreEmployeeRequest extends FormRequest
 {
@@ -14,8 +15,15 @@ class StoreEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name' => ['required_without:user_id', 'nullable', 'string', 'max:255'],
             'employee_number' => ['required', 'string', 'max:50', 'unique:employees'],
-            'user_id' => ['nullable', 'exists:users,id', 'unique:employees,user_id'],
+            'user_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where(
+                    fn ($query) => $query->whereIn('role', ['admin', 'teacher', 'bursar'])
+                ),
+                'unique:employees,user_id',
+            ],
             'employment_type' => ['required', 'in:full-time,part-time,contract'],
             'date_employed' => ['required', 'date'],
             'date_left' => ['nullable', 'date', 'after_or_equal:date_employed'],

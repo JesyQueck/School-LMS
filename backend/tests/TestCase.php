@@ -10,11 +10,11 @@ abstract class TestCase extends BaseTestCase
     {
         if (! $this->refreshInDatabaseState) {
             $connectionName = config('database.default');
-            foreach (config('database.connections') as $name => $conn) {
-                if ($conn['database'] ?? null !== config('database.connections.mysql.database')) {
-                    $connectionName = $name;
-                    break;
-                }
+
+            if ($connectionName === 'mysql') {
+                throw new \RuntimeException(
+                    'Tests are blocked because the default test database connection is MySQL.'
+                );
             }
             $this->artisan('migrate:fresh', ['--database' => $connectionName]);
             $this->refreshInDatabaseState = true;

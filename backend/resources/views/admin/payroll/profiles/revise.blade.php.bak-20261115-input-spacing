@@ -1,0 +1,81 @@
+<x-layouts.app title="Revise Salary - Payroll">
+    <div class="mb-6">
+        <x-ui.breadcrumbs>
+            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('admin.payroll.index') }}">Payroll</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('admin.payroll.profiles.index') }}">Salary Profiles</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item href="{{ route('admin.payroll.profiles.show', $profile) }}">Profile Details</x-ui.breadcrumb-item>
+            <x-ui.breadcrumb-item active>Revise Salary</x-ui.breadcrumb-item>
+        </x-ui.breadcrumbs>
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Revise Salary</h1>
+        <p class="text-sm text-neutral-500">{{ $profile->employee->employee_number }} — {{ $profile->employee->user?->name }}</p>
+    </div>
+
+    @if($errors->any())
+        <div class="mb-5 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+            <ul class="list-disc pl-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('admin.payroll.profiles.revise.store', $profile) }}">
+        @csrf
+
+        <x-ui.card elevated>
+            <div class="p-6 space-y-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Current Basic Salary</label>
+                        <div class="rounded-lg bg-neutral-100 dark:bg-dark-surface p-3 text-sm">
+                            &#8358;{{ number_format($profile->basic_salary, 2) }}
+                        </div>
+                    </div>
+                    <div>
+                        <label for="basic_salary" class="block text-sm font-medium mb-1">New Basic Salary</label>
+                        <input id="basic_salary" name="basic_salary" type="number" min="0.01" step="0.01" required value="{{ old('basic_salary', $profile->basic_salary) }}" class="w-full rounded-lg border-neutral-300 dark:border-dark-border dark:bg-dark-surface">
+                    </div>
+                    <div>
+                        <label for="effective_from" class="block text-sm font-medium mb-1">Effective Date</label>
+                        <input id="effective_from" name="effective_from" type="date" required value="{{ old('effective_from') }}" class="w-full rounded-lg border-neutral-300 dark:border-dark-border dark:bg-dark-surface">
+                        <p class="mt-1 text-xs text-neutral-500">Must be the first day of an existing draft payroll period.</p>
+                    </div>
+                    <div>
+                        <label for="reason" class="block text-sm font-medium mb-1">Reason for Revision</label>
+                        <input id="reason" name="reason" type="text" required maxlength="1000" value="{{ old('reason') }}" placeholder="Annual salary review, promotion..." class="w-full rounded-lg border-neutral-300 dark:border-dark-border dark:bg-dark-surface">
+                    </div>
+                </div>
+
+                <div class="border-t border-neutral-200 dark:border-dark-border pt-5">
+                    <h2 class="font-semibold mb-3">Salary Components</h2>
+                    <div class="space-y-3">
+                        @foreach($components as $index => $component)
+                            @php
+                                $existing = $profile->components->firstWhere('salary_component_id', $component->id);
+                                $enabled = old("components.$index.enabled", $existing ? 1 : 0);
+                                $value = old("components.$index.value", $existing?->configured_value ?? $component->default_value);
+                            @endphp
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center rounded-lg border border-neutral-200 dark:border-dark-border p-3">
+                                <input type="hidden" name="components[{{ $index }}][component_id]" value="{{ $component->id }}">
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" name="components[{{ $index }}][enabled]" value="1" @checked($enabled) class="rounded border-neutral-300">
+                                    <span>{{ $component->name }} ({{ ucfirst($component->component_type) }})</span>
+                                </label>
+                                <div class="sm:col-span-2">
+                                    <input type="number" min="0" step="0.01" name="components[{{ $index }}][value]" value="{{ $value }}" placeholder="Amount or percentage" class="w-full rounded-lg border-neutral-300 dark:border-dark-border dark:bg-dark-surface">
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <a href="{{ route('admin.payroll.profiles.show', $profile) }}" class="px-4 py-2 rounded-lg text-sm border border-neutral-300">Cancel</a>
+                    <button type="submit" class="px-5 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white">Save Revision</button>
+                </div>
+            </div>
+        </x-ui.card>
+    </form>
+</x-layouts.app>

@@ -159,7 +159,7 @@ class BursarRoleTest extends TestCase
         ]);
 
         $response->assertRedirect('/admin/accounts/create');
-        $response->assertSessionHas('status', 'Account created successfully.');
+        $response->assertSessionHas('status', 'Bursar John Bursar has been created with ID B-009. Check Credentials for login details.');
 
         $this->assertDatabaseHas('users', [
             'email' => 'john.bursar@example.com',

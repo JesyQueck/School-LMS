@@ -262,13 +262,10 @@ class PayrollService
     {
         return $employee->salaryProfiles()
             ->where('is_active', true)
-            ->where(function ($q) use ($period) {
-                // Profile overlaps the payroll period.
-                $q->whereDate('effective_from', '<=', $period->end_date)
-                    ->where(function ($inner) use ($period) {
-                        $inner->whereNull('effective_to')
-                            ->orWhereDate('effective_to', '>=', $period->start_date);
-                    });
+            ->whereDate('effective_from', '<=', $period->start_date)
+            ->where(function ($query) use ($period) {
+                $query->whereNull('effective_to')
+                    ->orWhereDate('effective_to', '>=', $period->start_date);
             })
             ->orderByDesc('effective_from')
             ->orderByDesc('id')

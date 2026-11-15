@@ -316,7 +316,8 @@ Route::middleware(['auth', 'password.only'])->group(function () {
                 Route::get('/', [SalaryProfileController::class, 'index'])->name('index');
                 Route::get('/create', [SalaryProfileController::class, 'create'])->name('create');
                 Route::post('/', [SalaryProfileController::class, 'store'])->name('store');
-                Route::get('/{salaryProfile}', [SalaryProfileController::class, 'show'])->name('show');
+                Route::get('/{salaryProfile}/revise', [SalaryProfileController::class, 'revise'])->name('revise');
+                Route::post('/{salaryProfile}/revise', [SalaryProfileController::class, 'storeRevision'])->name('revise.store');                Route::get('/{salaryProfile}', [SalaryProfileController::class, 'show'])->name('show');
                 Route::get('/{salaryProfile}/edit', [SalaryProfileController::class, 'edit'])->name('edit');
                 Route::put('/{salaryProfile}', [SalaryProfileController::class, 'update'])->name('update');
                 Route::delete('/{salaryProfile}', [SalaryProfileController::class, 'destroy'])->name('destroy');

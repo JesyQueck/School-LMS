@@ -11,6 +11,16 @@ class StoreSalaryProfileRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'is_active' => filter_var(
+                $this->input('is_active', true),
+                FILTER_VALIDATE_BOOLEAN
+            ),
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -18,16 +28,17 @@ class StoreSalaryProfileRequest extends FormRequest
             'basic_salary' => ['required', 'numeric', 'gte:0'],
             'effective_from' => ['required', 'date'],
             'effective_to' => ['nullable', 'date', 'after_or_equal:effective_from'],
-            'is_active' => ['boolean'],
+            'is_active' => ['required', 'boolean'],
+
+            'components' => ['sometimes', 'array'],
+            'components.*' => ['array'],
+            'components.*.enabled' => ['nullable', 'boolean'],
+            'components.*.component_id' => [
+                'required',
+                'integer',
+                'exists:salary_components,id',
+            ],
+            'components.*.value' => ['nullable', 'numeric', 'gte:0'],
         ];
-    }
-
-    public function validated($key = null, $default = null): array
-    {
-        $data = parent::validated($key, $default);
-
-        $data['is_active'] = filter_var($data['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN);
-
-        return $data;
     }
 }

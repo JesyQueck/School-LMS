@@ -34,12 +34,12 @@
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Employee <span class="text-danger-500">*</span></label>
                     <select name="employee_id" required class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                         @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}" {{ old('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->employee_number }}</option>
+                            <option value="{{ $emp->id }}" {{ old('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->employee_number }} &mdash; {{ $emp->user?->name ?: ($emp->name ?: 'Name unavailable') }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Basic Salary (₦) <span class="text-danger-500">*</span></label>
+                    <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Basic Salary (&#8358;) <span class="text-danger-500">*</span></label>
                     <input name="basic_salary" type="number" step="0.01" required value="{{ old('basic_salary') }}" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
                 <div>
@@ -52,7 +52,8 @@
                 </div>
                 <div class="sm:col-span-3">
                     <div class="flex items-center mb-2">
-                        <input name="is_active" type="checkbox" {{ old('is_active', true) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
+                        <input type="hidden" name="is_active" value="0">
+                        <input name="is_active" type="checkbox" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
                         <label class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">Active profile</label>
                     </div>
                 </div>
@@ -73,8 +74,8 @@
                                 <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ ucfirst($component->component_type) }} &middot; {{ ucfirst($component->calculation_type) }}</p>
                             </div>
                             <div class="w-48">
-                                <label class="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Value (₦)</label>
-                                <input name="components[{{ $component->id }}][value]" type="number" step="0.01" value="{{ $component->default_value }}" disabled class="w-full rounded border border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm">
+                                <label class="block text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-1">Value (&#8358;)</label>
+                                <input name="components[{{ $component->id }}][value]" type="number" step="0.01" value="{{ old('components.'.$component->id.'.value', $component->default_value) }}" class="w-full rounded border border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-3 py-2 text-sm">
                                 <input type="hidden" name="components[{{ $component->id }}][component_id]" value="{{ $component->id }}">
                             </div>
                         </div>
@@ -89,3 +90,5 @@
         </form>
     </x-ui.card>
 </x-layouts.app>
+
+

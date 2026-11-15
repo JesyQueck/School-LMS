@@ -1,4 +1,4 @@
-<x-layouts.app title="Edit Salary Component - Payroll">
+﻿<x-layouts.app title="Edit Salary Component - Payroll">
     <div class="mb-6">
         <x-ui.breadcrumbs>
             <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
@@ -56,12 +56,13 @@
                     <input name="description" type="text" value="{{ old('description', $salaryComponent->description) }}" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Default Value (₦) <span class="text-danger-500">*</span></label>
+                    <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Default Value (â‚¦) <span class="text-danger-500">*</span></label>
                     <input name="default_value" type="number" step="0.01" required value="{{ old('default_value', $salaryComponent->default_value) }}" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                 </div>
                 <div class="sm:col-span-2">
                     <div class="flex items-center mb-2">
-                        <input name="is_active" type="checkbox" {{ old('is_active', $salaryComponent->is_active) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
+                        <input type="hidden" name="is_active" value="0">
+                        <input name="is_active" type="checkbox" value="1" {{ old('is_active', $salaryComponent->is_active) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
                         <label class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">Active</label>
                     </div>
                     <div class="flex items-center">
@@ -78,3 +79,4 @@
         </form>
     </x-ui.card>
 </x-layouts.app>
+

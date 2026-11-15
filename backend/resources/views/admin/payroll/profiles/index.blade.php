@@ -15,7 +15,7 @@
                 <select name="employee_id" class="rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                     <option value="">All Employees</option>
                     @foreach($employees as $emp)
-                        <option value="{{ $emp->id }}" {{ ($filters['employee_id'] ?? '') == $emp->id ? 'selected' : '' }}>{{ $emp->employee_number }}</option>
+                        <option value="{{ $emp->id }}" {{ ($filters['employee_id'] ?? '') == $emp->id ? 'selected' : '' }}>{{ $emp->employee_number }} &mdash; {{ $emp->user?->name ?: ($emp->name ?: 'Name unavailable') }}</option>
                     @endforeach
                 </select>
                 <select name="is_active" class="rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
@@ -59,8 +59,8 @@
                 <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                     @forelse($profiles as $profile)
                         <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                            <td class="px-6 py-3.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $profile->employee->employee_number }}</td>
-                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($profile->basic_salary, 2) }}</td>
+                            <td class="px-6 py-3.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $profile->employee->employee_number }} &mdash; {{ $profile->employee->user?->name ?: ($profile->employee->name ?: 'Name unavailable') }}</td>
+                            <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">&#8358;{{ number_format($profile->basic_salary, 2) }}</td>
                             <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $profile->effective_from->format('d M Y') }}</td>
                             <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400">{{ $profile->effective_to ? $profile->effective_to->format('d M Y') : 'Present' }}</td>
                             <td class="px-6 py-3.5 text-center">

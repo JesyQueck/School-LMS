@@ -60,11 +60,13 @@
                 </div>
                 <div class="sm:col-span-2">
                     <div class="flex items-center mb-2">
-                        <input name="is_active" type="checkbox" {{ old('is_active', true) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
+                        <input type="hidden" name="is_active" value="0">
+                        <input name="is_active" type="checkbox" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
                         <label class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">Active by default</label>
                     </div>
                     <div class="flex items-center">
-                        <input name="is_taxable" type="checkbox" {{ old('is_taxable', false) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
+                        <input type="hidden" name="is_taxable" value="0">
+                        <input name="is_taxable" type="checkbox" value="1" {{ old('is_taxable', false) ? 'checked' : '' }} class="w-4 h-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 bg-neutral-100 dark:bg-neutral-700">
                         <label class="ml-2 text-sm text-neutral-700 dark:text-neutral-300">Taxable</label>
                     </div>
                 </div>

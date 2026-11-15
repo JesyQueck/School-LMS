@@ -50,7 +50,7 @@
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Status <span class="text-danger-500">*</span></label>
                     <select name="status" required class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                         @foreach($statuses as $status)
-                            <option value="{{ $status }}" {{ old('status') == $status ? 'selected' : 'draft' ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
+                            <option value="{{ $status }}" {{ old('status', 'draft') == $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
                         @endforeach
                     </select>
                 </div>

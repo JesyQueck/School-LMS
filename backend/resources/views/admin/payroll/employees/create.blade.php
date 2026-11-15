@@ -32,14 +32,22 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="lg:col-span-2">
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Employee Number <span class="text-danger-500">*</span></label>
-                    <input name="employee_number" type="text" required value="{{ old('employee_number') }}" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <input name="employee_number" type="text" required value="{{ old('employee_number', $selectedUser?->staff_id ?? '') }}" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                                <div class="lg:col-span-2">
+                    <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Employee Name <span class="text-danger-500">*</span></label>
+                    <input name="name" type="text" maxlength="255"
+                        value="{{ old('name', $selectedUser?->name ?? '') }}"
+                        placeholder="Enter employee full name"
+                        class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">Required when no user account is linked.</p>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Linked User</label>
                     <select name="user_id" class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                         <option value="">No User Linked</option>
                         @foreach($users as $user)
-                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }} ({{ $user->email }})</option>
+                            <option value="{{ $user->id }}" {{ old('user_id', $selectedUser?->id) == $user->id ? 'selected' : '' }}>{{ $user->name }} ({{ $user->email }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -55,7 +63,7 @@
                     <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-1.5">Employment Status <span class="text-danger-500">*</span></label>
                     <select name="employment_status" required class="w-full rounded-xl border-2 border-neutral-200 dark:border-dark-border bg-white dark:bg-dark-surface text-neutral-900 dark:text-dark-text px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                         @foreach($statuses as $status)
-                            <option value="{{ $status }}" {{ old('employment_status') == $status ? 'selected' : 'active' ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                            <option value="{{ $status }}" {{ old('employment_status', 'active') == $status ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
                         @endforeach
                     </select>
                 </div>
