@@ -11,14 +11,22 @@
         <p class="text-sm text-neutral-500">{{ $profile->employee->employee_number }} — {{ $profile->employee->user?->name }}</p>
     </div>
 
-    @if($errors->any())
-        <div class="mb-5 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700">
-            <ul class="list-disc pl-5">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
+    @if ($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="h-5 w-5 flex-shrink-0 text-danger-600 dark:text-danger-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div class="flex-1">
+                    <h4 class="text-sm font-bold text-danger-800 dark:text-danger-300 uppercase tracking-wider mb-1">Please fix the following errors:</h4>
+                    <ul class="list-disc list-inside text-sm text-danger-700 dark:text-danger-400 space-y-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </x-ui.alert>
     @endif
 
     <form method="POST" action="{{ route('admin.payroll.profiles.revise.store', $profile) }}">
@@ -37,10 +45,25 @@
                         <label for="basic_salary" class="block text-sm font-medium mb-1">New Basic Salary</label>
                         <input id="basic_salary" name="basic_salary" type="number" min="0.01" step="0.01" required value="{{ old('basic_salary', $profile->basic_salary) }}" class="w-full min-h-[48px] px-4 py-3 rounded-lg border border-neutral-300 dark:border-dark-border dark:bg-dark-surface text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     </div>
-                    <div>
-                        <label for="effective_from" class="block text-sm font-medium mb-1">Effective Date</label>
-                        <input id="effective_from" name="effective_from" type="date" required value="{{ old('effective_from') }}" class="w-full min-h-[48px] px-4 py-3 rounded-lg border border-neutral-300 dark:border-dark-border dark:bg-dark-surface text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        <p class="mt-1 text-xs text-neutral-500">Must be the first day of an existing draft payroll period.</p>
+                                        <div>
+                        <label for="effective_from" class="block text-sm font-medium mb-1">Effective Payroll Period</label>
+
+                        <select id="effective_from" name="effective_from" required
+                            class="w-full min-h-[48px] px-4 py-3 rounded-lg border border-neutral-300 dark:border-dark-border dark:bg-dark-surface text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            @disabled($eligiblePeriods->isEmpty())>
+                            @forelse($eligiblePeriods as $period)
+                                <option value="{{ $period->start_date->toDateString() }}"
+                                    @selected($defaultEffectiveDate === $period->start_date->toDateString())>
+                                    {{ $period->name }} — {{ $period->start_date->format('d M Y') }} to {{ $period->end_date->format('d M Y') }}
+                                </option>
+                            @empty
+                                <option value="">No eligible draft payroll periods available</option>
+                            @endforelse
+                        </select>
+
+                        <p class="mt-2 text-xs text-neutral-500">
+                            Select a draft payroll period. The revision takes effect from its first day.
+                        </p>
                     </div>
                     <div>
                         <label for="reason" class="block text-sm font-medium mb-1">Reason for Revision</label>
@@ -73,7 +96,7 @@
 
                 <div class="flex justify-end gap-3 pt-4">
                     <a href="{{ route('admin.payroll.profiles.show', $profile) }}" class="px-4 py-2 rounded-lg text-sm border border-neutral-300">Cancel</a>
-                    <button type="submit" class="px-5 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white">Save Revision</button>
+                    <button type="submit" @disabled($eligiblePeriods->isEmpty()) class="px-5 py-2 rounded-lg text-sm font-medium bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">Save Revision</button>
                 </div>
             </div>
         </x-ui.card>

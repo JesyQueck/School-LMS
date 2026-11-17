@@ -56,6 +56,7 @@ class SalaryProfileController extends Controller
                 ->orderBy('employee_number')
                 ->get(),
             'components' => SalaryComponent::where('is_active', true)
+            ->whereRaw('LOWER(name) != ?', ['basic salary'])
                 ->orderBy('component_type')
                 ->orderBy('name')
                 ->get(),
@@ -78,6 +79,10 @@ class SalaryProfileController extends Controller
                 }
 
                 $component = SalaryComponent::findOrFail($comp['component_id']);
+
+                if (strcasecmp(trim($component->name), 'Basic Salary') === 0) {
+                    continue;
+                }
 
                 $configuredValue = $component->name === 'Basic Salary'
                     ? $profile->basic_salary
@@ -135,6 +140,7 @@ class SalaryProfileController extends Controller
                 ->orderBy('employee_number')
                 ->get(),
             'components' => SalaryComponent::where('is_active', true)
+            ->whereRaw('LOWER(name) != ?', ['basic salary'])
                 ->orderBy('component_type')
                 ->orderBy('name')
                 ->get(),
@@ -192,6 +198,10 @@ class SalaryProfileController extends Controller
 
                 $component = SalaryComponent::findOrFail($componentId);
 
+                if (strcasecmp(trim($component->name), 'Basic Salary') === 0) {
+                    continue;
+                }
+
                 $configuredValue = $component->name === 'Basic Salary'
                     ? $salaryProfile->basic_salary
                     : ($comp['value'] ?? $component->default_value);
@@ -230,6 +240,14 @@ class SalaryProfileController extends Controller
         SalaryProfile $salaryProfile
     ) {
         $data = $request->validated();
+
+        $componentDefinition = SalaryComponent::findOrFail($data['salary_component_id']);
+
+        if (strcasecmp(trim($componentDefinition->name), 'Basic Salary') === 0) {
+            return back()->withErrors([
+                'salary_component_id' => 'Basic Salary is managed through the salary profile basic salary field.',
+            ]);
+        }
 
         $component = $salaryProfile->components()->create($data);
 
@@ -277,15 +295,36 @@ class SalaryProfileController extends Controller
             'components.salaryComponent',
         ]);
 
+        $eligiblePeriods = PayrollPeriod::query()
+            ->where('status', PayrollPeriod::STATUS_DRAFT)
+            ->whereDate('start_date', '>', $salaryProfile->effective_from->toDateString())
+            ->whereDoesntHave('payrollRecords', function ($query) use ($salaryProfile) {
+                $query->where('employee_id', $salaryProfile->employee_id);
+            })
+            ->orderBy('start_date')
+            ->get();
+
+        $oldDate = old('effective_from');
+
+        $selectedPeriod = $eligiblePeriods->first(function ($period) use ($oldDate) {
+            return $period->start_date->toDateString() === $oldDate;
+        });
+
+        $defaultEffectiveDate = (
+            $selectedPeriod ?? $eligiblePeriods->first()
+        )?->start_date?->toDateString();
+
         return view('admin.payroll.profiles.revise', [
             'profile' => $salaryProfile,
             'components' => SalaryComponent::where('is_active', true)
+            ->whereRaw('LOWER(name) != ?', ['basic salary'])
                 ->orderBy('component_type')
                 ->orderBy('name')
                 ->get(),
+            'eligiblePeriods' => $eligiblePeriods,
+            'defaultEffectiveDate' => $defaultEffectiveDate,
         ]);
     }
-
     public function storeRevision(
         StoreSalaryRevisionRequest $request,
         SalaryProfile $salaryProfile
@@ -374,9 +413,11 @@ class SalaryProfileController extends Controller
                 $component = SalaryComponent::where('is_active', true)
                     ->findOrFail($item['component_id']);
 
-                $value = $component->name === 'Basic Salary'
-                    ? $data['basic_salary']
-                    : ($item['value'] ?? $component->default_value);
+                if (strcasecmp(trim($component->name), 'Basic Salary') === 0) {
+                    continue;
+                }
+
+                $value = $item['value'] ?? $component->default_value;
 
                 $newProfile->components()->create([
                     'salary_component_id' => $component->id,

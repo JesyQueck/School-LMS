@@ -22,8 +22,8 @@
         <x-ui.stat-card label="Total Employees" :value="$totalEmployees" icon="users" compact="true" />
         <x-ui.stat-card label="Active Employees" :value="$activeEmployees" icon="user-check" compact="true" />
         <x-ui.stat-card label="Current Period" :value="$currentPeriod?->name ?? '—'" icon="calendar" compact="true" />
-        <x-ui.stat-card label="Total Payroll" :value="'₦' . number_format($totalPayrollAmount, 2)" icon="wallet" compact="true" />
-        <x-ui.stat-card label="Pending Approvals" :value="$pendingApprovals" icon="clock" compact="true" />
+        <x-ui.stat-card label="Current Period Payroll (Net)" :value="'₦' . number_format($totalPayrollAmount, 2)" icon="wallet" compact="true" />
+        <x-ui.stat-card label="Pending Approvals (Current Period)" :value="$pendingApprovals" icon="clock" compact="true" />
         <x-ui.stat-card label="Recently Processed" :value="$recentlyProcessed->count()" icon="layout-dashboard" compact="true" />
     </div>
 

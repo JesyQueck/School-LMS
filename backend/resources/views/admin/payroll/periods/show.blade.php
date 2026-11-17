@@ -1,131 +1,217 @@
 <x-layouts.app title="Payroll Period Details - Payroll">
-    <div class="mb-6">
-        <x-ui.breadcrumbs>
-            <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.payroll.index') }}">Payroll</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item href="{{ route('admin.payroll.periods.index') }}">Payroll Periods</x-ui.breadcrumb-item>
-            <x-ui.breadcrumb-item active>Period Details</x-ui.breadcrumb-item>
-        </x-ui.breadcrumbs>
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white mt-2">Payroll Period</h1>
-    </div>
+    @php
+        $allRecords = $period->payrollRecords->sortBy('employee.employee_number');
+        $calculated = $allRecords->where('status', 'calculated');
+        $approved = $allRecords->where('status', 'approved');
+        $paid = $allRecords->where('status', 'paid');
+        $voided = $allRecords->where('status', 'voided');
+    @endphp
 
-    @if(session('status'))
-        <x-ui.alert variant="success" class="mb-6">
-            <div class="flex items-start gap-3">
-                <svg class="h-5 w-5 flex-shrink-0 text-success-600 dark:text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <div class="flex-1 text-sm font-medium text-success-800 dark:text-success-300">{{ session('status') }}</div>
-            </div>
-        </x-ui.alert>
-    @endif
-
-    <div class="flex items-center justify-between gap-4 mb-6">
+    <div class="space-y-6">
         <div>
-            <h2 class="text-xl font-bold text-neutral-900 dark:text-white">{{ $period->name }}</h2>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $period->start_date->format('d M Y') }} &mdash; {{ $period->end_date->format('d M Y') }}</p>
+            <x-ui.breadcrumbs>
+                <x-ui.breadcrumb-item href="/admin/dashboard">Admin</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.payroll.index') }}">Payroll</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item href="{{ route('admin.payroll.periods.index') }}">Payroll Periods</x-ui.breadcrumb-item>
+                <x-ui.breadcrumb-item active>Period Details</x-ui.breadcrumb-item>
+            </x-ui.breadcrumbs>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.payroll.periods.edit', $period) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Edit</a>
-            <a href="{{ route('admin.payroll.periods.index') }}" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 text-sm font-medium px-4 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50">Back</a>
-        </div>
-    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-        <div class="lg:col-span-3">
-            <x-ui.card class="mb-6" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Payroll Records</h3>
+        @if(session('status'))
+            <x-ui.alert variant="success">
+                {{ session('status') }}
+            </x-ui.alert>
+        @endif
+
+        @if($errors->any())
+            <x-ui.alert variant="danger">
+                {{ $errors->first() }}
+            </x-ui.alert>
+        @endif
+
+        @if(session('excluded') && count(session('excluded')))
+            <div class="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm dark:border-amber-900/50 dark:bg-dark-surface">
+                <div class="border-b border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900/50 dark:bg-amber-900/10">
+                    <h2 class="text-base font-bold text-amber-900 dark:text-amber-300">
+                        Excluded Employees ({{ count(session('excluded')) }})
+                    </h2>
+                    <p class="mt-1 text-sm text-amber-800 dark:text-amber-400">
+                        These employees were not included in this payroll generation.
+                    </p>
                 </div>
-                <div class="overflow-x-auto">
+
+                <div class="overflow-x-auto p-4 sm:p-5">
                     <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
                         <thead class="bg-neutral-50 dark:bg-dark-surface">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Employee</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Net Pay</th>
-                                <th class="px-6 py-3 text-center text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Actions</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employee</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employee Number</th>
+                                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Reason Excluded</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-neutral-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
-                            @php
-                                $allRecords = $period->payrollRecords->sortBy('employee.employee_number');
-                                $calculated = $allRecords->where('status', 'calculated');
-                                $approved = $allRecords->where('status', 'approved');
-                                $paid = $allRecords->where('status', 'paid');
-                                $voided = $allRecords->where('status', 'voided');
-                            @endphp
-                            @forelse($allRecords as $record)
-                                @php
-                                    $statusConfig = match($record->status) {
-                                        'calculated' => ['bg' => 'bg-warning-100 dark:bg-warning-900/30', 'text' => 'text-warning-700 dark:text-warning-300'],
-                                        'approved' => ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-700 dark:text-blue-300'],
-                                        'paid' => ['bg' => 'bg-success-100 dark:bg-success-900/30', 'text' => 'text-success-700 dark:text-success-300'],
-                                        'voided' => ['bg' => 'bg-danger-100 dark:bg-danger-900/30', 'text' => 'text-danger-700 dark:text-danger-300'],
-                                        default => ['bg' => 'bg-neutral-100 dark:bg-neutral-800/30', 'text' => 'text-neutral-700 dark:text-neutral-300'],
-                                    };
-                                @endphp
-                                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
-                                    <td class="px-6 py-3.5 text-sm font-medium text-neutral-900 dark:text-white">{{ $record->employee->employee_number }}</td>
-                                    <td class="px-6 py-3.5 text-sm text-neutral-600 dark:text-neutral-400 text-right">₦{{ number_format($record->net_pay, 2) }}</td>
-                                    <td class="px-6 py-3.5 text-center">
-                                        <span class="inline-flex items-center rounded-full {{ $statusConfig['bg'] }} px-2 py-0.5 text-xs font-medium {{ $statusConfig['text'] }}">{{ ucfirst($record->status) }}</span>
+                        <tbody class="divide-y divide-neutral-200 dark:divide-dark-border">
+                            @foreach(session('excluded') as $item)
+                                <tr>
+                                    <td class="px-5 py-4 text-sm font-medium text-neutral-900 dark:text-white">
+                                        {{ $item['employee']->name ?: ($item['employee']->user?->name ?: $item['employee']->employee_number) }}
                                     </td>
-                                    <td class="px-6 py-3.5 text-right">
-                                        <a href="{{ route('admin.payroll.records.show', $record) }}" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">View</a>
+                                    <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-400">
+                                        {{ $item['employee']->employee_number ?? '—' }}
+                                    </td>
+                                    <td class="px-5 py-4 text-sm text-amber-800 dark:text-amber-300">
+                                        {{ $item['reason'] ?? 'No reason provided' }}
                                     </td>
                                 </tr>
-                            @empty
-                                <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">No payroll records for this period.</td></tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
-            </x-ui.card>
+            </div>
+        @endif
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">PAYROLL PERIOD</p>
+                <h1 class="mt-1 text-2xl font-bold text-neutral-900 dark:text-white">{{ $period->name }}</h1>
+                <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    {{ $period->start_date->format('d M Y') }} – {{ $period->end_date->format('d M Y') }}
+                    <span class="mx-2">·</span>
+                    Pay date: {{ $period->pay_date->format('d M Y') }}
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('admin.payroll.periods.edit', $period) }}"
+                   class="inline-flex items-center justify-center rounded-lg bg-[#14532d] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#166534] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" style="background-color:#e6f0e9 !important;color:#14532d !important;border:1px solid #b7d0bf !important;">
+                    Edit Period
+                </a>
+                <a href="{{ route('admin.payroll.periods.index') }}"
+                   class="inline-flex items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 dark:border-dark-border dark:bg-dark-surface dark:text-neutral-200 dark:hover:bg-neutral-800">
+                    Back to Periods
+                </a>
+            </div>
         </div>
 
-        <div class="lg:col-span-1">
-            <x-ui.card class="h-full flex flex-col" padding="false" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Period Summary</h3>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            @foreach([
+                ['label' => 'Total Records', 'value' => $allRecords->count(), 'color' => 'text-neutral-900 dark:text-white'],
+                ['label' => 'Calculated', 'value' => $calculated->count(), 'color' => 'text-amber-600 dark:text-amber-400'],
+                ['label' => 'Approved', 'value' => $approved->count(), 'color' => 'text-blue-600 dark:text-blue-400'],
+                ['label' => 'Paid', 'value' => $paid->count(), 'color' => 'text-emerald-600 dark:text-emerald-400'],
+            ] as $stat)
+                <div class="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+                    <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $stat['label'] }}</p>
+                    <p class="mt-2 text-3xl font-bold {{ $stat['color'] }}">{{ $stat['value'] }}</p>
                 </div>
-                <div class="p-5 flex-1 grid grid-cols-1 gap-4">
-                    <div class="p-4 border border-neutral-200 dark:border-dark-border rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Total Records</p>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $allRecords->count() }}</p>
-                    </div>
-                    <div class="p-4 border border-neutral-200 dark:border-dark-border rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Calculated</p>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $calculated->count() }}</p>
-                    </div>
-                    <div class="p-4 border border-neutral-200 dark:border-dark-border rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Approved</p>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $approved->count() }}</p>
-                    </div>
-                    <div class="p-4 border border-neutral-200 dark:border-dark-border rounded-lg bg-neutral-50 dark:bg-neutral-800/50">
-                        <p class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase">Paid</p>
-                        <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ $paid->count() }}</p>
-                    </div>
-                </div>
-            </x-ui.card>
+            @endforeach
+        </div>
 
-            <x-ui.card class="mt-6 flex flex-col" padding="false" elevated>
-                <div class="px-6 py-5 border-b-2 border-neutral-200 dark:border-dark-border">
-                    <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Actions</h3>
+        <div class="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-surface">
+            <div class="flex flex-col gap-2 border-b border-neutral-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-dark-border">
+                <div>
+                    <h2 class="text-lg font-bold text-neutral-900 dark:text-white">Payroll Records</h2>
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                        Employees and payment records for this period
+                    </p>
                 </div>
-                <div class="p-5 flex-1 flex flex-col gap-3">
-                    @if($period->status === 'draft' && $calculated->isEmpty())
-                        <form method="POST" action="{{ route('admin.payroll.periods.generate', $period) }}" class="w-full">
-                            @csrf
-                            <button type="submit" class="w-full bg-success-600 hover:bg-success-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Generate Payroll</button>
-                        </form>
-                    @endif
-                    @if($calculated->isNotEmpty() || $approved->isNotEmpty())
-                        <div class="text-xs text-neutral-500 dark:text-neutral-400 text-center py-2">
-                            Manage individual records via Payroll History
-                        </div>
-                    @endif
-                    <a href="{{ route('admin.payroll.history') }}" class="w-full text-sm text-primary-600 dark:text-primary-400 hover:underline text-center py-2">View All Payroll Records</a>
+
+                @if($period->status === 'draft' && $allRecords->isEmpty())
+                    <form method="POST" action="{{ route('admin.payroll.periods.generate', $period) }}">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center justify-center rounded-lg bg-[#166534] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#14532d] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2" style="background-color:#14532d !important;color:#ffffff !important;border:1px solid #14532d !important;">
+                            Generate Payroll
+                        </button>
+                    </form>
+                @endif
+            </div>
+
+            <div class="overflow-x-auto px-5 py-5">
+                <table class="min-w-full rounded-xl border border-neutral-200 border-separate border-spacing-0 divide-y divide-neutral-200 dark:border-dark-border dark:divide-dark-border">
+                    <thead class="bg-neutral-50 dark:bg-dark-surface">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employee</th>
+                            <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Employee Number</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Net Pay</th>
+                            <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Status</th>
+                            <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-200 dark:divide-dark-border">
+                        @forelse($allRecords as $record)
+                            @php
+                                $statusConfig = match($record->status) {
+                                    'calculated' => 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+                                    'approved' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                                    'paid' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+                                    'voided' => 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                                    default => 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
+                                };
+                            @endphp
+                            <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/40">
+                                <td class="whitespace-nowrap px-6 py-5 text-sm font-medium text-neutral-900 dark:text-white">
+                                    {{ $record->employee?->name ?: ($record->employee?->user?->name ?: $record->employee?->employee_number) }}
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-5 text-sm text-neutral-600 dark:text-neutral-400">
+                                    {{ $record->employee->employee_number ?? '—' }}
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-semibold text-neutral-900 dark:text-white">
+                                    ₦{{ number_format($record->net_pay, 2) }}
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-4 text-center">
+                                    <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusConfig }}">
+                                        {{ ucfirst($record->status) }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap px-5 py-4 text-right">
+                                    <a href="{{ route('admin.payroll.records.show', $record) }}"
+                                       class="text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-8 py-16 text-center align-middle">
+                                    <div class="mx-auto max-w-md py-3">
+                                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l5 5v11a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <h3 class="mt-4 text-sm font-semibold text-neutral-900 dark:text-white">No payroll records yet</h3>
+                                        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                                            Payroll records will appear here after payroll is generated for this period.
+                                        </p>
+                                        @if($period->status === 'draft')
+                                            <p class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+                                                Generating payroll will use employees eligible for this period.
+                                            </p>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($voided->isNotEmpty())
+                <div class="border-t border-neutral-200 px-5 py-3 text-sm text-neutral-500 dark:border-dark-border dark:text-neutral-400">
+                    {{ $voided->count() }} voided payroll record(s)
                 </div>
-            </x-ui.card>
+            @endif
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                Period status:
+                <span class="font-semibold text-neutral-800 dark:text-neutral-200">{{ ucfirst($period->status) }}</span>
+            </p>
+            <a href="{{ route('admin.payroll.history') }}"
+               class="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400">
+                View All Payroll History →
+            </a>
         </div>
     </div>
 </x-layouts.app>

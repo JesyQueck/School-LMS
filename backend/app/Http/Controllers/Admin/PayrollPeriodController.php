@@ -10,6 +10,8 @@ use App\Models\PayrollRecord;
 use App\Models\User;
 use App\Traits\AuditsActions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PayrollPeriodController extends Controller
 {
@@ -53,9 +55,77 @@ class PayrollPeriodController extends Controller
             ->with('status', 'Payroll period created.');
     }
 
+    public function generateYear(Request $request)
+    {
+        $validated = $request->validate([
+            'year' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'pay_day' => ['required', 'integer', 'between:1,31'],
+        ]);
+
+        $year = (int) $validated['year'];
+        $payDay = (int) $validated['pay_day'];
+        $created = 0;
+        $skipped = [];
+
+        DB::transaction(function () use ($request, $year, $payDay, &$created, &$skipped): void {
+            for ($month = 1; $month <= 12; $month++) {
+                $start = Carbon::create($year, $month, 1)->startOfDay();
+                $end = $start->copy()->endOfMonth();
+                $payDate = $start->copy()->day(min($payDay, $end->day));
+
+                $name = $start->format('F Y');
+
+                $overlap = PayrollPeriod::query()
+                    ->where('start_date', '<=', $end->toDateString())
+                    ->where('end_date', '>=', $start->toDateString())
+                    ->exists();
+
+                if ($overlap) {
+                    $skipped[] = $name;
+                    continue;
+                }
+
+                $data = [
+                    'name' => $name,
+                    'start_date' => $start->toDateString(),
+                    'end_date' => $end->toDateString(),
+                    'pay_date' => $payDate->toDateString(),
+                    'status' => PayrollPeriod::STATUS_DRAFT,
+                    'created_by' => $request->user()->id,
+                ];
+
+                $period = PayrollPeriod::create($data);
+
+                $this->audit(
+                    $request,
+                    'payroll_period.created',
+                    PayrollPeriod::class,
+                    $period->id,
+                    null,
+                    $data
+                );
+
+                $created++;
+            }
+        });
+
+        $message = "{$created} payroll period(s) generated for {$year}.";
+        if (count($skipped)) {
+            $message .= ' ' . count($skipped) . ' month(s) skipped because an existing period overlaps: ' . implode(', ', $skipped) . '.';
+        }
+
+        return redirect()
+            ->route('admin.payroll.periods.index')
+            ->with('status', $message)
+            ->with('generation_skipped', $skipped);
+    }
     public function show(PayrollPeriod $period)
     {
-        $period->load(['payrollRecords.employee', 'payrollRecords.components', 'creator']);
+        $period->load([
+            'payrollRecords.employee.user',
+            'payrollRecords.components',
+            'creator',
+        ]);
 
         $calculated = $period->payrollRecords->where('status', PayrollRecord::STATUS_CALCULATED);
         $approved = $period->payrollRecords->where('status', PayrollRecord::STATUS_APPROVED);

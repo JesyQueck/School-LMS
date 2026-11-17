@@ -105,7 +105,7 @@
                     @if($payrollRecord->status === 'calculated')
                         <form method="POST" action="{{ route('admin.payroll.records.approve', $payrollRecord) }}" class="w-full">
                             @csrf
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Approve Payroll</button>
+                            <button type="submit" class="w-full !bg-blue-600 hover:!bg-blue-700 !text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Approve Payroll</button>
                         </form>
                         <form method="POST" action="{{ route('admin.payroll.records.reject', $payrollRecord) }}" class="w-full">
                             @csrf
@@ -116,7 +116,10 @@
                             @csrf
                             <button type="submit" class="w-full bg-danger-600 hover:bg-danger-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors">Reject / Void</button>
                         </form>
-                        <a href="{{ route('bursar.staff-salaries.payment', $payrollRecord) }}" class="w-full bg-success-600 hover:bg-success-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm text-sm transition-colors text-center">Record Payment (Bursar)</a>
+                                                <div class="rounded-xl border border-neutral-200 dark:border-dark-border bg-neutral-50 dark:bg-dark-surface p-4">
+                            <p class="text-sm font-semibold text-neutral-800 dark:text-dark-text">Awaiting Bursar Payment</p>
+                            <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">This payroll has been approved. The Bursar is responsible for recording the payment.</p>
+                        </div>
                     @elseif($payrollRecord->status === 'paid')
                         <div class="w-full bg-success-50 dark:bg-success-950/10 border border-success-200 dark:border-success-800 rounded-lg p-4">
                             <p class="text-sm font-medium text-success-800 dark:text-success-300">Payment Recorded</p>
@@ -131,7 +134,7 @@
 
                     @if($payrollRecord->status === 'approved' || $payrollRecord->status === 'paid')
                         <div class="mt-auto pt-4 border-t border-neutral-200 dark:border-dark-border">
-                            <a href="{{ route('bursar.staff-salaries.payslip', $payrollRecord) }}" class="w-full flex items-center justify-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+                            <a href="{{ route('admin.payroll.records.payslip', $payrollRecord) }}" class="w-full flex items-center justify-center gap-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 View Payslip
                             </a>

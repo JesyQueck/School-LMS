@@ -37,7 +37,10 @@ class PayrollService
             throw new \InvalidArgumentException('Payroll can only be generated for draft or processed periods.');
         }
 
-        $employees = Employee::where('employment_status', Employee::STATUS_ACTIVE)->orderBy('employee_number')->get();
+        $employees = Employee::with('user')
+            ->where('employment_status', Employee::STATUS_ACTIVE)
+            ->orderBy('employee_number')
+            ->get();
 
         $records = [];
         $excluded = [];
@@ -132,7 +135,12 @@ class PayrollService
             }
 
             $component = $profileComponent->salaryComponent;
-            if (! $component || ! $component->is_active) {
+
+            if (
+                ! $component ||
+                ! $component->is_active ||
+                strcasecmp(trim($component->name), 'Basic Salary') === 0
+            ) {
                 continue;
             }
 
@@ -251,18 +259,14 @@ class PayrollService
     }
 
     /**
-     * Resolve the active salary profile effective for the given payroll period.
-     *
-     * A profile is effective if it is active and its date range overlaps
-     * the payroll period. When multiple profiles overlap, the one whose
-     * effective_from is latest and on or before the period start wins;
-     * otherwise the profile active on the period start date is used.
+     * Resolve the active salary profile whose date range overlaps the payroll period.
+     * The latest applicable profile is selected when multiple profiles overlap.
      */
     protected function resolveEffectiveProfile(Employee $employee, PayrollPeriod $period): ?SalaryProfile
     {
         return $employee->salaryProfiles()
             ->where('is_active', true)
-            ->whereDate('effective_from', '<=', $period->start_date)
+            ->whereDate('effective_from', '<=', $period->end_date)
             ->where(function ($query) use ($period) {
                 $query->whereNull('effective_to')
                     ->orWhereDate('effective_to', '>=', $period->start_date);

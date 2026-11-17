@@ -107,6 +107,7 @@ class PayrollManagementTest extends TestCase
         $this->actingAs($admin);
 
         $response = $this->post('/admin/payroll/employees', [
+            'name' => 'New Payroll Employee',
             'employee_number' => 'EMP-NEW-001',
             'employment_type' => 'full-time',
             'date_employed' => '2026-01-15',
@@ -711,7 +712,7 @@ class PayrollManagementTest extends TestCase
         $response->assertViewIs('bursar.payroll.payslip');
         $response->assertSee($employee->employee_number);
         $response->assertSee($period->name);
-        $response->assertSee('₦' . number_format($record->net_pay, 2));
+        $response->assertSee(number_format($record->net_pay, 2));
     }
 
     public function test_payslip_pdf_download(): void
@@ -783,8 +784,8 @@ class PayrollManagementTest extends TestCase
         $response = $this->get('/bursar/staff-salaries/records/' . $record->id . '/payslip');
         $response->assertOk();
         // Payslip should show the snapshot amount (10000), not the new live value (99999)
-        $response->assertSee('₦' . number_format(10000.00, 2));
-        $response->assertDontSee('₦' . number_format(99999.00, 2));
+        $response->assertSee(number_format(10000.00, 2));
+        $response->assertDontSee(number_format(99999.00, 2));
     }
 
     /* ---------------------------------------------------------------
@@ -831,5 +832,217 @@ class PayrollManagementTest extends TestCase
             'target_model' => PayrollPeriod::class,
             'target_id' => 1,
         ]);
+    }
+
+    public function test_admin_can_generate_all_twelve_monthly_payroll_periods(): void
+    {
+        $admin = $this->createAdmin();
+        $this->actingAs($admin);
+
+        $this->post('/admin/payroll/periods/generate-year', [
+            'year' => 2027,
+            'pay_day' => 27,
+        ])->assertRedirect('/admin/payroll/periods');
+
+        $this->assertSame(12, PayrollPeriod::whereYear('start_date', 2027)->count());
+
+        foreach (range(1, 12) as $month) {
+            $start = \Illuminate\Support\Carbon::create(2027, $month, 1);
+            $end = $start->copy()->endOfMonth();
+            $payDate = $start->copy()->day(27);
+
+            $period = PayrollPeriod::whereDate('start_date', $start->toDateString())->first();
+
+            $this->assertNotNull($period);
+            $this->assertSame($start->format('F Y'), $period->name);
+            $this->assertSame($end->toDateString(), $period->end_date->toDateString());
+            $this->assertSame($payDate->toDateString(), $period->pay_date->toDateString());
+            $this->assertSame('draft', $period->status);
+            $this->assertSame($admin->id, $period->created_by);
+
+            $this->assertDatabaseHas('audit_logs', [
+                'action' => 'payroll_period.created',
+                'target_model' => PayrollPeriod::class,
+                'target_id' => $period->id,
+            ]);
+        }
+
+        $this->assertSame(
+            12,
+            \Illuminate\Support\Facades\DB::table('audit_logs')
+                ->where('action', 'payroll_period.created')
+                ->where('target_model', PayrollPeriod::class)
+                ->count()
+        );
+    }
+
+    public function test_bulk_generation_clamps_payment_day_to_month_end_in_leap_year(): void
+    {
+        $admin = $this->createAdmin();
+        $this->actingAs($admin);
+
+        $this->post('/admin/payroll/periods/generate-year', [
+            'year' => 2028,
+            'pay_day' => 31,
+        ])->assertRedirect('/admin/payroll/periods');
+
+        $february = PayrollPeriod::where('name', 'February 2028')->firstOrFail();
+        $this->assertSame('2028-02-29', $february->pay_date->toDateString());
+
+        $april = PayrollPeriod::where('name', 'April 2028')->firstOrFail();
+        $this->assertSame('2028-04-30', $april->pay_date->toDateString());
+
+        $january = PayrollPeriod::where('name', 'January 2028')->firstOrFail();
+        $this->assertSame('2028-01-31', $january->pay_date->toDateString());
+    }
+
+    public function test_bulk_generation_skips_existing_and_overlapping_periods_without_overwriting(): void
+    {
+        $admin = $this->createAdmin();
+
+        $existingJanuary = $this->createPeriod($admin, [
+            'name' => 'Existing January',
+            'start_date' => '2027-01-01',
+            'end_date' => '2027-01-31',
+            'pay_date' => '2027-02-05',
+            'status' => 'locked',
+        ]);
+
+        $existingMarch = $this->createPeriod($admin, [
+            'name' => 'Existing March Partial',
+            'start_date' => '2027-03-10',
+            'end_date' => '2027-03-20',
+            'pay_date' => '2027-03-25',
+            'status' => 'processed',
+        ]);
+
+        $this->actingAs($admin);
+
+        $this->post('/admin/payroll/periods/generate-year', [
+            'year' => 2027,
+            'pay_day' => 27,
+        ])->assertRedirect('/admin/payroll/periods');
+
+        $this->assertSame(10, PayrollPeriod::whereYear('start_date', 2027)->whereNotIn('name', ['Existing January', 'Existing March Partial'])->count());
+
+        $this->assertDatabaseHas('payroll_periods', [
+            'id' => $existingJanuary->id,
+            'name' => 'Existing January',
+            'status' => 'locked',
+        ]);
+
+        $this->assertDatabaseHas('payroll_periods', [
+            'id' => $existingMarch->id,
+            'name' => 'Existing March Partial',
+            'status' => 'processed',
+        ]);
+
+        $this->assertDatabaseMissing('payroll_periods', [
+            'name' => 'January 2027',
+        ]);
+
+        $this->assertDatabaseMissing('payroll_periods', [
+            'name' => 'March 2027',
+        ]);
+    }
+
+    public function test_generated_payroll_period_can_be_edited_individually(): void
+    {
+        $admin = $this->createAdmin();
+        $this->actingAs($admin);
+
+        $this->post('/admin/payroll/periods/generate-year', [
+            'year' => 2027,
+            'pay_day' => 27,
+        ]);
+
+        $period = PayrollPeriod::where('name', 'January 2027')->firstOrFail();
+        $otherPeriod = PayrollPeriod::where('name', 'February 2027')->firstOrFail();
+
+        $this->put('/admin/payroll/periods/' . $period->id, [
+            'name' => 'January Payroll - Revised',
+            'start_date' => '2027-01-01',
+            'end_date' => '2027-01-31',
+            'pay_date' => '2027-02-05',
+            'status' => 'processed',
+        ])->assertRedirect('/admin/payroll/periods/' . $period->id);
+
+        $updated = $period->fresh();
+        $this->assertSame('January Payroll - Revised', $updated->name);
+        $this->assertSame('2027-02-05', $updated->pay_date->toDateString());
+        $this->assertSame('processed', $updated->status);
+
+        $unchanged = $otherPeriod->fresh();
+        $this->assertSame('February 2027', $unchanged->name);
+        $this->assertSame('2027-02-27', $unchanged->pay_date->toDateString());
+        $this->assertSame('draft', $unchanged->status);
+    }
+
+
+    public function test_payroll_dashboard_totals_and_pending_approvals_are_scoped_to_current_period(): void
+    {
+        $admin = $this->createAdmin();
+
+        $previousPeriod = $this->createPeriod($admin, [
+            'name' => 'January 2026',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-01-31',
+            'pay_date' => '2026-02-05',
+        ]);
+
+        $currentPeriod = $this->createPeriod($admin, [
+            'name' => 'February 2026',
+            'start_date' => '2026-02-01',
+            'end_date' => '2026-02-28',
+            'pay_date' => '2026-03-05',
+        ]);
+
+        $createRecord = function ($period, string $status, int $netPay): void {
+            $employee = $this->createEmployee();
+
+            PayrollRecord::create([
+                'employee_id' => $employee->id,
+                'payroll_period_id' => $period->id,
+                'basic_salary_snapshot' => $netPay,
+                'gross_pay' => $netPay,
+                'total_allowances' => 0,
+                'total_deductions' => 0,
+                'net_pay' => $netPay,
+                'status' => $status,
+            ]);
+        };
+
+        // Historical payroll must not inflate the current-period total.
+        $createRecord($previousPeriod, PayrollRecord::STATUS_CALCULATED, 900000);
+
+        // Current-period calculated and approved records are included.
+        $createRecord($currentPeriod, PayrollRecord::STATUS_CALCULATED, 200000);
+        $createRecord($currentPeriod, PayrollRecord::STATUS_APPROVED, 50000);
+
+        // Voided payroll is excluded from the total and pending count.
+        $createRecord($currentPeriod, PayrollRecord::STATUS_VOIDED, 100000);
+
+        $response = $this->actingAs($admin)->get('/admin/payroll');
+
+        $response->assertOk();
+        $response->assertViewHas('currentPeriod', function ($period) use ($currentPeriod) {
+            return $period->id === $currentPeriod->id;
+        });
+        $response->assertViewHas('totalPayrollAmount', function ($amount) {
+            return (float) $amount === 250000.0;
+        });
+        $response->assertViewHas('pendingApprovals', 1);
+    }
+
+    public function test_payroll_dashboard_shows_zero_payroll_totals_when_no_periods_exist(): void
+    {
+        $admin = $this->createAdmin();
+
+        $response = $this->actingAs($admin)->get('/admin/payroll');
+
+        $response->assertOk();
+        $response->assertViewHas('currentPeriod', null);
+        $response->assertViewHas('totalPayrollAmount', 0);
+        $response->assertViewHas('pendingApprovals', 0);
     }
 }

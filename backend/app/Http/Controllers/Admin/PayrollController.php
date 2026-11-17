@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ApprovePayrollRequest;
-use App\Http\Requests\RecordPayrollPaymentRequest;
 use App\Http\Requests\StorePayrollPeriodRequest;
 use App\Http\Requests\UpdatePayrollPeriodRequest;
 use App\Models\Employee;
@@ -13,6 +12,7 @@ use App\Models\PayrollRecord;
 use App\Models\User;
 use App\Services\PayrollService;
 use App\Traits\AuditsActions;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class PayrollController extends Controller
@@ -31,10 +31,17 @@ class PayrollController extends Controller
             ->orderBy('start_date', 'desc')
             ->first() ?? PayrollPeriod::orderBy('start_date', 'desc')->first();
 
-        $totalPayrollAmount = PayrollRecord::where('status', '!=', PayrollRecord::STATUS_VOIDED)
-            ->sum('net_pay');
+        $totalPayrollAmount = $currentPeriod
+            ? PayrollRecord::where('payroll_period_id', $currentPeriod->id)
+                ->where('status', '!=', PayrollRecord::STATUS_VOIDED)
+                ->sum('net_pay')
+            : 0;
 
-        $pendingApprovals = PayrollRecord::where('status', PayrollRecord::STATUS_CALCULATED)->count();
+        $pendingApprovals = $currentPeriod
+        ? PayrollRecord::where('payroll_period_id', $currentPeriod->id)
+            ->where('status', PayrollRecord::STATUS_CALCULATED)
+            ->count()
+        : 0;
 
         $recentlyProcessed = PayrollRecord::with(['employee', 'period'])
             ->whereIn('status', [PayrollRecord::STATUS_APPROVED, PayrollRecord::STATUS_PAID])
@@ -131,22 +138,36 @@ class PayrollController extends Controller
         }
     }
 
-    public function recordPayment(RecordPayrollPaymentRequest $request, PayrollRecord $payrollRecord)
+    public function payslip(Request $request, PayrollRecord $payrollRecord)
     {
-        try {
-            $this->payrollService->recordPayment($payrollRecord, $request->validatedData(), $request->user());
+        abort_unless(
+            in_array($payrollRecord->status, [
+                PayrollRecord::STATUS_APPROVED,
+                PayrollRecord::STATUS_PAID,
+            ], true),
+            404
+        );
 
-            $this->audit($request, 'payroll.payment_recorded', PayrollRecord::class, $payrollRecord->id, null, [
-                'record_id' => $payrollRecord->id,
-                'employee' => $payrollRecord->employee->employee_number,
-                'period' => $payrollRecord->period->name,
-                'payment_method' => $request->validated('payment_method'),
-                'payment_reference' => $request->validated('payment_reference'),
-            ]);
+        $payrollRecord->load([
+            'employee.user',
+            'period',
+            'components',
+            'payslip.generator',
+        ]);
 
-            return back()->with('status', 'Payment recorded for '.$payrollRecord->employee->employee_number.'.');
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['payroll' => $e->getMessage()]);
+        if ($request->boolean('download')) {
+            $pdf = Pdf::loadView(
+                'bursar.payroll.payslip-pdf',
+                compact('payrollRecord')
+            );
+
+            return $pdf->download(
+                'payslip-'.$payrollRecord->employee->employee_number.'-'.$payrollRecord->period->name.'.pdf'
+            );
         }
+
+        return view('admin.payroll.payslip', [
+            'payrollRecord' => $payrollRecord,
+        ]);
     }
 }

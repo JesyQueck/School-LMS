@@ -37,6 +37,68 @@
         </x-ui.alert>
     @endif
 
+    @if($errors->any())
+        <x-ui.alert variant="danger" class="mb-6">
+            <ul class="list-disc list-inside text-sm space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-ui.alert>
+    @endif
+
+    <x-ui.card class="mb-6" elevated>
+        <div class="p-5 sm:p-6">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-base font-bold text-neutral-900 dark:text-white">Generate Monthly Periods</h2>
+            </div>
+
+            <p class="mb-5 max-w-3xl text-sm leading-5 text-neutral-500 dark:text-neutral-400">
+                Generate all twelve monthly payroll periods for a selected year. Existing or overlapping periods will be skipped, and each generated period can be managed independently.
+            </p>
+
+            <form id="generate-payroll-periods-form" method="POST" action="{{ route('admin.payroll.periods.generate-year') }}"
+                class="grid grid-cols-1 sm:grid-cols-[180px_220px_max-content] items-end gap-4">
+                @csrf
+
+                <div class="w-full min-w-0">
+                    <label for="payroll-year" class="mb-2 block text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                        Payroll Year
+                    </label>
+                    <input id="payroll-year" type="number" name="year" min="2000" max="2100"
+                        value="{{ old('year', now()->year) }}" required
+                        class="block h-11 w-full rounded-xl border border-neutral-300 bg-white px-4 text-sm text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text">
+                </div>
+
+                <div class="w-full min-w-0">
+                    <label for="payroll-pay-day" class="mb-2 block text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                        Default Payment Day
+                    </label>
+                    <select id="payroll-pay-day" name="pay_day" required
+                        class="block h-11 w-full rounded-xl border border-neutral-300 bg-white px-4 text-sm text-neutral-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text">
+                        @for($day = 1; $day <= 31; $day++)
+                            <option value="{{ $day }}" {{ (int) old('pay_day', 27) === $day ? 'selected' : '' }}>{{ $day }}{{ in_array($day % 100, [11, 12, 13]) ? 'th' : match($day % 10) { 1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th' } }}</option>
+                        @endfor
+                    </select>
+                </div>
+
+                <div class="w-full sm:w-auto">
+                    <button type="submit"
+                        class="inline-flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-surface">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Generate 12 Months
+                    </button>
+                </div>
+            </form>
+        </div>
+    </x-ui.card>
     <x-ui.card class="mb-6" elevated>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-dark-border">
@@ -93,4 +155,76 @@
             {{ $periods->links() }}
         </div>
     </x-ui.card>
+
+    {{-- Generate Payroll Periods Confirmation Modal --}}
+    <div id="generate-periods-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-dark-surface">
+            <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Generate Monthly Payroll Periods?</h3>
+            <p class="mt-2 text-sm leading-6 text-neutral-600 dark:text-neutral-300">
+                This will create up to twelve Draft payroll periods for the selected year.
+                Existing or overlapping periods will be skipped. You can edit each generated period individually.
+            </p>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" id="generate-periods-cancel"
+                    class="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 dark:border-dark-border dark:text-neutral-300 dark:hover:bg-neutral-800">
+                    Cancel
+                </button>
+                <button type="button" id="generate-periods-confirm"
+                    class="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700">
+                    Generate Periods
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        (function () {
+            const form = document.getElementById('generate-payroll-periods-form');
+            const modal = document.getElementById('generate-periods-modal');
+            const cancelButton = document.getElementById('generate-periods-cancel');
+            const confirmButton = document.getElementById('generate-periods-confirm');
+
+            if (!form || !modal || !cancelButton || !confirmButton) return;
+
+            let confirmed = false;
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            form.addEventListener('submit', function (event) {
+                if (confirmed) return;
+
+                event.preventDefault();
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+
+            cancelButton.addEventListener('click', closeModal);
+
+            confirmButton.addEventListener('click', function () {
+                confirmed = true;
+                closeModal();
+                form.requestSubmit();
+            });
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) closeModal();
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+    @endpush
 </x-layouts.app>

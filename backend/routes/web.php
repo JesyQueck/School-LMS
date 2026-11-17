@@ -285,6 +285,7 @@ Route::middleware(['auth', 'password.only'])->group(function () {
                 Route::get('/', [PayrollPeriodController::class, 'index'])->name('index');
                 Route::get('/create', [PayrollPeriodController::class, 'create'])->name('create');
                 Route::post('/', [PayrollPeriodController::class, 'store'])->name('store');
+                Route::post('/generate-year', [PayrollPeriodController::class, 'generateYear'])->name('generate-year');
                 Route::get('/{period}', [PayrollPeriodController::class, 'show'])->name('show');
                 Route::get('/{period}/edit', [PayrollPeriodController::class, 'edit'])->name('edit');
                 Route::put('/{period}', [PayrollPeriodController::class, 'update'])->name('update');
@@ -327,8 +328,8 @@ Route::middleware(['auth', 'password.only'])->group(function () {
 
             Route::post('/records/{payrollRecord}/approve', [AdminPayrollController::class, 'approve'])->name('records.approve');
             Route::post('/records/{payrollRecord}/reject', [AdminPayrollController::class, 'reject'])->name('records.reject');
-            Route::post('/records/{payrollRecord}/payment', [AdminPayrollController::class, 'recordPayment'])->name('records.payment');
-        });
+            Route::get('/records/{payrollRecord}/payslip', [AdminPayrollController::class, 'payslip'])->name('records.payslip');
+});
     });
 });
 
